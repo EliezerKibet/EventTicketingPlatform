@@ -457,10 +457,6 @@ const OrganizerAnalytics: React.FC = () => {
                     <div>
                         <h1 className="text-3xl font-bold text-black mb-2">Analytics Dashboard</h1>
                         <p className="text-black">Comprehensive insights for your events</p>
-                        <div className="flex items-center mt-2">
-                            <Wifi className="w-4 h-4 text-green-500 mr-1" />
-                            <span className="text-sm text-black">Connected to API</span>
-                        </div>
                     </div>
                     <button
                         onClick={fetchAnalyticsData}
