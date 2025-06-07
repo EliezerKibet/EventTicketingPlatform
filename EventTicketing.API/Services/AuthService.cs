@@ -145,6 +145,18 @@ namespace EventTicketing.API.Services
             return tokenHandler.WriteToken(token);
         }
 
+        // New async methods for UserService
+        public async Task<bool> VerifyPasswordAsync(string password, string hashedPassword)
+        {
+            return await Task.FromResult(VerifyPassword(password, hashedPassword));
+        }
+
+        public async Task<string> HashPasswordAsync(string password)
+        {
+            return await Task.FromResult(HashPassword(password));
+        }
+
+        // Existing private methods (keep these as they are)
         private string HashPassword(string password)
         {
             using var rng = RandomNumberGenerator.Create();

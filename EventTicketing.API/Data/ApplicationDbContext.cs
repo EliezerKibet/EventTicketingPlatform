@@ -32,10 +32,16 @@ namespace EventTicketing.API.Data
 
         // Favorites
         public DbSet<UserFavoriteEvent> UserFavoriteEvents { get; set; }
+        public UserPreferences? UserPreferences { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<UserPreferences>()
+            .HasOne(up => up.User)
+            .WithOne(u => u.UserPreferences)
+            .HasForeignKey<UserPreferences>(up => up.UserId);
 
             // User - UserProfile (One-to-One)
             modelBuilder.Entity<User>()

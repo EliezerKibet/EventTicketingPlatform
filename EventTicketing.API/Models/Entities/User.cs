@@ -30,6 +30,8 @@ namespace EventTicketing.API.Models.Entities
         public bool IsActive { get; set; } = true;
         public UserStatus Status { get; set; } = UserStatus.Active;
 
+        public UserPreferences? UserPreferences { get; set; }
+
         // Navigation Properties
         public UserProfile? UserProfile { get; set; }
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();

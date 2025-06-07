@@ -247,6 +247,112 @@ interface TicketValidation {
     message: string;
 }
 
+interface UserProfile {
+    userId: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber?: string;
+    dateOfBirth?: string;
+    profileImageUrl?: string;
+    isEmailVerified: boolean;
+    isPhoneVerified: boolean;
+    createdAt: string;
+    lastLoginAt?: string;
+    status: string;
+    bio?: string;
+    website?: string;
+    timeZone?: string;
+    isOrganizer: boolean;
+    roles: string[];
+}
+
+interface UpdateUserProfileDto {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber?: string;
+    dateOfBirth?: string;
+    bio?: string;
+    website?: string;
+    timeZone?: string;
+}
+
+interface UserOrganization {
+    companyName?: string;
+    businessLicense?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+}
+
+interface UpdateUserOrganizationDto {
+    companyName?: string;
+    businessLicense?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+}
+
+interface UserPreferences {
+    emailNotifications: boolean;
+    smsNotifications: boolean;
+    newBookingNotifications: boolean;
+    cancellationNotifications: boolean;
+    lowInventoryNotifications: boolean;
+    dailyReports: boolean;
+    weeklyReports: boolean;
+    monthlyReports: boolean;
+    twoFactorEnabled: boolean;
+    sessionTimeout: number;
+    loginNotifications: boolean;
+    defaultTimeZone?: string;
+    defaultEventDuration: number;
+    defaultTicketSaleStart: number;
+    defaultRefundPolicy?: string;
+    requireApproval: boolean;
+    autoPublish: boolean;
+    theme: string;
+    language: string;
+    dateFormat: string;
+    timeFormat: string;
+    currency: string;
+}
+
+interface UpdateUserPreferencesDto {
+    emailNotifications: boolean;
+    smsNotifications: boolean;
+    newBookingNotifications: boolean;
+    cancellationNotifications: boolean;
+    lowInventoryNotifications: boolean;
+    dailyReports: boolean;
+    weeklyReports: boolean;
+    monthlyReports: boolean;
+    twoFactorEnabled: boolean;
+    sessionTimeout: number;
+    loginNotifications: boolean;
+    defaultTimeZone?: string;
+    defaultEventDuration: number;
+    defaultTicketSaleStart: number;
+    defaultRefundPolicy?: string;
+    requireApproval: boolean;
+    autoPublish: boolean;
+    theme: string;
+    language: string;
+    dateFormat: string;
+    timeFormat: string;
+    currency: string;
+}
+
+interface ChangePasswordDto {
+    currentPassword: string;
+    newPassword: string;
+}
+
 // API Response wrapper
 interface ApiResponse<T> {
     success?: boolean;
@@ -261,6 +367,119 @@ const getApiBaseUrl = (): string => {
         return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251/api';
     }
     return process.env.API_URL || 'http://localhost:5251/api';
+};
+
+export const userApi = {
+    // Profile management
+    getProfile: async (): Promise<UserProfile> => {
+        try {
+            console.log('👤 Fetching user profile');
+            const response = await api.get('/user/profile');
+            console.log('👤 Successfully loaded user profile');
+            return response.data;
+        } catch (error: any) {
+            console.error('👤 Error fetching profile:', error.message);
+            throw new Error(`Failed to load profile: ${error.message}`);
+        }
+    },
+
+    updateProfile: async (profileData: UpdateUserProfileDto): Promise<UserProfile> => {
+        try {
+            console.log('👤 Updating user profile');
+            const response = await api.put('/user/profile', profileData);
+            console.log('👤 Successfully updated user profile');
+            return response.data;
+        } catch (error: any) {
+            console.error('👤 Error updating profile:', error.message);
+            throw new Error(`Failed to update profile: ${error.message}`);
+        }
+    },
+
+    changePassword: async (passwordData: ChangePasswordDto): Promise<void> => {
+        try {
+            console.log('👤 Changing password');
+            await api.post('/user/change-password', passwordData);
+            console.log('👤 Successfully changed password');
+        } catch (error: any) {
+            console.error('👤 Error changing password:', error.message);
+            throw new Error(`Failed to change password: ${error.message}`);
+        }
+    },
+
+    // Organization management
+    getOrganization: async (): Promise<UserOrganization> => {
+        try {
+            console.log('🏢 Fetching organization details');
+            const response = await api.get('/user/organization');
+            console.log('🏢 Successfully loaded organization details');
+            return response.data;
+        } catch (error: any) {
+            console.error('🏢 Error fetching organization:', error.message);
+            // Return empty object for new organizations
+            return {};
+        }
+    },
+
+    updateOrganization: async (orgData: UpdateUserOrganizationDto): Promise<UserOrganization> => {
+        try {
+            console.log('🏢 Updating organization details');
+            const response = await api.put('/user/organization', orgData);
+            console.log('🏢 Successfully updated organization details');
+            return response.data;
+        } catch (error: any) {
+            console.error('🏢 Error updating organization:', error.message);
+            throw new Error(`Failed to update organization: ${error.message}`);
+        }
+    },
+
+    // Preferences management
+    getPreferences: async (): Promise<UserPreferences> => {
+        try {
+            console.log('⚙️ Fetching user preferences');
+            const response = await api.get('/user/preferences');
+            console.log('⚙️ Successfully loaded user preferences');
+            return response.data;
+        } catch (error: any) {
+            console.error('⚙️ Error fetching preferences:', error.message);
+            // Return default preferences if none exist
+            return {
+                emailNotifications: true,
+                smsNotifications: false,
+                newBookingNotifications: true,
+                cancellationNotifications: true,
+                lowInventoryNotifications: true,
+                dailyReports: false,
+                weeklyReports: true,
+                monthlyReports: true,
+                twoFactorEnabled: false,
+                sessionTimeout: 30,
+                loginNotifications: true,
+                defaultTimeZone: 'America/New_York',
+                defaultEventDuration: 120,
+                defaultTicketSaleStart: 30,
+                defaultRefundPolicy: 'flexible',
+                requireApproval: false,
+                autoPublish: false,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                currency: 'USD'
+            };
+        }
+    },
+
+    updatePreferences: async (preferencesData: UpdateUserPreferencesDto): Promise<UserPreferences> => {
+        try {
+            console.log('⚙️ Updating user preferences');
+            const response = await api.put('/user/preferences', preferencesData);
+            console.log('⚙️ Successfully updated user preferences');
+            return response.data;
+        } catch (error: any) {
+            console.error('⚙️ Error updating preferences:', error.message);
+            throw new Error(`Failed to update preferences: ${error.message}`);
+        }
+    }
 };
 
 const API_BASE_URL = getApiBaseUrl();
