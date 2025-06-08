@@ -163,87 +163,167 @@ namespace EventTicketing.API.Services
             return await GetUserOrganizationAsync(userId);
         }
 
+        // UPDATED: Now uses actual UserPreferences entity with enhanced properties
         public async Task<UserPreferencesDto> GetUserPreferencesAsync(int userId)
         {
-            var user = await _context.Users
-                .Include(u => u.UserProfile)
-                .FirstOrDefaultAsync(u => u.UserId == userId);
-
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
             if (user == null)
                 throw new ArgumentException("User not found");
 
-            // For now, return default preferences
-            // You can store these in a separate UserPreferences table or as JSON in UserProfile
-            return new UserPreferencesDto
+            var preferences = await _context.UserPreferences
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (preferences == null)
             {
-                EmailNotifications = true,
-                SmsNotifications = false,
-                NewBookingNotifications = true,
-                CancellationNotifications = true,
-                LowInventoryNotifications = true,
-                DailyReports = false,
-                WeeklyReports = true,
-                MonthlyReports = true,
-                TwoFactorEnabled = false,
-                SessionTimeout = 30,
-                LoginNotifications = true,
-                DefaultTimeZone = user.UserProfile?.TimeZone ?? "America/New_York",
-                DefaultEventDuration = 120,
-                DefaultTicketSaleStart = 30,
-                DefaultRefundPolicy = "flexible",
-                RequireApproval = false,
-                AutoPublish = false,
-                Theme = "light",
-                Language = "en",
-                DateFormat = "MM/dd/yyyy",
-                TimeFormat = "12h",
-                Currency = "USD"
-            };
-        }
-
-        public async Task<UserPreferencesDto> UpdateUserPreferencesAsync(int userId, UpdateUserPreferencesDto updateDto)
-        {
-            var user = await _context.Users
-                .Include(u => u.UserProfile)
-                .FirstOrDefaultAsync(u => u.UserId == userId);
-
-            if (user == null)
-                throw new ArgumentException("User not found");
-
-            // For now, we'll just return the updated preferences
-            // In a real implementation, you'd save these to a UserPreferences table or JSON field
-
-            // Update timezone in user profile if provided
-            if (user.UserProfile != null && !string.IsNullOrEmpty(updateDto.DefaultTimeZone))
-            {
-                user.UserProfile.TimeZone = updateDto.DefaultTimeZone;
-                await _context.SaveChangesAsync();
+                // Return default preferences if none exist
+                return new UserPreferencesDto
+                {
+                    EmailNotifications = true,
+                    SmsNotifications = false,
+                    NewBookingNotifications = true,
+                    CancellationNotifications = true,
+                    LowInventoryNotifications = true,
+                    DailyReports = false,
+                    WeeklyReports = true,
+                    MonthlyReports = true,
+                    TwoFactorEnabled = false,
+                    SessionTimeout = 30,
+                    LoginNotifications = true,
+                    DefaultTimeZone = "America/New_York",
+                    DefaultEventDuration = 120,
+                    DefaultTicketSaleStart = 30,
+                    DefaultRefundPolicy = "flexible",
+                    RequireApproval = false,
+                    AutoPublish = false,
+                    Theme = "light",
+                    Language = "en",
+                    DateFormat = "MM/dd/yyyy",
+                    TimeFormat = "12h",
+                    Currency = "USD",
+                    // NEW: Enhanced appearance preferences
+                    AccentColor = "blue",
+                    FontSize = "medium",
+                    CompactMode = false
+                };
             }
 
             return new UserPreferencesDto
             {
-                EmailNotifications = updateDto.EmailNotifications,
-                SmsNotifications = updateDto.SmsNotifications,
-                NewBookingNotifications = updateDto.NewBookingNotifications,
-                CancellationNotifications = updateDto.CancellationNotifications,
-                LowInventoryNotifications = updateDto.LowInventoryNotifications,
-                DailyReports = updateDto.DailyReports,
-                WeeklyReports = updateDto.WeeklyReports,
-                MonthlyReports = updateDto.MonthlyReports,
-                TwoFactorEnabled = updateDto.TwoFactorEnabled,
-                SessionTimeout = updateDto.SessionTimeout,
-                LoginNotifications = updateDto.LoginNotifications,
-                DefaultTimeZone = updateDto.DefaultTimeZone,
-                DefaultEventDuration = updateDto.DefaultEventDuration,
-                DefaultTicketSaleStart = updateDto.DefaultTicketSaleStart,
-                DefaultRefundPolicy = updateDto.DefaultRefundPolicy,
-                RequireApproval = updateDto.RequireApproval,
-                AutoPublish = updateDto.AutoPublish,
-                Theme = updateDto.Theme,
-                Language = updateDto.Language,
-                DateFormat = updateDto.DateFormat,
-                TimeFormat = updateDto.TimeFormat,
-                Currency = updateDto.Currency
+                EmailNotifications = preferences.EmailNotifications,
+                SmsNotifications = preferences.SmsNotifications,
+                NewBookingNotifications = preferences.NewBookingNotifications,
+                CancellationNotifications = preferences.CancellationNotifications,
+                LowInventoryNotifications = preferences.LowInventoryNotifications,
+                DailyReports = preferences.DailyReports,
+                WeeklyReports = preferences.WeeklyReports,
+                MonthlyReports = preferences.MonthlyReports,
+                TwoFactorEnabled = preferences.TwoFactorEnabled,
+                SessionTimeout = preferences.SessionTimeout,
+                LoginNotifications = preferences.LoginNotifications,
+                DefaultTimeZone = preferences.DefaultTimeZone,
+                DefaultEventDuration = preferences.DefaultEventDuration,
+                DefaultTicketSaleStart = preferences.DefaultTicketSaleStart,
+                DefaultRefundPolicy = preferences.DefaultRefundPolicy,
+                RequireApproval = preferences.RequireApproval,
+                AutoPublish = preferences.AutoPublish,
+                Theme = preferences.Theme,
+                Language = preferences.Language,
+                DateFormat = preferences.DateFormat,
+                TimeFormat = preferences.TimeFormat,
+                Currency = preferences.Currency,
+                // NEW: Enhanced appearance preferences
+                AccentColor = preferences.AccentColor,
+                FontSize = preferences.FontSize,
+                CompactMode = preferences.CompactMode
+            };
+        }
+
+        // UPDATED: Now saves to actual UserPreferences entity with enhanced properties
+        public async Task<UserPreferencesDto> UpdateUserPreferencesAsync(int userId, UpdateUserPreferencesDto updateDto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (user == null)
+                throw new ArgumentException("User not found");
+
+            var preferences = await _context.UserPreferences
+                .FirstOrDefaultAsync(p => p.UserId == userId);
+
+            if (preferences == null)
+            {
+                // Create new preferences if none exist
+                preferences = new UserPreferences
+                {
+                    UserId = userId,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.UserPreferences.Add(preferences);
+            }
+
+            // Map all properties from DTO to entity
+            preferences.EmailNotifications = updateDto.EmailNotifications;
+            preferences.SmsNotifications = updateDto.SmsNotifications;
+            preferences.NewBookingNotifications = updateDto.NewBookingNotifications;
+            preferences.CancellationNotifications = updateDto.CancellationNotifications;
+            preferences.LowInventoryNotifications = updateDto.LowInventoryNotifications;
+            preferences.DailyReports = updateDto.DailyReports;
+            preferences.WeeklyReports = updateDto.WeeklyReports;
+            preferences.MonthlyReports = updateDto.MonthlyReports;
+
+            preferences.TwoFactorEnabled = updateDto.TwoFactorEnabled;
+            preferences.SessionTimeout = updateDto.SessionTimeout;
+            preferences.LoginNotifications = updateDto.LoginNotifications;
+
+            preferences.DefaultTimeZone = updateDto.DefaultTimeZone;
+            preferences.DefaultEventDuration = updateDto.DefaultEventDuration;
+            preferences.DefaultTicketSaleStart = updateDto.DefaultTicketSaleStart;
+            preferences.DefaultRefundPolicy = updateDto.DefaultRefundPolicy;
+            preferences.RequireApproval = updateDto.RequireApproval;
+            preferences.AutoPublish = updateDto.AutoPublish;
+
+            preferences.Theme = updateDto.Theme;
+            preferences.Language = updateDto.Language;
+            preferences.DateFormat = updateDto.DateFormat;
+            preferences.TimeFormat = updateDto.TimeFormat;
+            preferences.Currency = updateDto.Currency;
+
+            // NEW: Enhanced appearance preferences
+            preferences.AccentColor = updateDto.AccentColor;
+            preferences.FontSize = updateDto.FontSize;
+            preferences.CompactMode = updateDto.CompactMode;
+
+            preferences.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            // Return the updated preferences
+            return new UserPreferencesDto
+            {
+                EmailNotifications = preferences.EmailNotifications,
+                SmsNotifications = preferences.SmsNotifications,
+                NewBookingNotifications = preferences.NewBookingNotifications,
+                CancellationNotifications = preferences.CancellationNotifications,
+                LowInventoryNotifications = preferences.LowInventoryNotifications,
+                DailyReports = preferences.DailyReports,
+                WeeklyReports = preferences.WeeklyReports,
+                MonthlyReports = preferences.MonthlyReports,
+                TwoFactorEnabled = preferences.TwoFactorEnabled,
+                SessionTimeout = preferences.SessionTimeout,
+                LoginNotifications = preferences.LoginNotifications,
+                DefaultTimeZone = preferences.DefaultTimeZone,
+                DefaultEventDuration = preferences.DefaultEventDuration,
+                DefaultTicketSaleStart = preferences.DefaultTicketSaleStart,
+                DefaultRefundPolicy = preferences.DefaultRefundPolicy,
+                RequireApproval = preferences.RequireApproval,
+                AutoPublish = preferences.AutoPublish,
+                Theme = preferences.Theme,
+                Language = preferences.Language,
+                DateFormat = preferences.DateFormat,
+                TimeFormat = preferences.TimeFormat,
+                Currency = preferences.Currency,
+                // NEW: Enhanced appearance preferences
+                AccentColor = preferences.AccentColor,
+                FontSize = preferences.FontSize,
+                CompactMode = preferences.CompactMode
             };
         }
     }

@@ -1,4 +1,4 @@
-using EventTicketing.API.Models.DTOs;
+﻿using EventTicketing.API.Models.DTOs;
 using EventTicketing.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -114,11 +114,14 @@ namespace EventTicketing.API.Controllers
             try
             {
                 var userId = GetCurrentUserId();
+                Console.WriteLine($"🔍 Getting preferences for user {userId}");
                 var preferences = await _userService.GetUserPreferencesAsync(userId);
+                Console.WriteLine($"✅ Returning preferences: Theme={preferences.Theme}, AccentColor={preferences.AccentColor}, FontSize={preferences.FontSize}, CompactMode={preferences.CompactMode}");
                 return Ok(preferences);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"❌ Error getting preferences: {ex.Message}");
                 return NotFound(new { message = ex.Message });
             }
         }
@@ -130,11 +133,30 @@ namespace EventTicketing.API.Controllers
             try
             {
                 var userId = GetCurrentUserId();
+
+                // DEBUG: Log what we received from frontend
+                Console.WriteLine($"🔍 Updating preferences for user {userId}");
+                Console.WriteLine($"📝 Received - Theme: {updateDto.Theme}");
+                Console.WriteLine($"📝 Received - AccentColor: {updateDto.AccentColor}");
+                Console.WriteLine($"📝 Received - FontSize: {updateDto.FontSize}");
+                Console.WriteLine($"📝 Received - CompactMode: {updateDto.CompactMode}");
+                Console.WriteLine($"📝 Received - Currency: {updateDto.Currency}");
+                Console.WriteLine($"📝 Received - Language: {updateDto.Language}");
+
                 var preferences = await _userService.UpdateUserPreferencesAsync(userId, updateDto);
+
+                Console.WriteLine($"✅ Successfully updated preferences");
+                Console.WriteLine($"💾 Saved - Theme: {preferences.Theme}");
+                Console.WriteLine($"💾 Saved - AccentColor: {preferences.AccentColor}");
+                Console.WriteLine($"💾 Saved - FontSize: {preferences.FontSize}");
+                Console.WriteLine($"💾 Saved - CompactMode: {preferences.CompactMode}");
+
                 return Ok(preferences);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"❌ Error updating preferences: {ex.Message}");
+                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
                 return BadRequest(new { message = ex.Message });
             }
         }

@@ -709,7 +709,6 @@ const OrganizerAnalytics: React.FC = () => {
                                 <div key={venue.venueId} className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex justify-between items-start mb-2">
                                         <h4 className="font-semibold text-black">{venue.venueName}</h4>
-                                        <span className="text-sm text-black">★ {venue.avgRating}</span>
                                     </div>
                                     <div className="grid grid-cols-3 gap-4 text-sm">
                                         <div>

@@ -18,13 +18,6 @@ namespace EventTicketing.API.Controllers
             _analyticsService = analyticsService;
         }
 
-        private int GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
-                throw new UnauthorizedAccessException("User not authenticated");
-            return int.Parse(userIdClaim.Value);
-        }
 
         // GET: api/analytics/revenue-by-event
         [HttpGet("revenue-by-event")]
@@ -90,20 +83,71 @@ namespace EventTicketing.API.Controllers
             }
         }
 
-        // GET: api/analytics/check-in-patterns
         [HttpGet("check-in-patterns")]
-        public async Task<ActionResult<CheckInAnalyticsDto>> GetCheckInPatterns([FromQuery] string period = "last30days")
+        public async Task<IActionResult> GetCheckInAnalytics([FromQuery] string period = "last30days")
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var data = await _analyticsService.GetCheckInAnalyticsAsync(userId, period);
-                return Ok(data);
+                // Debug: Print all claims
+                Console.WriteLine("=== JWT CLAIMS DEBUG ===");
+                foreach (var claim in User.Claims)
+                {
+                    Console.WriteLine($"Type: {claim.Type} | Value: {claim.Value}");
+                }
+                Console.WriteLine("========================");
+
+                // Extract user ID using the exact same claim type as AuthService
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    Console.WriteLine("ERROR: ClaimTypes.NameIdentifier not found in token");
+                    return Ok(new CheckInAnalyticsDto());
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int organizerId) || organizerId <= 0)
+                {
+                    Console.WriteLine($"ERROR: Invalid user ID in token: '{userIdClaim.Value}'");
+                    return Ok(new CheckInAnalyticsDto());
+                }
+
+                Console.WriteLine($"SUCCESS: Found organizer ID {organizerId}");
+
+                var result = await _analyticsService.GetCheckInAnalyticsAsync(organizerId, period);
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                Console.WriteLine($"Check-in analytics error: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return Ok(new CheckInAnalyticsDto());
             }
+        }
+
+        private int GetCurrentUserId()
+        {
+            // Debug: Print all claims for other methods too
+            Console.WriteLine("=== GetCurrentUserId DEBUG ===");
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine($"Type: {claim.Type} | Value: {claim.Value}");
+            }
+            Console.WriteLine("==============================");
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                Console.WriteLine("ERROR: ClaimTypes.NameIdentifier not found");
+                throw new UnauthorizedAccessException("User not authenticated - no NameIdentifier claim");
+            }
+
+            if (!int.TryParse(userIdClaim.Value, out int userId) || userId <= 0)
+            {
+                Console.WriteLine($"ERROR: Invalid user ID value: '{userIdClaim.Value}'");
+                throw new UnauthorizedAccessException($"Invalid user ID in token: {userIdClaim.Value}");
+            }
+
+            Console.WriteLine($"SUCCESS: GetCurrentUserId returning {userId}");
+            return userId;
         }
 
         // GET: api/analytics/venue-performance

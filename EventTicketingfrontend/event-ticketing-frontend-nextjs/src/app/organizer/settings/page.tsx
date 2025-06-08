@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { userApi } from '@/lib/api';
+import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 import {
     User,
     Mail,
@@ -30,7 +31,6 @@ import {
     RefreshCw,
     AlertCircle,
     CheckCircle,
-    Toggle,
     Lock,
     Unlock,
     Zap,
@@ -68,11 +68,15 @@ interface UserPreferences {
     autoPublish: boolean;
 
     // Appearance preferences
-    theme: string;
+    // Enhanced appearance preferences 
+    theme: 'light' | 'dark' | 'auto'; 
     language: string;
     dateFormat: string;
-    timeFormat: string;
+    timeFormat: '12h' | '24h';  
     currency: string;
+    accentColor: string;        
+    fontSize: 'small' | 'medium' | 'large';  
+    compactMode: boolean;    
 }
 
 interface UserProfileData {
@@ -110,6 +114,56 @@ interface UserData {
     roles?: string[];
 }
 
+const themes = [
+    {
+        id: 'light',
+        name: 'Light',
+        icon: Sun,
+        description: 'Clean and bright interface',
+        preview: { bg: 'bg-white', text: 'text-gray-900', border: 'border-gray-200' }
+    },
+    {
+        id: 'dark',
+        name: 'Dark',
+        icon: Moon,
+        description: 'Easy on the eyes',
+        preview: { bg: 'bg-gray-900', text: 'text-white', border: 'border-gray-700' }
+    },
+    {
+        id: 'auto',
+        name: 'Auto',
+        icon: Monitor,
+        description: 'Follows system preference',
+        preview: { bg: 'bg-gradient-to-r from-white to-gray-900', text: 'text-gray-600', border: 'border-gray-400' }
+    }
+];
+
+const accentColors = [
+    { id: 'blue', name: 'Blue', class: 'bg-blue-500', rgb: 'rgb(59, 130, 246)' },
+    { id: 'purple', name: 'Purple', class: 'bg-purple-500', rgb: 'rgb(168, 85, 247)' },
+    { id: 'green', name: 'Green', class: 'bg-green-500', rgb: 'rgb(34, 197, 94)' },
+    { id: 'red', name: 'Red', class: 'bg-red-500', rgb: 'rgb(239, 68, 68)' },
+    { id: 'orange', name: 'Orange', class: 'bg-orange-500', rgb: 'rgb(249, 115, 22)' },
+    { id: 'pink', name: 'Pink', class: 'bg-pink-500', rgb: 'rgb(236, 72, 153)' }
+];
+
+const languages = [
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'es', name: 'Español', flag: '🇪🇸' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'it', name: 'Italiano', flag: '🇮🇹' }
+];
+
+const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' }
+];
+
+
+
 const OrganizerSettings: React.FC = () => {
     // State declarations
     const [activeTab, setActiveTab] = useState('profile');
@@ -119,6 +173,8 @@ const OrganizerSettings: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
     const [error, setError] = useState<string | null>(null);
+    const { updateTheme } = useTheme();
+    const themeClasses = useThemeClasses();
 
     // User basic data (from User entity)
     const [userData, setUserData] = useState<UserData>({
@@ -168,6 +224,10 @@ const OrganizerSettings: React.FC = () => {
         defaultRefundPolicy: 'flexible',
         requireApproval: false,
         autoPublish: false,
+
+        accentColor: 'blue',
+        fontSize: 'medium',
+        compactMode: false,
 
         // Appearance preferences
         theme: 'light',
@@ -310,11 +370,16 @@ const OrganizerSettings: React.FC = () => {
                     autoPublish: preferencesData.autoPublish ?? false,
 
                     // Appearance preferences
-                    theme: preferencesData.theme ?? 'light',
+
+                    theme: (['light', 'dark', 'auto'].includes(preferencesData.theme) ? preferencesData.theme : 'light') as 'light' | 'dark' | 'auto',
                     language: preferencesData.language ?? 'en',
                     dateFormat: preferencesData.dateFormat ?? 'MM/dd/yyyy',
-                    timeFormat: preferencesData.timeFormat ?? '12h',
-                    currency: preferencesData.currency ?? 'USD'
+                    timeFormat: (['12h', '24h'].includes(preferencesData.timeFormat) ? preferencesData.timeFormat : '12h') as '12h' | '24h',
+                    currency: preferencesData.currency ?? 'USD',
+                    accentColor: preferencesData.accentColor ?? 'blue',
+                    fontSize: (['small', 'medium', 'large'].includes(preferencesData.fontSize) ? preferencesData.fontSize : 'medium') as 'small' | 'medium' | 'large',
+                    compactMode: preferencesData.compactMode ?? false
+
                 });
             } catch (prefError) {
                 console.log('No preferences found, using defaults');
@@ -429,7 +494,11 @@ const OrganizerSettings: React.FC = () => {
                 language: userPreferences.language,
                 dateFormat: userPreferences.dateFormat,
                 timeFormat: userPreferences.timeFormat,
-                currency: userPreferences.currency
+                currency: userPreferences.currency,
+                // ADD THESE NEW FIELDS:
+                accentColor: userPreferences.accentColor,
+                fontSize: userPreferences.fontSize,
+                compactMode: userPreferences.compactMode
             });
 
             setSaved(true);
@@ -510,6 +579,11 @@ const OrganizerSettings: React.FC = () => {
             ...prev,
             [key]: value
         }));
+
+        // Update global theme immediately
+        if (key === 'theme' || key === 'accentColor' || key === 'fontSize' || key === 'compactMode') {
+            updateTheme({ [key]: value });
+        }
     };
 
     // Effects
@@ -522,6 +596,7 @@ const OrganizerSettings: React.FC = () => {
             fetchUserData();
         }
     }, [authStatus]);
+
 
     // Tab configuration
     const tabs = [
@@ -1089,23 +1164,126 @@ const OrganizerSettings: React.FC = () => {
 
     const renderAppearanceTab = () => (
         <div className="space-y-6">
+            {/* Theme Selection */}
             <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Display Preferences</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-black mb-2">Theme</label>
-                        <select
-                            value={userPreferences.theme}
-                            onChange={(e) => updatePreference('theme', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
-                            disabled={loading}
+                <div className="flex items-center space-x-2 mb-4">
+                    <Palette className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-lg font-semibold text-black">Theme</h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-6">Choose your preferred interface theme</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {themes.map((theme) => {
+                        const Icon = theme.icon;
+                        const isSelected = userPreferences.theme === theme.id;
+
+                        return (
+                            <button
+                                key={theme.id}
+                                onClick={() => updatePreference('theme', theme.id as any)}
+                                className={`relative p-4 rounded-lg border-2 transition-all ${isSelected
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                {isSelected && (
+                                    <div className="absolute top-2 right-2">
+                                        <Check className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                )}
+
+                                <div className="flex items-center space-x-3 mb-3">
+                                    <Icon className="w-5 h-5 text-gray-600" />
+                                    <span className="font-medium text-black">{theme.name}</span>
+                                </div>
+
+                                <p className="text-xs text-gray-500 mb-3">{theme.description}</p>
+
+                                <div className={`${theme.preview.bg} ${theme.preview.border} border rounded p-2 space-y-1`}>
+                                    <div className={`h-2 bg-blue-500 rounded`}></div>
+                                    <div className={`h-1 ${theme.preview.text} bg-current opacity-50 rounded`}></div>
+                                    <div className={`h-1 ${theme.preview.text} bg-current opacity-30 rounded w-3/4`}></div>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Accent Color */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+                <h3 className="text-lg font-semibold text-black mb-4">Accent Color</h3>
+                <p className="text-sm text-gray-600 mb-6">Choose your preferred accent color</p>
+
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+                    {accentColors.map((color) => (
+                        <button
+                            key={color.id}
+                            onClick={() => updatePreference('accentColor', color.id)}
+                            className={`relative p-3 rounded-lg border-2 transition-all ${userPreferences.accentColor === color.id
+                                    ? 'border-gray-400'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
                         >
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                            <option value="auto">Auto (System)</option>
-                        </select>
+                            <div className={`w-8 h-8 ${color.class} rounded-full mx-auto mb-2`}></div>
+                            <span className="text-xs text-gray-600">{color.name}</span>
+                            {userPreferences.accentColor === color.id && (
+                                <div className="absolute top-1 right-1">
+                                    <Check className="w-3 h-3 text-gray-600" />
+                                </div>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Display Settings */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+                <h3 className="text-lg font-semibold text-black mb-4">Display Settings</h3>
+
+                <div className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-black mb-3">Font Size</label>
+                        <div className="grid grid-cols-3 gap-3">
+                            {(['small', 'medium', 'large'] as const).map((size) => (
+                                <button
+                                    key={size}
+                                    onClick={() => updatePreference('fontSize', size)}
+                                    className={`p-3 rounded-lg border-2 transition-all ${userPreferences.fontSize === size
+                                            ? 'border-blue-500 bg-blue-50'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <div className={`${size === 'small' ? 'text-sm' : size === 'large' ? 'text-lg' : 'text-base'} text-black font-medium capitalize`}>
+                                        {size}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className="text-sm font-medium text-black">Compact Mode</h4>
+                            <p className="text-xs text-gray-500">Reduce spacing between elements</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.compactMode}
+                            onChange={(enabled) => updatePreference('compactMode', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Localization */}
+            <div className="bg-white rounded-lg p-6 shadow-sm border">
+                <div className="flex items-center space-x-2 mb-4">
+                    <Globe className="w-5 h-5 text-gray-600" />
+                    <h3 className="text-lg font-semibold text-black">Localization</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-black mb-2">Language</label>
                         <select
@@ -1114,11 +1292,11 @@ const OrganizerSettings: React.FC = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
                             disabled={loading}
                         >
-                            <option value="en">English</option>
-                            <option value="es">Spanish</option>
-                            <option value="fr">French</option>
-                            <option value="de">German</option>
-                            <option value="it">Italian</option>
+                            {languages.map((lang) => (
+                                <option key={lang.code} value={lang.code}>
+                                    {lang.flag} {lang.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -1130,23 +1308,10 @@ const OrganizerSettings: React.FC = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
                             disabled={loading}
                         >
-                            <option value="MM/dd/yyyy">MM/DD/YYYY (US)</option>
-                            <option value="dd/MM/yyyy">DD/MM/YYYY (UK)</option>
-                            <option value="yyyy-MM-dd">YYYY-MM-DD (ISO)</option>
-                            <option value="dd.MM.yyyy">DD.MM.YYYY (German)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-black mb-2">Time Format</label>
-                        <select
-                            value={userPreferences.timeFormat}
-                            onChange={(e) => updatePreference('timeFormat', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
-                            disabled={loading}
-                        >
-                            <option value="12h">12-hour (AM/PM)</option>
-                            <option value="24h">24-hour</option>
+                            <option value="MM/dd/yyyy">12/25/2024 (US)</option>
+                            <option value="dd/MM/yyyy">25/12/2024 (UK)</option>
+                            <option value="yyyy-MM-dd">2024-12-25 (ISO)</option>
+                            <option value="dd.MM.yyyy">25.12.2024 (German)</option>
                         </select>
                     </div>
 
@@ -1158,40 +1323,78 @@ const OrganizerSettings: React.FC = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
                             disabled={loading}
                         >
-                            <option value="USD">$ USD</option>
-                            <option value="EUR">€ EUR</option>
-                            <option value="GBP">£ GBP</option>
-                            <option value="CAD">$ CAD</option>
+                            {currencies.map((curr) => (
+                                <option key={curr.code} value={curr.code}>
+                                    {curr.symbol} {curr.name}
+                                </option>
+                            ))}
                         </select>
+                    </div>
+                </div>
+
+                <div className="mt-4">
+                    <label className="block text-sm font-medium text-black mb-2">Time Format</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <button
+                            onClick={() => updatePreference('timeFormat', '12h')}
+                            className={`p-2 rounded-lg border-2 transition-all ${userPreferences.timeFormat === '12h'
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                        >
+                            <div className="text-sm font-medium text-black">12-hour</div>
+                            <div className="text-xs text-gray-500">2:30 PM</div>
+                        </button>
+                        <button
+                            onClick={() => updatePreference('timeFormat', '24h')}
+                            className={`p-2 rounded-lg border-2 transition-all ${userPreferences.timeFormat === '24h'
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                        >
+                            <div className="text-sm font-medium text-black">24-hour</div>
+                            <div className="text-xs text-gray-500">14:30</div>
+                        </button>
                     </div>
                 </div>
             </div>
 
+            {/* Live Preview */}
             <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Theme Preview</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className={`p-4 rounded-lg border ${userPreferences.theme === 'light' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
-                        <div className="flex items-center space-x-2 mb-2">
-                            <Sun className="w-4 h-4" />
-                            <span className="text-sm font-medium">Light</span>
-                        </div>
-                        <div className="bg-white p-2 rounded border text-xs">Sample content</div>
-                    </div>
+                <h3 className="text-lg font-semibold text-black mb-4">Live Preview</h3>
 
-                    <div className={`p-4 rounded-lg border ${userPreferences.theme === 'dark' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
-                        <div className="flex items-center space-x-2 mb-2">
-                            <Moon className="w-4 h-4" />
-                            <span className="text-sm font-medium">Dark</span>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-lg font-semibold text-black">Sample Dashboard</h4>
+                            <button
+                                className="px-4 py-2 rounded-lg text-white"
+                                style={{ backgroundColor: accentColors.find(c => c.id === userPreferences.accentColor)?.rgb }}
+                            >
+                                Create Event
+                            </button>
                         </div>
-                        <div className="bg-gray-800 text-white p-2 rounded border text-xs">Sample content</div>
-                    </div>
 
-                    <div className={`p-4 rounded-lg border ${userPreferences.theme === 'auto' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}>
-                        <div className="flex items-center space-x-2 mb-2">
-                            <Monitor className="w-4 h-4" />
-                            <span className="text-sm font-medium">Auto</span>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                <div className="text-sm text-gray-500">Revenue</div>
+                                <div className="text-2xl font-bold text-black">
+                                    {currencies.find(c => c.code === userPreferences.currency)?.symbol}12,345
+                                </div>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                <div className="text-sm text-gray-500">Next Event</div>
+                                <div className="text-sm font-medium text-black">
+                                    Dec 25, 2024 at {userPreferences.timeFormat === '12h' ? '2:30 PM' : '14:30'}
+                                </div>
+                            </div>
+                            <div className="bg-white p-4 rounded-lg border border-gray-200">
+                                <div className="text-sm text-gray-500">Language</div>
+                                <div className="text-sm font-medium text-black">
+                                    {languages.find(l => l.code === userPreferences.language)?.name}
+                                </div>
+                            </div>
                         </div>
-                        <div className="bg-gradient-to-r from-white to-gray-800 text-black p-2 rounded border text-xs">Sample content</div>
                     </div>
                 </div>
             </div>
@@ -1212,7 +1415,7 @@ const OrganizerSettings: React.FC = () => {
 
     // Main render
     return (
-        <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+        <div className={`max-w-7xl mx-auto p-6 ${themeClasses.background} min-h-screen`}>
             {/* Authentication checking state */}
             {authStatus === 'checking' && (
                 <div className="flex items-center justify-center min-h-screen">
@@ -1244,14 +1447,14 @@ const OrganizerSettings: React.FC = () => {
             {authStatus === 'authenticated' && (
                 <>
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-black mb-2">Settings</h1>
-                        <p className="text-black">Manage your account and event preferences</p>
+                        <h1 className={`text-3xl font-bold ${themeClasses.text} mb-2`}>Settings</h1>
+                        <p className={themeClasses.text}>Manage your account and event preferences</p>
                     </div>
 
                     <div className="flex flex-col lg:flex-row gap-8">
                         {/* Sidebar Navigation */}
                         <div className="lg:w-64">
-                            <div className="bg-white rounded-lg shadow-sm border p-4">
+                            <div className={`${themeClasses.card} rounded-lg shadow-sm border ${themeClasses.border} p-4`}>
                                 <nav className="space-y-2">
                                     {tabs.map((tab) => {
                                         const Icon = tab.icon;
@@ -1263,8 +1466,8 @@ const OrganizerSettings: React.FC = () => {
                                                     setError(null);
                                                 }}
                                                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${activeTab === tab.id
-                                                        ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                                                        : 'text-black hover:bg-gray-50'
+                                                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                                                    : `${themeClasses.text} ${themeClasses.hover}`
                                                     }`}
                                             >
                                                 <Icon className="w-4 h-4" />
@@ -1285,7 +1488,8 @@ const OrganizerSettings: React.FC = () => {
                                 <button
                                     onClick={() => handleSave(activeTab)}
                                     disabled={loading || profileLoading}
-                                    className="flex items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                                    className="flex items-center px-6 py-3 text-white rounded-lg hover:opacity-90 disabled:opacity-50"
+                                    style={{ backgroundColor: accentColors.find(c => c.id === userPreferences.accentColor)?.rgb || '#3B82F6' }}
                                 >
                                     {loading ? (
                                         <RefreshCw className="w-4 h-4 mr-2 animate-spin" />

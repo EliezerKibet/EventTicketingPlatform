@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using EventTicketing.API.Models.Entities;
 
 namespace EventTicketing.API.Data
@@ -32,7 +32,7 @@ namespace EventTicketing.API.Data
 
         // Favorites
         public DbSet<UserFavoriteEvent> UserFavoriteEvents { get; set; }
-        public UserPreferences? UserPreferences { get; set; }
+        public DbSet<UserPreferences> UserPreferences { get; set; }  // ✅ CORRECT
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -2,7 +2,8 @@
 // app/organizer/OrganizerClientLayout.tsx
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import {
@@ -27,7 +28,16 @@ interface OrganizerClientLayoutProps {
 const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children }) => {
     const { user, logout, isOrganizer, isLoading } = useAuth();
     const router = useRouter();
-    const [sidebarOpen, setSidebarOpen] = React.useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // Theme hooks
+    const { initializeTheme } = useTheme();
+    const themeClasses = useThemeClasses();
+
+    // Initialize theme on component mount
+    useEffect(() => {
+        initializeTheme();
+    }, [initializeTheme]);
 
     // Handle authentication and authorization
     useEffect(() => {
@@ -87,13 +97,13 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
         router.push('/login');
     };
 
-    // Show loading state
+    // Show loading state with theme support
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
                 </div>
             </div>
         );
@@ -105,7 +115,7 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
     }
 
     return (
-        <div className="h-screen flex overflow-hidden bg-gray-50">
+        <div className={`h-screen flex overflow-hidden ${themeClasses.background}`}>
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
                 <div className="fixed inset-0 z-40 lg:hidden">
@@ -116,30 +126,30 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
                 </div>
             )}
 
-            {/* Sidebar */}
-            <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            {/* Sidebar with theme support */}
+            <div className={`fixed inset-y-0 left-0 z-50 w-64 ${themeClasses.card} shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}>
 
-                {/* Sidebar header */}
-                <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
+                {/* Sidebar header with theme support */}
+                <div className={`flex items-center justify-between h-16 px-6 border-b ${themeClasses.border} flex-shrink-0`}>
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
-                            <Calendar className="h-8 w-8 text-blue-600" />
+                            <Calendar className="h-8 w-8" style={{ color: 'var(--color-primary)' }} />
                         </div>
                         <div className="ml-3">
-                            <h1 className="text-lg font-semibold text-gray-900">EventPro</h1>
-                            <p className="text-xs text-gray-500">Organizer</p>
+                            <h1 className={`text-lg font-semibold ${themeClasses.text}`}>EventPro</h1>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Organizer</p>
                         </div>
                     </div>
                     <button
                         onClick={() => setSidebarOpen(false)}
-                        className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                        className={`lg:hidden p-2 rounded-md ${themeClasses.textMuted} hover:${themeClasses.text} ${themeClasses.hover} transition-colors`}
                     >
                         <X className="h-5 w-5" />
                     </button>
                 </div>
 
-                {/* Navigation */}
+                {/* Navigation with theme support */}
                 <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                     {navigation.map((item) => {
                         const Icon = item.icon;
@@ -149,33 +159,39 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
                                 key={item.name}
                                 href={item.href}
                                 onClick={() => setSidebarOpen(false)}
-                                className="flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${themeClasses.textMuted} hover:${themeClasses.text} ${themeClasses.hover}`}
                             >
-                                <Icon className="h-5 w-5 mr-3 text-gray-400" />
+                                <Icon className={`h-5 w-5 mr-3 ${themeClasses.textMuted}`} />
                                 {item.name}
                             </a>
                         );
                     })}
                 </nav>
 
-                {/* User profile section */}
-                <div className="border-t border-gray-200 p-4 flex-shrink-0">
+                {/* User profile section with theme support */}
+                <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0`}>
                     <div className="flex items-center space-x-3 mb-3">
                         <div className="flex-shrink-0">
-                            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <Users className="h-5 w-5 text-blue-600" />
+                            <div
+                                className="h-10 w-10 rounded-full flex items-center justify-center"
+                                style={{
+                                    backgroundColor: 'var(--color-primary)',
+                                    opacity: 0.1
+                                }}
+                            >
+                                <Users className="h-5 w-5" style={{ color: 'var(--color-primary)' }} />
                             </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className={`text-sm font-medium ${themeClasses.text} truncate`}>
                                 {user.firstName} {user.lastName}
                             </p>
-                            <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                            <p className={`text-xs ${themeClasses.textMuted} truncate`}>{user.email}</p>
                         </div>
                     </div>
                     <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg"
+                        className={`flex items-center w-full px-3 py-2 text-sm ${themeClasses.textMuted} hover:${themeClasses.text} ${themeClasses.hover} rounded-lg transition-colors`}
                     >
                         <LogOut className="h-4 w-4 mr-2" />
                         Sign out
@@ -183,30 +199,30 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
                 </div>
             </div>
 
-            {/* Main content area */}
+            {/* Main content area with theme support */}
             <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
-                {/* Top bar */}
-                <div className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
+                {/* Top bar with theme support */}
+                <div className={`${themeClasses.card} shadow-sm border-b ${themeClasses.border} flex-shrink-0`}>
                     <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
                         <button
                             onClick={() => setSidebarOpen(true)}
-                            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                            className={`lg:hidden p-2 rounded-md ${themeClasses.textMuted} hover:${themeClasses.text} ${themeClasses.hover} transition-colors`}
                         >
                             <Menu className="h-5 w-5" />
                         </button>
 
                         <div className="flex items-center space-x-4">
                             <div className="hidden sm:block">
-                                <p className="text-sm text-gray-500">
-                                    Welcome back, <span className="font-medium text-gray-900">{user.firstName}</span>
+                                <p className={`text-sm ${themeClasses.textMuted}`}>
+                                    Welcome back, <span className={`font-medium ${themeClasses.text}`}>{user.firstName}</span>
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Page content */}
-                <main className="flex-1 overflow-y-auto">
+                {/* Page content with theme support */}
+                <main className={`flex-1 overflow-y-auto ${themeClasses.background}`}>
                     {children}
                 </main>
             </div>

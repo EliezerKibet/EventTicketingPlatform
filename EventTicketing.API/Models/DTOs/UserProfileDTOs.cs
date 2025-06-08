@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using EventTicketing.API.Models.Entities; // This line imports UserStatus
+using EventTicketing.API.Models.Entities;
+
 namespace EventTicketing.API.Models.DTOs
 {
     // Main profile response DTO
@@ -70,7 +71,7 @@ namespace EventTicketing.API.Models.DTOs
         public string? Country { get; set; }
     }
 
-    // User preferences DTO
+    // User preferences DTO - SINGLE DEFINITION WITH ALL ENHANCED PROPERTIES
     public class UserPreferencesDto
     {
         // Notification preferences
@@ -96,12 +97,17 @@ namespace EventTicketing.API.Models.DTOs
         public bool RequireApproval { get; set; } = false;
         public bool AutoPublish { get; set; } = false;
 
-        // Appearance preferences
+        // Appearance preferences - EXISTING
         public string Theme { get; set; } = "light";
         public string Language { get; set; } = "en";
         public string DateFormat { get; set; } = "MM/dd/yyyy";
         public string TimeFormat { get; set; } = "12h";
         public string Currency { get; set; } = "USD";
+
+        // NEW: Enhanced appearance preferences
+        public string AccentColor { get; set; } = "blue";
+        public string FontSize { get; set; } = "medium";
+        public bool CompactMode { get; set; } = false;
     }
 
     // Update preferences DTO
@@ -130,12 +136,23 @@ namespace EventTicketing.API.Models.DTOs
         public bool RequireApproval { get; set; }
         public bool AutoPublish { get; set; }
 
-        // Appearance preferences
+        // Appearance preferences - EXISTING
         public string Theme { get; set; }
         public string Language { get; set; }
         public string DateFormat { get; set; }
         public string TimeFormat { get; set; }
         public string Currency { get; set; }
+
+        // NEW: Enhanced appearance preferences
+        [RegularExpression("^(blue|purple|green|red|orange|pink)$",
+            ErrorMessage = "AccentColor must be one of: blue, purple, green, red, orange, pink")]
+        public string AccentColor { get; set; }
+
+        [RegularExpression("^(small|medium|large)$",
+            ErrorMessage = "FontSize must be one of: small, medium, large")]
+        public string FontSize { get; set; }
+
+        public bool CompactMode { get; set; }
     }
 
     // Change password DTO

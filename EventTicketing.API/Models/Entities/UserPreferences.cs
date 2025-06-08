@@ -31,12 +31,17 @@ namespace EventTicketing.API.Models.Entities
         public bool RequireApproval { get; set; } = false;
         public bool AutoPublish { get; set; } = false;
 
-        // Appearance preferences
+        // Appearance preferences - EXISTING
         public string Theme { get; set; } = "light";
         public string Language { get; set; } = "en";
         public string DateFormat { get; set; } = "MM/dd/yyyy";
         public string TimeFormat { get; set; } = "12h";
         public string Currency { get; set; } = "USD";
+
+        // NEW: Enhanced appearance preferences
+        public string AccentColor { get; set; } = "blue";
+        public string FontSize { get; set; } = "medium"; // small, medium, large
+        public bool CompactMode { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

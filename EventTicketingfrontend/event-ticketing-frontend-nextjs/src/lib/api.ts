@@ -321,6 +321,9 @@ interface UserPreferences {
     dateFormat: string;
     timeFormat: string;
     currency: string;
+    accentColor: string;
+    fontSize: string;
+    compactMode: boolean;
 }
 
 interface UpdateUserPreferencesDto {
@@ -346,6 +349,9 @@ interface UpdateUserPreferencesDto {
     dateFormat: string;
     timeFormat: string;
     currency: string;
+    accentColor: string;
+    fontSize: string;
+    compactMode: boolean;
 }
 
 interface ChangePasswordDto {
@@ -464,7 +470,11 @@ export const userApi = {
                 language: 'en',
                 dateFormat: 'MM/dd/yyyy',
                 timeFormat: '12h',
-                currency: 'USD'
+                currency: 'USD',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false
+
             };
         }
     },
