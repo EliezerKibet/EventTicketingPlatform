@@ -1,3 +1,4 @@
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // app/organizer/OrganizerClientLayout.tsx
 'use client';
@@ -5,6 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18nContext } from '@/components/providers/I18nProvider';
 import { useRouter } from 'next/navigation';
 import {
     Calendar,
@@ -18,7 +20,8 @@ import {
     Home,
     MapPin,
     Ticket,
-    LogOut
+    LogOut,
+    Languages
 } from 'lucide-react';
 
 interface OrganizerClientLayoutProps {
@@ -29,10 +32,14 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
     const { user, logout, isOrganizer, isLoading } = useAuth();
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
 
     // Theme hooks
     const { initializeTheme } = useTheme();
     const themeClasses = useThemeClasses();
+
+    // Use proper I18n context
+    const { t, changeLanguage, currentLanguage, availableLanguages } = useI18nContext();
 
     // Initialize theme on component mount
     useEffect(() => {
@@ -56,17 +63,17 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
 
     const navigation = [
         {
-            name: 'Dashboard',
+            name: t('dashboard'),
             href: '/organizer/dashboard',
             icon: Home,
         },
         {
-            name: 'My Events',
+            name: t('events'),
             href: '/organizer/events',
             icon: Calendar,
         },
         {
-            name: 'Create Event',
+            name: t('createEvent'),
             href: '/organizer/events/create',
             icon: Plus,
         },
@@ -86,7 +93,7 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
             icon: BarChart3,
         },
         {
-            name: 'Settings',
+            name: t('settings'),
             href: '/organizer/settings',
             icon: Settings,
         }
@@ -97,13 +104,18 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
         router.push('/login');
     };
 
+    const handleLanguageChange = (langCode: string) => {
+        changeLanguage(langCode);
+        setLanguageDropdownOpen(false);
+    };
+
     // Show loading state with theme support
     if (isLoading) {
         return (
             <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>{t('loading')}</p>
                 </div>
             </div>
         );
@@ -168,6 +180,37 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
                     })}
                 </nav>
 
+                {/* Language Selector */}
+                <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0`}>
+                    <div className="relative">
+                        <button
+                            onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
+                            className={`flex items-center w-full px-3 py-2 text-sm ${themeClasses.textMuted} hover:${themeClasses.text} ${themeClasses.hover} rounded-lg transition-colors`}
+                        >
+                            <Languages className="h-4 w-4 mr-2" />
+                            {t('language')}
+                        </button>
+
+                        {languageDropdownOpen && (
+                            <div className={`absolute bottom-full left-0 mb-2 w-full ${themeClasses.card} rounded-lg shadow-lg border ${themeClasses.border} py-1 z-50`}>
+                                {availableLanguages.map((lang: { code: string; flag: string; nativeName: string; name: string }) => (
+                                    <button
+                                        key={lang.code}
+                                        onClick={() => handleLanguageChange(lang.code)}
+                                        className={`flex items-center w-full px-3 py-2 text-sm ${currentLanguage === lang.code
+                                            ? `${themeClasses.text} bg-blue-50 dark:bg-blue-900/20`
+                                            : `${themeClasses.textMuted} hover:${themeClasses.text}`
+                                            } ${themeClasses.hover} transition-colors`}
+                                    >
+                                        <span className="mr-2">{lang.flag}</span>
+                                        <span>{lang.nativeName}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
                 {/* User profile section with theme support */}
                 <div className={`border-t ${themeClasses.border} p-4 flex-shrink-0`}>
                     <div className="flex items-center space-x-3 mb-3">
@@ -194,7 +237,7 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
                         className={`flex items-center w-full px-3 py-2 text-sm ${themeClasses.textMuted} hover:${themeClasses.text} ${themeClasses.hover} rounded-lg transition-colors`}
                     >
                         <LogOut className="h-4 w-4 mr-2" />
-                        Sign out
+                        {t('logout')}
                     </button>
                 </div>
             </div>
@@ -214,7 +257,7 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
                         <div className="flex items-center space-x-4">
                             <div className="hidden sm:block">
                                 <p className={`text-sm ${themeClasses.textMuted}`}>
-                                    Welcome back, <span className={`font-medium ${themeClasses.text}`}>{user.firstName}</span>
+                                    {t('welcomeBack', { name: user.firstName })}
                                 </p>
                             </div>
                         </div>

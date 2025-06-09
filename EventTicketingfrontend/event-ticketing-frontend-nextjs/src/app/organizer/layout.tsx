@@ -1,12 +1,13 @@
 // app/organizer/layout.tsx
 import React from 'react';
 
-interface LayoutProps {
+interface OrganizerLayoutProps {
     children: React.ReactNode;
 }
 
-export default function Layout({ children }: LayoutProps) {
-    // This layout doesn't need to do anything special
-    // The ConditionalLayout component handles the organizer layout logic
+// Minimal layout - the ConditionalLayout already handles the OrganizerClientLayout
+const OrganizerLayout: React.FC<OrganizerLayoutProps> = ({ children }) => {
     return <>{children}</>;
-}
+};
+
+export default OrganizerLayout;

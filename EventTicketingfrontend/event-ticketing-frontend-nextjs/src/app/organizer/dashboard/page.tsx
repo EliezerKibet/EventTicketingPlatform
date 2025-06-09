@@ -1,4 +1,5 @@
-﻿/* eslint-disable @typescript-eslint/no-unused-vars */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // app/organizer/dashboard/page.tsx
 'use client';
 
@@ -6,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { eventsApi } from '@/lib/api';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
+import { useI18nContext } from '@/components/providers/I18nProvider';
 import {
     Calendar,
     Users,
@@ -20,7 +22,9 @@ import {
     Tag,
     Globe,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    RefreshCw,
+    AlertCircle
 } from 'lucide-react';
 
 // Define Event type locally to match your types file
@@ -60,9 +64,11 @@ interface Stats {
 
 const OrganizerDashboard: React.FC = () => {
     const { user, isOrganizer } = useAuth();
-    // Actually use the theme hooks!
+    const { isDark, isCompact } = useTheme();
     const themeClasses = useThemeClasses();
-    const theme = useTheme();
+
+    // Use the proper I18n context instead of fallback
+    const { t, formatCurrency } = useI18nContext();
 
     const [loading, setLoading] = useState(true);
     const [events, setEvents] = useState<Event[]>([]);
@@ -85,20 +91,15 @@ const OrganizerDashboard: React.FC = () => {
         try {
             setLoading(true);
             setError('');
-
-            // Fetch organizer's events using your API
             const eventsResponse = await eventsApi.getMyEvents();
             setEvents(eventsResponse);
 
-            // Calculate stats from events data
             const now = new Date();
             const totalEvents = eventsResponse.length;
             const publishedEvents = eventsResponse.filter(event => event.isPublished).length;
             const upcomingEvents = eventsResponse.filter(event =>
                 new Date(event.startDateTime || event.eventDate) > now && event.isPublished
             ).length;
-
-            // Use your existing Event properties
             const totalTicketsSold = eventsResponse.reduce((sum, event) => sum + (event.ticketsSold || 0), 0);
             const totalRevenue = eventsResponse.reduce((sum, event) => sum + (event.revenue || 0), 0);
 
@@ -112,7 +113,7 @@ const OrganizerDashboard: React.FC = () => {
 
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
-            setError('Failed to load dashboard data');
+            setError(t('dashboardError'));
         } finally {
             setLoading(false);
         }
@@ -130,14 +131,12 @@ const OrganizerDashboard: React.FC = () => {
             });
 
             if (response.ok) {
-                // Update local state
                 setEvents(events.map(event =>
                     event.eventId === eventId
                         ? { ...event, isPublished: !currentStatus }
                         : event
                 ));
 
-                // Update stats
                 setStats(prev => ({
                     ...prev,
                     publishedEvents: currentStatus ? prev.publishedEvents - 1 : prev.publishedEvents + 1
@@ -165,11 +164,9 @@ const OrganizerDashboard: React.FC = () => {
             });
 
             if (response.ok) {
-                // Remove from local state
                 const deletedEvent = events.find(e => e.eventId === eventId);
                 setEvents(events.filter(event => event.eventId !== eventId));
 
-                // Update stats
                 setStats(prev => ({
                     ...prev,
                     totalEvents: prev.totalEvents - 1,
@@ -192,23 +189,26 @@ const OrganizerDashboard: React.FC = () => {
         trend?: 'up' | 'down';
         trendValue?: string;
         color?: string;
-    }> = ({ icon: Icon, title, value, subtitle, trend, trendValue, color = 'bg-blue-500' }) => (
-        <div className={`${themeClasses.card} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
+    }> = ({ icon: Icon, title, value, subtitle, trend, trendValue, color = 'blue' }) => (
+        <div className={`${themeClasses.themeCard} ${themeClasses.compactCard} rounded-lg shadow-sm border ${themeClasses.themeBorder} theme-transition`}>
             <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                    <div className={`p-3 rounded-lg ${color}`}>
+                    <div className={`p-3 rounded-lg ${color === 'blue' ? 'accent-bg' :
+                        color === 'green' ? 'bg-green-500' :
+                            color === 'purple' ? 'bg-purple-500' :
+                                color === 'orange' ? 'bg-orange-500' : 'accent-bg'}`}>
                         <Icon className="h-6 w-6 text-white" />
                     </div>
-                    <div className="ml-4">
-                        <p className={`text-sm font-medium ${themeClasses.textMuted}`}>{title}</p>
-                        <p className={`text-2xl font-bold ${themeClasses.text}`}>{value}</p>
-                        {subtitle && <p className={`text-sm ${themeClasses.textMuted}`}>{subtitle}</p>}
+                    <div className={`${isCompact ? 'ml-3' : 'ml-4'}`}>
+                        <p className={`${themeClasses.textSm} font-medium ${themeClasses.themeMutedFg}`}>{title}</p>
+                        <p className={`${themeClasses.text2Xl} font-bold ${themeClasses.themeFg}`}>{value}</p>
+                        {subtitle && <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>{subtitle}</p>}
                     </div>
                 </div>
                 {trend && (
-                    <div className={`flex items-center ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className={`flex items-center ${trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         {trend === 'up' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-                        <span className="text-sm font-medium ml-1">{trendValue}</span>
+                        <span className={`${themeClasses.textSm} font-medium ml-1`}>{trendValue}</span>
                     </div>
                 )}
             </div>
@@ -216,252 +216,76 @@ const OrganizerDashboard: React.FC = () => {
     );
 
     const EventCard: React.FC<{ event: Event }> = ({ event }) => {
-        // Helper function to normalize date to string
-        const normalizeDate = (date: string | number | Date): string => {
-            if (typeof date === 'string') return date;
-            if (typeof date === 'number') return new Date(date).toISOString();
-            return date.toISOString();
-        };
-
-        // Helper function to check if event spans multiple days
-        const isMultiDayEvent = (startDate: string | number | Date, endDate: string | number | Date) => {
-            if (!startDate || !endDate) return false;
-
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-
-            // Check if dates are valid
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) return false;
-
-            // Compare just the date portion (ignore time)
-            const startDateOnly = start.toDateString();
-            const endDateOnly = end.toDateString();
-
-            return startDateOnly !== endDateOnly;
-        };
-
-        // Helper function to format date range
         const formatDateRange = (startDate: string | number | Date, endDate: string | number | Date) => {
             if (!startDate) return 'Date not set';
-
             const start = new Date(startDate);
             if (isNaN(start.getTime())) return 'Invalid date';
-
-            // If no end date, show single date
-            if (!endDate) {
-                return start.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-            }
-
-            const end = new Date(endDate);
-            if (isNaN(end.getTime())) {
-                // If end date is invalid, just show start date
-                return start.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-            }
-
-            // Check if it's the same day
-            if (!isMultiDayEvent(startDate, endDate)) {
-                // Same day event - just show the date once
-                return start.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-            }
-
-            // Multi-day event formatting
-            const startMonth = start.getMonth();
-            const endMonth = end.getMonth();
-            const startYear = start.getFullYear();
-            const endYear = end.getFullYear();
-
-            if (startYear === endYear) {
-                if (startMonth === endMonth) {
-                    // Same month and year: "Jul 22-23, 2025"
-                    return `${start.toLocaleDateString('en-US', { month: 'short' })} ${start.getDate()}-${end.getDate()}, ${startYear}`;
-                } else {
-                    // Different months, same year: "Jul 5 - Aug 7, 2025"
-                    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${startYear}`;
-                }
-            } else {
-                // Different years: "Dec 30, 2024 - Jan 5, 2025"
-                return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-            }
+            return start.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
         };
 
-        // Helper function to format time range
-        const formatTimeRange = (startDate: string | number | Date, endDate: string | number | Date) => {
-            if (!startDate) return 'Time not set';
-
-            const start = new Date(startDate);
-            if (isNaN(start.getTime())) return 'Invalid time';
-
-            const startTime = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            if (!endDate) {
-                return startTime;
-            }
-
-            const end = new Date(endDate);
-            if (isNaN(end.getTime())) {
-                return startTime;
-            }
-
-            const endTime = end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            // Always show time range if we have both start and end times
-            if (startTime !== endTime) {
-                return `${startTime} - ${endTime}`;
-            }
-
-            return startTime;
-        };
-
-        // Calculate event duration in days
-        const getEventDuration = () => {
-            if (!startDateTime || !endDateTime || !isMultiDayEvent(startDateTime, endDateTime)) {
-                return null;
-            }
-
-            const start = new Date(startDateTime);
-            const end = new Date(endDateTime);
-
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
-
-            const diffInMs = end.getTime() - start.getTime();
-            const diffInDays = Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
-
-            return diffInDays > 0 ? diffInDays : null;
-        };
-
-        // Use the actual API field names based on your data
         const startDateTime = event.startDateTime || event.eventDate;
         const endDateTime = event.endDateTime || event.startDateTime || event.eventDate;
 
         return (
-            <div className={`${themeClasses.card} p-6 rounded-lg shadow-sm ${themeClasses.border} border ${themeClasses.hover} transition-shadow`}>
-                <div className="flex justify-between items-start mb-4">
+            <div className={`${themeClasses.themeCard} ${themeClasses.compactCard} rounded-lg shadow-sm border ${themeClasses.themeBorder} hover:shadow-md theme-transition`}>
+                <div className={`flex justify-between items-start ${isCompact ? 'mb-3' : 'mb-4'}`}>
                     <div className="flex-1">
-                        <h3 className={`text-lg font-semibold ${themeClasses.text} mb-2`}>{event.title}</h3>
-                        <p className={`${themeClasses.textMuted} text-sm line-clamp-2`}>{event.description}</p>
+                        <h3 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg} ${isCompact ? 'mb-1' : 'mb-2'}`}>{event.title}</h3>
+                        <p className={`${themeClasses.themeMutedFg} ${themeClasses.textSm} line-clamp-2`}>{event.description}</p>
                     </div>
-                    <div className="flex flex-col gap-2 ml-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${event.isPublished
+                    <div className={`flex flex-col ${isCompact ? 'gap-1' : 'gap-2'} ${isCompact ? 'ml-3' : 'ml-4'}`}>
+                        <span className={`px-3 py-1 rounded-full ${themeClasses.textSm} font-medium ${event.isPublished
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
                             : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                             }`}>
-                            {event.isPublished ? 'Published' : 'Draft'}
+                            {event.isPublished ? t('published') : t('draft')}
                         </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${event.isOnline
+                        <span className={`px-3 py-1 rounded-full ${themeClasses.textSm} font-medium ${event.isOnline
                             ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                             : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
                             }`}>
-                            {event.isOnline ? 'Online' : 'In-Person'}
+                            {event.isOnline ? t('online') : t('inPerson')}
                         </span>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                    {/* Date Range Display */}
-                    <div className={`flex items-start text-sm ${themeClasses.textMuted}`}>
-                        <Calendar className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
-                        <div className="flex flex-col">
-                            <span className="font-medium">
-                                {formatDateRange(startDateTime, endDateTime)}
-                            </span>
-                            {(() => {
-                                const duration = getEventDuration();
-                                return duration && duration > 1 ? (
-                                    <span className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
-                                        {duration} day event
-                                    </span>
-                                ) : null;
-                            })()}
-                        </div>
-                    </div>
-
-                    {/* Time Range Display */}
-                    <div className={`flex items-start text-sm ${themeClasses.textMuted}`}>
-                        <Clock className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
-                        <div className="flex flex-col">
-                            <span>
-                                {formatTimeRange(startDateTime, endDateTime)}
-                            </span>
-                            {isMultiDayEvent(startDateTime, endDateTime) && (
-                                <span className={`text-xs ${themeClasses.textMuted} mt-1`}>
-                                    Multi-day schedule
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className={`flex items-center text-sm ${themeClasses.textMuted}`}>
-                        {event.isOnline ? <Globe className="h-4 w-4 mr-2 flex-shrink-0" /> : <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />}
-                        <span className="truncate">{event.venueName || 'Virtual Event'}</span>
-                    </div>
-                    <div className={`flex items-center text-sm ${themeClasses.textMuted}`}>
-                        <Tag className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span>{event.categoryName || 'Uncategorized'}</span>
-                    </div>
-                </div>
-
-                {/* Event Stats */}
-                <div className={`flex justify-between items-center p-3 ${themeClasses.isDark ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg mb-4`}>
-                    <div className="text-center">
-                        <p className={`text-lg font-bold ${themeClasses.text}`}>{event.ticketsSold || 0}</p>
-                        <p className={`text-xs ${themeClasses.textMuted}`}>Tickets Sold</p>
-                    </div>
-                    <div className="text-center">
-                        <p className={`text-lg font-bold ${themeClasses.text}`}>{event.availableTickets + event.ticketsSold || 'Unlimited'}</p>
-                        <p className={`text-xs ${themeClasses.textMuted}`}>Max Capacity</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-lg font-bold text-green-600 dark:text-green-400">{event.currency} {(event.revenue || 0).toLocaleString()}</p>
-                        <p className={`text-xs ${themeClasses.textMuted}`}>Revenue</p>
-                    </div>
-                </div>
-
-                {/* Action Buttons */}
                 <div className="flex justify-between items-center">
-                    <div className="flex gap-2">
+                    <div className={`flex ${isCompact ? 'gap-1' : 'gap-2'}`}>
                         <button
                             onClick={() => window.open(`/events/${event.eventId}`, '_blank')}
-                            className="flex items-center px-3 py-2 text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                            className={`flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 theme-transition`}
                         >
                             <Eye className="h-4 w-4 mr-1" />
-                            View
+                            {t('view')}
                         </button>
                         <button
                             onClick={() => window.location.href = `/organizer/events/${event.eventId}/edit`}
-                            className={`flex items-center px-3 py-2 text-sm ${themeClasses.isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg transition-colors`}
+                            className={`flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} ${themeClasses.themeMuted} ${themeClasses.themeMutedFg} rounded-lg ${isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} theme-transition`}
                         >
                             <Edit className="h-4 w-4 mr-1" />
-                            Edit
+                            {t('edit')}
                         </button>
                     </div>
-                    <div className="flex gap-2">
+                    <div className={`flex ${isCompact ? 'gap-1' : 'gap-2'}`}>
                         <button
                             onClick={() => handlePublishEvent(event.eventId, event.isPublished)}
-                            className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${event.isPublished
+                            className={`${themeClasses.compactButton} ${themeClasses.textSm} rounded-lg font-medium theme-transition ${event.isPublished
                                 ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:hover:bg-yellow-900/50'
                                 : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
                                 }`}
                         >
-                            {event.isPublished ? 'Unpublish' : 'Publish'}
+                            {event.isPublished ? t('unpublish') : t('publish')}
                         </button>
                         <button
                             onClick={() => handleDeleteEvent(event.eventId)}
-                            className="flex items-center px-3 py-2 text-sm bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                            className={`flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 theme-transition`}
                         >
                             <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
+                            {t('delete')}
                         </button>
                     </div>
                 </div>
@@ -471,12 +295,12 @@ const OrganizerDashboard: React.FC = () => {
 
     if (loading) {
         return (
-            <div className={`p-8 min-h-screen ${themeClasses.background}`}>
+            <div className={`${isCompact ? 'p-4' : 'p-8'} min-h-screen ${themeClasses.themeBg}`}>
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-center py-12">
                         <div className="text-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                            <p className={`mt-4 ${themeClasses.textMuted}`}>Loading your dashboard...</p>
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 accent-border mx-auto"></div>
+                            <p className={`mt-4 ${themeClasses.themeMutedFg}`}>{t('loadingDashboard')}</p>
                         </div>
                     </div>
                 </div>
@@ -485,90 +309,97 @@ const OrganizerDashboard: React.FC = () => {
     }
 
     return (
-        <div className={`p-6 min-h-screen ${themeClasses.background}`}>
+        <div className={`${isCompact ? 'p-4' : 'p-6'} min-h-screen ${themeClasses.themeBg} theme-transition`}>
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
+                <div className={isCompact ? 'mb-6' : 'mb-8'}>
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>Dashboard</h1>
-                            <p className={`${themeClasses.textMuted} mt-1`}>Welcome back, {user?.firstName}! Here&apos;s what&apos;s happening with your events.</p>
+                            <h1 className={`${themeClasses.text3Xl} font-bold ${themeClasses.themeFg}`}>
+                                {t('dashboard')}
+                            </h1>
+                            <p className={` ${themeClasses.themeMutedFg} mt-1`}>
+                                {t('welcomeBack', { name: user?.firstName })}
+                            </p>
                         </div>
                         <button
                             onClick={() => window.location.href = '/organizer/events/create'}
-                            className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="btn-accent"
                         >
                             <Plus className="h-5 w-5 mr-2" />
-                            Create Event
+                            {t('createEvent')}
                         </button>
                     </div>
                 </div>
 
                 {/* Error Message */}
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800 rounded-lg">
-                        <p className="text-red-600 dark:text-red-400">{error}</p>
+                    <div className={`${isCompact ? 'mb-4' : 'mb-6'} p-4 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800 rounded-lg`}>
+                        <div className="flex items-center">
+                            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
+                            <p className="text-red-600 dark:text-red-400">{error}</p>
+                        </div>
                     </div>
                 )}
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ${themeClasses.compactGap} ${isCompact ? 'mb-6' : 'mb-8'}`}>
                     <StatCard
                         icon={Calendar}
-                        title="Total Events"
+                        title={t('totalEvents')}
                         value={stats.totalEvents}
-                        subtitle={`${stats.publishedEvents} published`}
-                        color="bg-blue-500"
+                        subtitle={t('publishedCount', { count: stats.publishedEvents })}
+                        color="blue"
                     />
                     <StatCard
                         icon={Users}
-                        title="Tickets Sold"
+                        title={t('ticketsSold')}
                         value={stats.totalTicketsSold.toLocaleString()}
-                        color="bg-green-500"
+                        color="green"
                     />
                     <StatCard
                         icon={DollarSign}
-                        title="Total Revenue"
-                        value={`RM ${stats.totalRevenue.toLocaleString()}`}
-                        color="bg-purple-500"
+                        title={t('totalRevenue')}
+                        value={formatCurrency(stats.totalRevenue)}
+                        color="purple"
                     />
                     <StatCard
                         icon={TrendingUp}
-                        title="Upcoming Events"
+                        title={t('upcomingEvents')}
                         value={stats.upcomingEvents}
-                        color="bg-orange-500"
+                        color="orange"
                     />
                 </div>
 
                 {/* Recent Events */}
                 <div>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className={`text-xl font-semibold ${themeClasses.text}`}>Your Events</h2>
+                    <div className={`flex justify-between items-center ${isCompact ? 'mb-4' : 'mb-6'}`}>
+                        <h2 className={`${themeClasses.textXl} font-semibold ${themeClasses.themeFg}`}>{t('yourEvents')}</h2>
                         {events.length > 6 && (
                             <button
                                 onClick={() => window.location.href = '/organizer/events'}
-                                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
+                                className="accent-text hover:accent-hover text-sm font-medium theme-transition"
                             >
-                                View all events →
+                                {t('viewAllEvents')}
                             </button>
                         )}
                     </div>
 
                     {events.length === 0 ? (
-                        <div className={`text-center py-12 ${themeClasses.card} rounded-lg ${themeClasses.border} border`}>
-                            <Calendar className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
-                            <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>No events yet</h3>
-                            <p className={`${themeClasses.textMuted} mb-6`}>Create your first event to get started with EventPro.</p>
+                        <div className={`text-center ${isCompact ? 'py-8' : 'py-12'} ${themeClasses.themeCard} rounded-lg border ${themeClasses.themeBorder}`}>
+                            <Calendar className={`h-12 w-12 ${themeClasses.themeMutedFg} mx-auto ${isCompact ? 'mb-3' : 'mb-4'}`} />
+                            <h3 className={`${themeClasses.textLg} font-medium ${themeClasses.themeFg} ${isCompact ? 'mb-1' : 'mb-2'}`}>{t('noEventsYet')}</h3>
+                            <p className={`${themeClasses.themeMutedFg} ${isCompact ? 'mb-4' : 'mb-6'}`}>{t('createFirstEventPrompt')}</p>
                             <button
                                 onClick={() => window.location.href = '/organizer/events/create'}
-                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                className="btn-accent"
                             >
                                 <Plus className="h-4 w-4 mr-2" />
-                                Create Your First Event
+                                {t('createYourFirstEvent')}
                             </button>
                         </div>
                     ) : (
-                        <div className="grid gap-6 lg:grid-cols-2">
+                        <div className={`grid ${themeClasses.compactGap} lg:grid-cols-2`}>
                             {events.slice(0, 6).map((event) => (
                                 <EventCard key={event.eventId} event={event} />
                             ))}

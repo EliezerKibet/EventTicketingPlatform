@@ -1,5 +1,153 @@
 @import "tailwindcss";
 
+html.text-size-small {
+    --font-size-base: 14px;
+    --font-size-sm: 12px;
+    --font-size-lg: 16px;
+    --font-size-xl: 18px;
+    --font-size-2xl: 20px;
+    --font-size-3xl: 22px;
+}
+
+html.text-size-medium {
+    --font-size-base: 16px;
+    --font-size-sm: 14px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 24px;
+    --font-size-3xl: 30px;
+}
+
+html.text-size-large {
+    --font-size-base: 18px;
+    --font-size-sm: 16px;
+    --font-size-lg: 20px;
+    --font-size-xl: 24px;
+    --font-size-2xl: 28px;
+    --font-size-3xl: 36px;
+}
+
+/* Enhanced compact mode */
+html.compact {
+    --spacing-unit: 0.5rem;
+    --card-padding: 1rem;
+    --button-padding: 0.375rem 0.75rem;
+    --input-padding: 0.375rem 0.75rem;
+    --header-height: 3rem;
+    --sidebar-width: 14rem;
+}
+
+html:not(.compact) {
+    --spacing-unit: 1rem;
+    --card-padding: 1.5rem;
+    --button-padding: 0.5rem 1rem;
+    --input-padding: 0.5rem 1rem;
+    --header-height: 4rem;
+    --sidebar-width: 16rem;
+}
+
+/* Responsive font sizing */
+.text-responsive-sm {
+    font-size: var(--font-size-sm);
+}
+
+.text-responsive-base {
+    font-size: var(--font-size-base);
+}
+
+.text-responsive-lg {
+    font-size: var(--font-size-lg);
+}
+
+.text-responsive-xl {
+    font-size: var(--font-size-xl);
+}
+
+.text-responsive-2xl {
+    font-size: var(--font-size-2xl);
+}
+
+.text-responsive-3xl {
+    font-size: var(--font-size-3xl);
+}
+
+/* Component-specific compact classes */
+.compact-card {
+    padding: var(--card-padding);
+}
+
+.compact-button {
+    padding: var(--button-padding);
+}
+
+.compact-input {
+    padding: var(--input-padding);
+}
+
+.compact-gap {
+    gap: var(--spacing-unit);
+}
+
+.compact-space-y > * + * {
+    margin-top: var(--spacing-unit);
+}
+
+.compact-space-x > * + * {
+    margin-left: var(--spacing-unit);
+}
+
+/* Accent color variations */
+.accent-bg {
+    background-color: var(--color-primary);
+}
+
+.accent-text {
+    color: var(--color-primary);
+}
+
+.accent-border {
+    border-color: var(--color-primary);
+}
+
+.accent-hover:hover {
+    background-color: var(--color-primary);
+    opacity: 0.9;
+}
+
+.accent-focus:focus {
+    outline-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Button variants using accent color */
+.btn-accent {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+    padding: var(--button-padding);
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+    .btn-accent:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+.btn-accent-outline {
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+    background-color: transparent;
+    padding: var(--button-padding);
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+    .btn-accent-outline:hover {
+        background-color: var(--color-primary);
+        color: var(--color-primary-foreground);
+    }
 :root {
     --background: #ffffff;
     --foreground: #171717;

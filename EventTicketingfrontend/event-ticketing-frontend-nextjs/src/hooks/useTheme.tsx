@@ -13,7 +13,11 @@ const accentColors: { [key: string]: string } = {
     green: 'rgb(34, 197, 94)',
     red: 'rgb(239, 68, 68)',
     orange: 'rgb(249, 115, 22)',
-    pink: 'rgb(236, 72, 153)'
+    pink: 'rgb(236, 72, 153)',
+    teal: 'rgb(20, 184, 166)',
+    indigo: 'rgb(99, 102, 241)',
+    yellow: 'rgb(234, 179, 8)',
+    slate: 'rgb(100, 116, 139)'
 };
 
 const defaultSettings: ThemeSettings = {
@@ -28,11 +32,12 @@ export const useTheme = () => {
     const [isDark, setIsDark] = useState(false);
     const isInitialized = useRef(false);
 
-    // Memoized function to apply theme to DOM
+    // Enhanced theme application
     const applyTheme = useCallback((settings: ThemeSettings) => {
         if (typeof window === 'undefined') return;
 
         const root = document.documentElement;
+        const body = document.body;
         let shouldBeDark = false;
 
         // Determine if dark mode should be active
@@ -41,18 +46,18 @@ export const useTheme = () => {
         } else if (settings.theme === 'light') {
             shouldBeDark = false;
         } else {
-            // Auto mode - check system preference
             shouldBeDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         }
 
         // Apply dark/light mode
         if (shouldBeDark) {
             root.classList.add('dark');
+            body.classList.add('dark');
         } else {
             root.classList.remove('dark');
+            body.classList.remove('dark');
         }
 
-        // Only update isDark state if it actually changed
         setIsDark(prevIsDark => {
             if (prevIsDark !== shouldBeDark) {
                 return shouldBeDark;
@@ -70,18 +75,28 @@ export const useTheme = () => {
         // Apply compact mode
         if (settings.compactMode) {
             root.classList.add('compact');
+            body.classList.add('compact');
         } else {
             root.classList.remove('compact');
+            body.classList.remove('compact');
         }
-    }, []); // No dependencies since we only use the passed settings
+
+        // Emit custom event for components to react to theme changes
+        window.dispatchEvent(new CustomEvent('themeChanged', {
+            detail: { ...settings, isDark: shouldBeDark }
+        }));
+
+    }, []);
 
     // Function to update theme settings
     const updateTheme = useCallback((newSettings: Partial<ThemeSettings>) => {
         setThemeSettings(prevSettings => {
             const updated = { ...prevSettings, ...newSettings };
 
-            // Apply theme immediately
-            applyTheme(updated);
+            // Apply theme in next tick to avoid render-phase updates
+            setTimeout(() => {
+                applyTheme(updated);
+            }, 0);
 
             // Save to localStorage
             try {
@@ -90,8 +105,10 @@ export const useTheme = () => {
                 console.error('Error saving theme settings:', error);
             }
 
-            // Emit event for other components
-            window.dispatchEvent(new CustomEvent('themeChange', { detail: updated }));
+            // Emit event for other components in next tick
+            setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('themeChange', { detail: updated }));
+            }, 0);
 
             return updated;
         });
@@ -151,54 +168,46 @@ export const useTheme = () => {
         isDark,
         updateTheme,
         initializeTheme, // Keep for compatibility with existing code
-        applyTheme // Expose for manual calls if needed
+        applyTheme, // Expose for manual calls if needed
+        accentColors,
+        getAccentColor: () => accentColors[themeSettings.accentColor] || accentColors.blue,
+        isCompact: themeSettings.compactMode,
+        getCurrentFontSize: () => themeSettings.fontSize
     };
 };
 
 // Helper hook for getting theme-aware classes
 export const useThemeClasses = () => {
     const [isDark, setIsDark] = useState(false);
+    const [isCompact, setIsCompact] = useState(false);
     const observerRef = useRef<MutationObserver | null>(null);
-    const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
-        const updateDarkMode = () => {
+        const updateThemeState = () => {
             const currentIsDark = document.documentElement.classList.contains('dark');
+            const currentIsCompact = document.documentElement.classList.contains('compact');
 
-            // Clear any pending update
-            if (updateTimeoutRef.current) {
-                clearTimeout(updateTimeoutRef.current);
-            }
-
-            // Defer the state update to avoid React warning
-            updateTimeoutRef.current = setTimeout(() => {
-                setIsDark(prevIsDark => {
-                    // Only update if the value actually changed
-                    if (prevIsDark !== currentIsDark) {
-                        return currentIsDark;
-                    }
-                    return prevIsDark;
-                });
-            }, 0);
+            // Use functional updates to avoid stale closures
+            setIsDark(prev => prev !== currentIsDark ? currentIsDark : prev);
+            setIsCompact(prev => prev !== currentIsCompact ? currentIsCompact : prev);
         };
 
-        // Initial check
-        updateDarkMode();
+        // Initial state update - defer to avoid render-phase updates
+        setTimeout(updateThemeState, 0);
 
-        // Clean up previous observer
+        // Observe class changes
         if (observerRef.current) {
             observerRef.current.disconnect();
         }
 
-        // Create new observer
         observerRef.current = new MutationObserver((mutations) => {
-            // Only update if class attribute actually changed
             for (const mutation of mutations) {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    updateDarkMode();
-                    break; // Only need to update once
+                    // Defer state update to avoid render-phase conflicts
+                    setTimeout(updateThemeState, 0);
+                    break;
                 }
             }
         });
@@ -208,33 +217,34 @@ export const useThemeClasses = () => {
             attributeFilter: ['class']
         });
 
-        // Listen for custom theme change events
-        const handleThemeChange = () => updateDarkMode();
-        window.addEventListener('themeChange', handleThemeChange);
+        // Listen for theme change events
+        const handleThemeChange = () => {
+            // Defer state update to avoid render-phase conflicts
+            setTimeout(updateThemeState, 0);
+        };
+
+        window.addEventListener('themeChanged', handleThemeChange);
 
         return () => {
-            // Clean up timeout
-            if (updateTimeoutRef.current) {
-                clearTimeout(updateTimeoutRef.current);
-            }
-
             if (observerRef.current) {
                 observerRef.current.disconnect();
             }
-            window.removeEventListener('themeChange', handleThemeChange);
+            window.removeEventListener('themeChanged', handleThemeChange);
         };
-    }, []); // Empty dependency array - set up once
+    }, []);
 
-    // Return theme-aware classes
     return {
         isDark,
+        isCompact,
+        // Base theme classes
         background: isDark ? 'bg-gray-900' : 'bg-gray-50',
         card: isDark ? 'bg-gray-800' : 'bg-white',
         text: isDark ? 'text-white' : 'text-gray-900',
         textMuted: isDark ? 'text-gray-400' : 'text-gray-600',
         border: isDark ? 'border-gray-700' : 'border-gray-200',
         hover: isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50',
-        // Theme utility classes
+
+        // Enhanced theme utility classes
         themeBg: 'theme-bg',
         themeCard: 'theme-card',
         themeFg: 'theme-fg',
@@ -243,6 +253,31 @@ export const useThemeClasses = () => {
         themeMutedFg: 'theme-muted-fg',
         themeBorder: 'theme-border',
         themePrimary: 'theme-primary',
-        themePrimaryFg: 'theme-primary-fg'
+        themePrimaryFg: 'theme-primary-fg',
+
+        // Responsive classes
+        textSm: 'text-responsive-sm',
+        textBase: 'text-responsive-base',
+        textLg: 'text-responsive-lg',
+        textXl: 'text-responsive-xl',
+        text2Xl: 'text-responsive-2xl',
+        text3Xl: 'text-responsive-3xl',
+
+        // Compact classes
+        compactCard: 'compact-card',
+        compactButton: 'compact-button',
+        compactInput: 'compact-input',
+        compactGap: 'compact-gap',
+        compactSpaceY: 'compact-space-y',
+        compactSpaceX: 'compact-space-x',
+
+        // Accent classes
+        accentBg: 'accent-bg',
+        accentText: 'accent-text',
+        accentBorder: 'accent-border',
+        accentHover: 'accent-hover',
+        accentFocus: 'accent-focus',
+        btnAccent: 'btn-accent',
+        btnAccentOutline: 'btn-accent-outline'
     };
 };
