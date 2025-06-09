@@ -5,6 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme, useThemeClasses } from '@/hooks/useTheme';
+
 import {
     Ticket,
     Plus,
@@ -78,6 +80,9 @@ interface CreateTicketTypeData {
 const TicketsPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
+    const themeClasses = useThemeClasses();
+    const { isDark } = useTheme();
+
     const [activeTab, setActiveTab] = useState<'types' | 'validate' | 'checkin'>('types');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -375,41 +380,59 @@ const TicketsPage = () => {
         return matchesSearch && matchesEvent;
     });
 
+    // Get theme-aware input styles
+    const getInputStyles = (hasError = false) => {
+        const baseStyles = `w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-opacity-60`;
+        const themeStyles = isDark
+            ? `${themeClasses.card} ${themeClasses.text} ${themeClasses.border} placeholder-gray-400`
+            : `bg-white text-gray-900 border-gray-300 placeholder-gray-600`;
+        const errorStyles = hasError ? 'border-red-500' : '';
+        return `${baseStyles} ${themeStyles} ${errorStyles}`;
+    };
+
+    // Get theme-aware tab styles
+    const getTabStyles = (isActive: boolean) => {
+        if (isActive) {
+            return 'border-blue-500 text-blue-600 dark:text-blue-400';
+        }
+        return `border-transparent ${themeClasses.textMuted} hover:${themeClasses.text} hover:border-gray-300 dark:hover:border-gray-600`;
+    };
+
     if (!user || !isOrganizer) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className={`min-h-screen ${themeClasses.background}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+                        className={`flex items-center ${themeClasses.textMuted} hover:${themeClasses.text} mb-4 transition-colors`}
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back
                     </button>
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Ticket Management</h1>
-                            <p className="text-gray-600 mt-1">Manage ticket types, validate tickets, and handle check-ins</p>
+                            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>Ticket Management</h1>
+                            <p className={`${themeClasses.textMuted} mt-1`}>Manage ticket types, validate tickets, and handle check-ins</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Important Notice */}
-                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <h3 className="text-sm font-medium text-amber-800 mb-2">⚠️ Important: Ticket Type Creation Limitations</h3>
-                    <ul className="text-xs text-amber-700 space-y-1">
+                <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">⚠️ Important: Ticket Type Creation Limitations</h3>
+                    <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
                         <li>• <strong>Published events:</strong> Ticket types cannot be modified to preserve existing sales data</li>
                         <li>• <strong>Events with sales:</strong> Ticket type editing is locked once tickets are sold</li>
                         <li>• <strong>To create ticket types:</strong> Events must be in DRAFT status with no existing sales</li>
@@ -419,53 +442,44 @@ const TicketsPage = () => {
 
                 {/* Success/Error Messages */}
                 {success && (
-                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                         <div className="flex items-center">
                             <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                            <p className="text-green-700">{success}</p>
+                            <p className="text-green-700 dark:text-green-300">{success}</p>
                         </div>
                     </div>
                 )}
 
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                         <div className="flex items-center">
                             <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                            <p className="text-red-700">{error}</p>
+                            <p className="text-red-700 dark:text-red-300">{error}</p>
                         </div>
                     </div>
                 )}
 
                 {/* Tabs */}
                 <div className="mb-6">
-                    <div className="border-b border-gray-200">
+                    <div className={`border-b ${themeClasses.border}`}>
                         <nav className="-mb-px flex space-x-8">
                             <button
                                 onClick={() => setActiveTab('types')}
-                                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'types'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
+                                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${getTabStyles(activeTab === 'types')}`}
                             >
                                 <Ticket className="h-4 w-4 inline mr-2" />
                                 Ticket Types
                             </button>
                             <button
                                 onClick={() => setActiveTab('validate')}
-                                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'validate'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
+                                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${getTabStyles(activeTab === 'validate')}`}
                             >
                                 <QrCode className="h-4 w-4 inline mr-2" />
                                 Validate Tickets
                             </button>
                             <button
                                 onClick={() => setActiveTab('checkin')}
-                                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'checkin'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
+                                className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${getTabStyles(activeTab === 'checkin')}`}
                             >
                                 <CheckCircle className="h-4 w-4 inline mr-2" />
                                 Check-in
@@ -487,21 +501,21 @@ const TicketsPage = () => {
                                     <Plus className="h-4 w-4 mr-2" />
                                     Create Ticket Type
                                 </button>
-                                <div className="text-sm text-gray-600">
+                                <div className={`text-sm ${themeClasses.textMuted}`}>
                                     <span className="font-medium">Note:</span> Only works for draft events without existing sales
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <button
                                     onClick={() => router.push('/organizer/events/create')}
-                                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
                                 >
                                     Create New Event
                                 </button>
-                                <span className="text-gray-400">|</span>
+                                <span className={themeClasses.textMuted}>|</span>
                                 <button
                                     onClick={() => router.push('/organizer/events')}
-                                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
                                 >
                                     Manage Events
                                 </button>
@@ -509,23 +523,23 @@ const TicketsPage = () => {
                         </div>
 
                         {/* Filters */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div className={`${themeClasses.card} rounded-lg shadow-sm border ${themeClasses.border} p-6`}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="relative">
-                                    <Search className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                                    <Search className={`h-5 w-5 ${themeClasses.textMuted} absolute left-3 top-1/2 transform -translate-y-1/2`} />
                                     <input
                                         type="text"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         placeholder="Search ticket types..."
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                                        className={`w-full pl-10 pr-4 py-2 border ${themeClasses.border} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.card} ${themeClasses.text} placeholder-opacity-60 ${isDark ? 'placeholder-gray-400' : 'placeholder-gray-600'}`}
                                     />
                                 </div>
                                 <div>
                                     <select
                                         value={selectedEvent}
                                         onChange={(e) => setSelectedEvent(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className={`w-full px-4 py-2 border ${themeClasses.border} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.card} ${themeClasses.text}`}
                                     >
                                         <option value="">All Events</option>
                                         {events.map(event => (
@@ -539,68 +553,68 @@ const TicketsPage = () => {
                         </div>
 
                         {/* Ticket Types List */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div className={`${themeClasses.card} rounded-lg shadow-sm border ${themeClasses.border}`}>
                             {loading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                    <span className="ml-2 text-gray-600">Loading ticket types...</span>
+                                    <span className={`ml-2 ${themeClasses.textMuted}`}>Loading ticket types...</span>
                                 </div>
                             ) : filteredTicketTypes.length === 0 ? (
                                 <div className="text-center py-12">
-                                    <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No ticket types found</h3>
-                                    <p className="text-gray-600">
+                                    <Ticket className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
+                                    <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>No ticket types found</h3>
+                                    <p className={themeClasses.textMuted}>
                                         {searchTerm || selectedEvent ? 'Try adjusting your filters' : 'Create your first ticket type'}
                                     </p>
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full">
-                                        <thead className="bg-gray-50 border-b border-gray-200">
+                                        <thead className={`${isDark ? 'bg-gray-800' : 'bg-gray-50'} border-b ${themeClasses.border}`}>
                                             <tr>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
                                                     Ticket Type
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
                                                     Event
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
                                                     Price
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
                                                     Availability
                                                 </th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
                                                     Status
                                                 </th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
+                                        <tbody className={`${themeClasses.card} divide-y ${themeClasses.border}`}>
                                             {filteredTicketTypes.map((ticketType) => (
-                                                <tr key={ticketType.ticketTypeId} className="hover:bg-gray-50">
+                                                <tr key={ticketType.ticketTypeId} className={themeClasses.hover}>
                                                     <td className="px-6 py-4">
                                                         <div>
-                                                            <div className="text-sm font-medium text-gray-900">{ticketType.name}</div>
+                                                            <div className={`text-sm font-medium ${themeClasses.text}`}>{ticketType.name}</div>
                                                             {ticketType.description && (
-                                                                <div className="text-sm text-gray-500 truncate max-w-xs">{ticketType.description}</div>
+                                                                <div className={`text-sm ${themeClasses.textMuted} truncate max-w-xs`}>{ticketType.description}</div>
                                                             )}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <div className="text-sm text-gray-900">{ticketType.eventTitle || 'Unknown Event'}</div>
+                                                        <div className={`text-sm ${themeClasses.text}`}>{ticketType.eventTitle || 'Unknown Event'}</div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <div className="flex items-center text-sm text-gray-900">
-                                                            <DollarSign className="h-4 w-4 text-gray-400 mr-1" />
+                                                        <div className={`flex items-center text-sm ${themeClasses.text}`}>
+                                                            <DollarSign className={`h-4 w-4 ${themeClasses.textMuted} mr-1`} />
                                                             {ticketType.price.toFixed(2)}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <div className="flex items-center text-sm text-gray-900">
-                                                            <Users className="h-4 w-4 text-gray-400 mr-1" />
+                                                        <div className={`flex items-center text-sm ${themeClasses.text}`}>
+                                                            <Users className={`h-4 w-4 ${themeClasses.textMuted} mr-1`} />
                                                             {ticketType.remainingQuantity} / {ticketType.quantity}
                                                         </div>
-                                                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                                        <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2 mt-1`}>
                                                             <div
                                                                 className="bg-blue-600 h-2 rounded-full"
                                                                 style={{
@@ -611,8 +625,8 @@ const TicketsPage = () => {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${ticketType.isActive
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-red-100 text-red-800'
+                                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                                             }`}>
                                                             {ticketType.isActive ? 'Active' : 'Inactive'}
                                                         </span>
@@ -630,8 +644,8 @@ const TicketsPage = () => {
                 {/* Validate Tickets Tab */}
                 {activeTab === 'validate' && (
                     <div className="space-y-6">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Validate Ticket</h2>
+                        <div className={`${themeClasses.card} rounded-lg shadow-sm border ${themeClasses.border} p-6`}>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Validate Ticket</h2>
                             <div className="flex space-x-4">
                                 <div className="flex-1">
                                     <input
@@ -639,7 +653,7 @@ const TicketsPage = () => {
                                         value={ticketNumber}
                                         onChange={(e) => setTicketNumber(e.target.value)}
                                         placeholder="Enter ticket number"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                                        className={getInputStyles()}
                                     />
                                 </div>
                                 <button
@@ -663,8 +677,8 @@ const TicketsPage = () => {
 
                             {validationResult && (
                                 <div className={`mt-6 p-4 rounded-lg border ${validationResult.isValid
-                                    ? 'bg-green-50 border-green-200'
-                                    : 'bg-red-50 border-red-200'
+                                    ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800'
+                                    : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
                                     }`}>
                                     <div className="flex items-center mb-2">
                                         {validationResult.isValid ? (
@@ -672,27 +686,34 @@ const TicketsPage = () => {
                                         ) : (
                                             <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
                                         )}
-                                        <h3 className={`font-medium ${validationResult.isValid ? 'text-green-800' : 'text-red-800'
+                                        <h3 className={`font-medium ${validationResult.isValid
+                                            ? 'text-green-800 dark:text-green-200'
+                                            : 'text-red-800 dark:text-red-200'
                                             }`}>
                                             {validationResult.isValid ? 'Valid Ticket' : 'Invalid Ticket'}
                                         </h3>
                                     </div>
 
                                     {validationResult.ticket && (
-                                        <div className="space-y-2 text-sm">
+                                        <div className={`space-y-2 text-sm ${validationResult.isValid
+                                            ? 'text-green-700 dark:text-green-300'
+                                            : 'text-red-700 dark:text-red-300'
+                                            }`}>
                                             <p><span className="font-medium">Ticket Number:</span> {validationResult.ticket.ticketNumber}</p>
                                             <p><span className="font-medium">Event:</span> {validationResult.ticket.eventTitle}</p>
                                             <p><span className="font-medium">Type:</span> {validationResult.ticket.ticketTypeName}</p>
                                             <p><span className="font-medium">Attendee:</span> {validationResult.ticket.attendeeName}</p>
                                             <p><span className="font-medium">Status:</span>
-                                                <span className={`ml-1 ${validationResult.ticket.isUsed ? 'text-red-600' : 'text-green-600'}`}>
+                                                <span className={`ml-1 ${validationResult.ticket.isUsed ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                                                     {validationResult.ticket.isUsed ? 'Already Used' : 'Not Used'}
                                                 </span>
                                             </p>
                                         </div>
                                     )}
 
-                                    <p className={`mt-2 text-sm ${validationResult.isValid ? 'text-green-700' : 'text-red-700'
+                                    <p className={`mt-2 text-sm ${validationResult.isValid
+                                        ? 'text-green-700 dark:text-green-300'
+                                        : 'text-red-700 dark:text-red-300'
                                         }`}>
                                         {validationResult.message}
                                     </p>
@@ -705,8 +726,8 @@ const TicketsPage = () => {
                 {/* Check-in Tab */}
                 {activeTab === 'checkin' && (
                     <div className="space-y-6">
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Check-in Ticket</h2>
+                        <div className={`${themeClasses.card} rounded-lg shadow-sm border ${themeClasses.border} p-6`}>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Check-in Ticket</h2>
                             <div className="flex space-x-4">
                                 <div className="flex-1">
                                     <input
@@ -714,7 +735,7 @@ const TicketsPage = () => {
                                         value={checkInNumber}
                                         onChange={(e) => setCheckInNumber(e.target.value)}
                                         placeholder="Enter ticket number to check-in"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                                        className={getInputStyles()}
                                     />
                                 </div>
                                 <button
@@ -737,12 +758,12 @@ const TicketsPage = () => {
                             </div>
 
                             {checkInResult && (
-                                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                     <div className="flex items-center mb-2">
                                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                                        <h3 className="font-medium text-green-800">Ticket Checked In Successfully</h3>
+                                        <h3 className="font-medium text-green-800 dark:text-green-200">Ticket Checked In Successfully</h3>
                                     </div>
-                                    <div className="space-y-2 text-sm text-green-700">
+                                    <div className="space-y-2 text-sm text-green-700 dark:text-green-300">
                                         <p><span className="font-medium">Ticket Number:</span> {checkInResult.ticketNumber}</p>
                                         <p><span className="font-medium">Attendee:</span> {checkInResult.attendeeName}</p>
                                         <p><span className="font-medium">Event:</span> {checkInResult.eventTitle}</p>
@@ -757,13 +778,13 @@ const TicketsPage = () => {
                 {/* Create Ticket Type Modal */}
                 {showCreateForm && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className={`${themeClasses.card} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl`}>
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-xl font-semibold text-gray-900">Create Ticket Type</h2>
+                                    <h2 className={`text-xl font-semibold ${themeClasses.text}`}>Create Ticket Type</h2>
                                     <button
                                         onClick={resetForm}
-                                        className="text-gray-400 hover:text-gray-600"
+                                        className={`${themeClasses.textMuted} hover:${themeClasses.text} transition-colors`}
                                     >
                                         <X className="h-6 w-6" />
                                     </button>
@@ -771,9 +792,9 @@ const TicketsPage = () => {
 
                                 <form onSubmit={handleCreateTicketType} className="space-y-4">
                                     {/* Business Rules Warning */}
-                                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                        <h4 className="text-sm font-medium text-yellow-800 mb-2">⚠️ Ticket Creation Requirements</h4>
-                                        <ul className="text-xs text-yellow-700 space-y-1">
+                                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                        <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">⚠️ Ticket Creation Requirements</h4>
+                                        <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
                                             <li>• Event must be in <strong>DRAFT</strong> status (not published)</li>
                                             <li>• Event must have <strong>no existing ticket sales</strong></li>
                                             <li>• You must be the <strong>event organizer</strong></li>
@@ -783,15 +804,14 @@ const TicketsPage = () => {
 
                                     {/* Event Selection */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Event *
                                         </label>
                                         <select
                                             name="eventId"
                                             value={formData.eventId}
                                             onChange={handleInputChange}
-                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.eventId ? 'border-red-500' : 'border-gray-300'
-                                                }`}
+                                            className={getInputStyles(!!formErrors.eventId)}
                                         >
                                             <option value="">Select an event</option>
                                             {events.map(event => (
@@ -802,7 +822,7 @@ const TicketsPage = () => {
                                         </select>
                                         {formErrors.eventId && <p className="text-red-500 text-sm mt-1">{formErrors.eventId}</p>}
                                         {events.length === 0 && (
-                                            <p className="text-amber-600 text-sm mt-1">
+                                            <p className="text-amber-600 dark:text-amber-400 text-sm mt-1">
                                                 No events found. You need to create an event first before creating ticket types.
                                             </p>
                                         )}
@@ -810,7 +830,7 @@ const TicketsPage = () => {
 
                                     {/* Ticket Type Name */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Ticket Type Name *
                                         </label>
                                         <input
@@ -818,8 +838,7 @@ const TicketsPage = () => {
                                             name="name"
                                             value={formData.name}
                                             onChange={handleInputChange}
-                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600 ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-                                                }`}
+                                            className={getInputStyles(!!formErrors.name)}
                                             placeholder="e.g., General Admission, VIP, Early Bird"
                                         />
                                         {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
@@ -827,7 +846,7 @@ const TicketsPage = () => {
 
                                     {/* Description */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Description
                                         </label>
                                         <textarea
@@ -835,7 +854,7 @@ const TicketsPage = () => {
                                             value={formData.description}
                                             onChange={handleInputChange}
                                             rows={3}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
+                                            className={getInputStyles()}
                                             placeholder="Optional description of what this ticket includes..."
                                         />
                                     </div>
@@ -843,7 +862,7 @@ const TicketsPage = () => {
                                     {/* Price and Quantity */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                 Price (RM) *
                                             </label>
                                             <input
@@ -853,15 +872,14 @@ const TicketsPage = () => {
                                                 onChange={handleInputChange}
                                                 min="0"
                                                 step="0.01"
-                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600 ${formErrors.price ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
+                                                className={getInputStyles(!!formErrors.price)}
                                                 placeholder="0.00"
                                             />
                                             {formErrors.price && <p className="text-red-500 text-sm mt-1">{formErrors.price}</p>}
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                 Quantity *
                                             </label>
                                             <input
@@ -870,8 +888,7 @@ const TicketsPage = () => {
                                                 value={formData.quantity}
                                                 onChange={handleInputChange}
                                                 min="1"
-                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600 ${formErrors.quantity ? 'border-red-500' : 'border-gray-300'
-                                                    }`}
+                                                className={getInputStyles(!!formErrors.quantity)}
                                                 placeholder="Number of tickets available"
                                             />
                                             {formErrors.quantity && <p className="text-red-500 text-sm mt-1">{formErrors.quantity}</p>}
@@ -879,11 +896,11 @@ const TicketsPage = () => {
                                     </div>
 
                                     {/* Form Actions */}
-                                    <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                                    <div className={`flex justify-end space-x-4 pt-6 border-t ${themeClasses.border}`}>
                                         <button
                                             type="button"
                                             onClick={resetForm}
-                                            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                            className={`px-6 py-2 border ${themeClasses.border} ${themeClasses.textMuted} rounded-lg ${themeClasses.hover} transition-colors`}
                                         >
                                             Cancel
                                         </button>

@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { eventsApi } from '@/lib/api';
+import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 import {
     Calendar,
     MapPin,
@@ -52,6 +53,7 @@ interface Event {
 const OrganizerEventsPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
+    const themeClasses = useThemeClasses();
 
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
@@ -333,24 +335,24 @@ const OrganizerEventsPage = () => {
 
     if (!user || !isOrganizer) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className={`min-h-screen ${themeClasses.background}`}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">My Events</h1>
-                            <p className="text-gray-600 mt-1">Manage your events and track their performance</p>
+                            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>My Events</h1>
+                            <p className={`${themeClasses.textMuted} mt-1`}>Manage your events and track their performance</p>
                         </div>
                         <button
                             onClick={() => router.push('/organizer/events/create')}
@@ -365,21 +367,21 @@ const OrganizerEventsPage = () => {
                 {/* Search and Filters */}
                 <div className="mb-6 flex flex-col sm:flex-row gap-4">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${themeClasses.textMuted}`} />
                         <input
                             type="text"
                             placeholder="Search by title, venue, category, date, status, revenue..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className={`w-full pl-10 pr-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                         />
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Filter className="h-5 w-5 text-gray-400" />
+                        <Filter className={`h-5 w-5 ${themeClasses.textMuted}`} />
                         <select
                             value={filterPublished}
                             onChange={(e) => setFilterPublished(e.target.value as 'all' | 'published' | 'unpublished')}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className={`px-3 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                         >
                             <option value="all">All Events</option>
                             <option value="published">Published</option>
@@ -390,11 +392,11 @@ const OrganizerEventsPage = () => {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-700 text-sm">{error}</p>
+                    <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <p className="text-red-700 dark:text-red-400 text-sm">{error}</p>
                         <button
                             onClick={() => setError('')}
-                            className="text-red-500 text-xs underline mt-1"
+                            className="text-red-500 dark:text-red-400 text-xs underline mt-1"
                         >
                             Dismiss
                         </button>
@@ -405,50 +407,50 @@ const OrganizerEventsPage = () => {
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p className="ml-3 text-gray-600">Loading your events...</p>
+                        <p className={`ml-3 ${themeClasses.textMuted}`}>Loading your events...</p>
                     </div>
                 ) : (
                     <>
                         {/* Enhanced Events Stats */}
                         <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="text-2xl font-bold text-gray-900">{events.length}</div>
-                                <div className="text-sm text-gray-600">Total Events</div>
+                            <div className={`${themeClasses.card} p-4 rounded-lg ${themeClasses.border} border`}>
+                                <div className={`text-2xl font-bold ${themeClasses.text}`}>{events.length}</div>
+                                <div className={`text-sm ${themeClasses.textMuted}`}>Total Events</div>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="text-2xl font-bold text-green-600">
+                            <div className={`${themeClasses.card} p-4 rounded-lg ${themeClasses.border} border`}>
+                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                                     {events.filter(e => e.isPublished).length}
                                 </div>
-                                <div className="text-sm text-gray-600">Published</div>
+                                <div className={`text-sm ${themeClasses.textMuted}`}>Published</div>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="text-2xl font-bold text-orange-600">
+                            <div className={`${themeClasses.card} p-4 rounded-lg ${themeClasses.border} border`}>
+                                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                                     {events.filter(e => !e.isPublished).length}
                                 </div>
-                                <div className="text-sm text-gray-600">Unpublished</div>
+                                <div className={`text-sm ${themeClasses.textMuted}`}>Unpublished</div>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="text-2xl font-bold text-blue-600">
+                            <div className={`${themeClasses.card} p-4 rounded-lg ${themeClasses.border} border`}>
+                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                                     {events.reduce((sum, e) => sum + (e.ticketsSold || 0), 0).toLocaleString()}
                                 </div>
-                                <div className="text-sm text-gray-600">Tickets Sold</div>
+                                <div className={`text-sm ${themeClasses.textMuted}`}>Tickets Sold</div>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="text-2xl font-bold text-purple-600">
+                            <div className={`${themeClasses.card} p-4 rounded-lg ${themeClasses.border} border`}>
+                                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                                     {events.length > 0 ? events[0].currency : 'RM'} {events.reduce((sum, e) => sum + (e.revenue || 0), 0).toLocaleString()}
                                 </div>
-                                <div className="text-sm text-gray-600">Total Revenue</div>
+                                <div className={`text-sm ${themeClasses.textMuted}`}>Total Revenue</div>
                             </div>
                         </div>
 
                         {/* Events List */}
                         {filteredEvents.length === 0 ? (
                             <div className="text-center py-12">
-                                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                <Calendar className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
+                                <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>
                                     {events.length === 0 ? 'No events created yet' : 'No events match your search'}
                                 </h3>
-                                <p className="text-gray-600 mb-4">
+                                <p className={`${themeClasses.textMuted} mb-4`}>
                                     {events.length === 0
                                         ? 'Create your first event to get started with EventHub'
                                         : 'Try adjusting your search or filter criteria'
@@ -472,51 +474,51 @@ const OrganizerEventsPage = () => {
                                     const duration = getEventDuration(startDateTime, endDateTime);
 
                                     return (
-                                        <div key={event.eventId} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                                        <div key={event.eventId} className={`${themeClasses.card} ${themeClasses.border} border rounded-lg shadow-sm hover:shadow-md transition-shadow`}>
                                             <div className="p-6">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-1">
                                                         <div className="flex items-center space-x-3 mb-2">
                                                             <button
                                                                 onClick={() => router.push(`/organizer/events/${event.eventId}`)}
-                                                                className="text-xl font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left"
+                                                                className={`text-xl font-semibold ${themeClasses.text} hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left`}
                                                             >
                                                                 {event.title}
                                                             </button>
                                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.isPublished
-                                                                ? 'bg-green-100 text-green-800'
-                                                                : 'bg-orange-100 text-orange-800'
+                                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
                                                                 }`}>
                                                                 {event.isPublished ? 'Published' : 'Draft'}
                                                             </span>
                                                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.isOnline
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : 'bg-purple-100 text-purple-800'
+                                                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                                                : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
                                                                 }`}>
                                                                 {event.isOnline ? 'Online' : 'In-Person'}
                                                             </span>
                                                             {/* Multi-day badge */}
                                                             {duration && duration > 1 && (
-                                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                                                                     {duration} Days
                                                                 </span>
                                                             )}
                                                         </div>
 
-                                                        <p className="text-gray-600 mb-4 line-clamp-2">
+                                                        <p className={`${themeClasses.textMuted} mb-4 line-clamp-2`}>
                                                             {event.description || event.shortDescription || 'No description available'}
                                                         </p>
 
-                                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-500 mb-4">
+                                                        <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm ${themeClasses.textMuted} mb-4`}>
                                                             {/* Enhanced Date Display */}
                                                             <div className="flex items-start">
                                                                 <Calendar className="h-4 w-4 mr-1 flex-shrink-0 mt-0.5" />
                                                                 <div className="flex flex-col">
-                                                                    <span className="font-medium text-gray-700">
+                                                                    <span className={`font-medium ${themeClasses.text}`}>
                                                                         {formatDateRange(startDateTime, endDateTime)}
                                                                     </span>
                                                                     {duration && duration > 1 && (
-                                                                        <span className="text-xs text-blue-600 font-medium">
+                                                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
                                                                             {duration} day event
                                                                         </span>
                                                                     )}
@@ -529,7 +531,7 @@ const OrganizerEventsPage = () => {
                                                                 <div className="flex flex-col">
                                                                     <span>{formatTimeRange(startDateTime, endDateTime)}</span>
                                                                     {isMultiDayEvent(startDateTime, endDateTime) && (
-                                                                        <span className="text-xs text-gray-500">
+                                                                        <span className={`text-xs ${themeClasses.textMuted}`}>
                                                                             Multi-day schedule
                                                                         </span>
                                                                     )}
@@ -547,18 +549,18 @@ const OrganizerEventsPage = () => {
                                                         </div>
 
                                                         {/* Event Statistics */}
-                                                        <div className="grid grid-cols-3 gap-4 p-3 bg-gray-50 rounded-lg mb-4">
+                                                        <div className={`grid grid-cols-3 gap-4 p-3 ${themeClasses.isDark ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg mb-4`}>
                                                             <div className="text-center">
-                                                                <div className="text-lg font-bold text-gray-900">{event.ticketsSold || 0}</div>
-                                                                <div className="text-xs text-gray-600">Tickets Sold</div>
+                                                                <div className={`text-lg font-bold ${themeClasses.text}`}>{event.ticketsSold || 0}</div>
+                                                                <div className={`text-xs ${themeClasses.textMuted}`}>Tickets Sold</div>
                                                             </div>
                                                             <div className="text-center">
-                                                                <div className="text-lg font-bold text-gray-900">{(event.availableTickets + (event.ticketsSold || 0)) || 'Unlimited'}</div>
-                                                                <div className="text-xs text-gray-600">Total Capacity</div>
+                                                                <div className={`text-lg font-bold ${themeClasses.text}`}>{(event.availableTickets + (event.ticketsSold || 0)) || 'Unlimited'}</div>
+                                                                <div className={`text-xs ${themeClasses.textMuted}`}>Total Capacity</div>
                                                             </div>
                                                             <div className="text-center">
-                                                                <div className="text-lg font-bold text-green-600">{event.currency} {(event.revenue || 0).toLocaleString()}</div>
-                                                                <div className="text-xs text-gray-600">Revenue</div>
+                                                                <div className="text-lg font-bold text-green-600 dark:text-green-400">{event.currency} {(event.revenue || 0).toLocaleString()}</div>
+                                                                <div className={`text-xs ${themeClasses.textMuted}`}>Revenue</div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -567,7 +569,7 @@ const OrganizerEventsPage = () => {
                                                     <div className="flex items-center space-x-2 ml-4">
                                                         <button
                                                             onClick={() => router.push(`/organizer/events/${event.eventId}`)}
-                                                            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                                                            className={`p-2 ${themeClasses.textMuted} ${themeClasses.hover} rounded-lg transition-colors`}
                                                             title="View event details"
                                                         >
                                                             <Eye className="h-5 w-5" />
@@ -576,8 +578,8 @@ const OrganizerEventsPage = () => {
                                                         <button
                                                             onClick={() => handlePublishToggle(event.eventId, event.isPublished)}
                                                             className={`p-2 rounded-lg transition-colors ${event.isPublished
-                                                                ? 'text-orange-600 hover:bg-orange-50'
-                                                                : 'text-green-600 hover:bg-green-50'
+                                                                ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                                                                : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
                                                                 }`}
                                                             title={event.isPublished ? 'Unpublish event' : 'Publish event'}
                                                         >
@@ -586,7 +588,7 @@ const OrganizerEventsPage = () => {
 
                                                         <button
                                                             onClick={() => router.push(`/organizer/events/${event.eventId}/edit`)}
-                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                                             title="Edit event"
                                                         >
                                                             <Edit className="h-5 w-5" />
@@ -594,7 +596,7 @@ const OrganizerEventsPage = () => {
 
                                                         <button
                                                             onClick={() => handleDeleteEvent(event.eventId, event.title)}
-                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                                             title="Delete event"
                                                         >
                                                             <Trash2 className="h-5 w-5" />

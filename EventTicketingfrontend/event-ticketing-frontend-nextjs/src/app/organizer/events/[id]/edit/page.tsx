@@ -9,6 +9,8 @@ import {
     Calendar, MapPin, Globe, Users, DollarSign, Plus, Trash2, Save, ArrowLeft,
     AlertCircle, Clock, Edit, Lock, AlertTriangle, Info, X
 } from 'lucide-react';
+import { useTheme, useThemeClasses } from '@/hooks/useTheme';
+
 
 // Local interfaces to avoid import issues
 interface Category {
@@ -79,6 +81,7 @@ const EditEventPage = () => {
     const params = useParams();
     const eventId = params?.id as string;
     const { user, isOrganizer } = useAuth();
+    const themeClasses = useThemeClasses();
 
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -331,8 +334,8 @@ const EditEventPage = () => {
                 status: 'locked',
                 icon: Lock,
                 color: 'text-red-600',
-                bgColor: 'bg-red-50',
-                borderColor: 'border-red-200',
+                bgColor: 'bg-red-50 dark:bg-red-900/20',
+                borderColor: 'border-red-200 dark:border-red-800',
                 reason: reason
             };
         }
@@ -341,8 +344,8 @@ const EditEventPage = () => {
             status: 'editable',
             icon: Edit,
             color: 'text-green-600',
-            bgColor: 'bg-green-50',
-            borderColor: 'border-green-200',
+            bgColor: 'bg-green-50 dark:bg-green-900/20',
+            borderColor: 'border-green-200 dark:border-green-800',
             reason: 'Safe to edit - no sales yet'
         };
     };
@@ -699,10 +702,10 @@ const EditEventPage = () => {
 
     if (!user || !isOrganizer) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
                 </div>
             </div>
         );
@@ -710,10 +713,10 @@ const EditEventPage = () => {
 
     if (initialLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading event details...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading event details...</p>
                 </div>
             </div>
         );
@@ -725,33 +728,33 @@ const EditEventPage = () => {
     const lockedTickets = ticketTypes.length - editableTickets;
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className={`min-h-screen ${themeClasses.background}`}>
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+                        className={`flex items-center ${themeClasses.textMuted} hover:${themeClasses.text} mb-4`}
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back to Events
                     </button>
-                    <h1 className="text-3xl font-bold text-gray-900">Edit Event</h1>
-                    <p className="text-gray-600 mt-1">Update your event details</p>
+                    <h1 className={`text-3xl font-bold ${themeClasses.text}`}>Edit Event</h1>
+                    <p className={`${themeClasses.textMuted} mt-1`}>Update your event details</p>
 
                     {/* Show event duration if multi-day */}
                     {eventDuration && eventDuration > 1 && (
-                        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                             <Clock className="h-4 w-4 mr-1" />
                             {eventDuration} day event
                         </div>
                     )}
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className={`${themeClasses.card} rounded-lg shadow-sm ${themeClasses.border} border`}>
                     {/* Success/Error Messages */}
                     {success && (
-                        <div className="p-4 bg-green-50 border-b border-green-200">
+                        <div className="p-4 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0">
                                     <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -759,18 +762,18 @@ const EditEventPage = () => {
                                     </svg>
                                 </div>
                                 <div className="ml-3">
-                                    <p className="text-sm text-green-700">{success}</p>
+                                    <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {error && (
-                        <div className="p-4 bg-red-50 border-b border-red-200">
+                        <div className="p-4 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
                             <div className="flex items-center">
                                 <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
                                 <div className="ml-3">
-                                    <p className="text-sm text-red-700">{error}</p>
+                                    <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
                                 </div>
                             </div>
                         </div>
@@ -779,10 +782,10 @@ const EditEventPage = () => {
                     <form onSubmit={handleSubmit} className="p-6 space-y-8">
                         {/* Basic Information */}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Basic Information</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Event Title *
                                     </label>
                                     <input
@@ -790,15 +793,14 @@ const EditEventPage = () => {
                                         name="title"
                                         value={formData.title}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 ${formErrors.title ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.title ? 'border-red-500' : ''}`}
                                         placeholder="Enter event title"
                                     />
                                     {formErrors.title && <p className="text-red-500 text-sm mt-1">{formErrors.title}</p>}
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Description *
                                     </label>
                                     <textarea
@@ -806,27 +808,25 @@ const EditEventPage = () => {
                                         value={formData.description}
                                         onChange={handleInputChange}
                                         rows={4}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 ${formErrors.description ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.description ? 'border-red-500' : ''}`}
                                         placeholder="Describe your event in detail..."
                                     />
                                     {formErrors.description && <p className="text-red-500 text-sm mt-1">{formErrors.description}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Category *
                                     </label>
                                     <select
                                         name="categoryId"
                                         value={formData.categoryId}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.categoryId ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.categoryId ? 'border-red-500' : ''}`}
                                     >
-                                        <option value="" className="text-gray-500">Select category</option>
+                                        <option value="" className={themeClasses.textMuted}>Select category</option>
                                         {categories.map(category => (
-                                            <option key={category.categoryId} value={category.categoryId} className="text-gray-900">
+                                            <option key={category.categoryId} value={category.categoryId} className={themeClasses.text}>
                                                 {category.name}
                                             </option>
                                         ))}
@@ -835,7 +835,7 @@ const EditEventPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Max Capacity *
                                     </label>
                                     <input
@@ -844,15 +844,14 @@ const EditEventPage = () => {
                                         value={formData.maxCapacity}
                                         onChange={handleInputChange}
                                         min="1"
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 ${formErrors.maxCapacity ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.maxCapacity ? 'border-red-500' : ''}`}
                                         placeholder="Maximum attendees"
                                     />
                                     {formErrors.maxCapacity && <p className="text-red-500 text-sm mt-1">{formErrors.maxCapacity}</p>}
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Event Image URL
                                     </label>
                                     <input
@@ -860,7 +859,7 @@ const EditEventPage = () => {
                                         name="imageUrl"
                                         value={formData.imageUrl}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                                         placeholder="https://example.com/event-image.jpg"
                                     />
                                 </div>
@@ -869,14 +868,14 @@ const EditEventPage = () => {
 
                         {/* Date & Time */}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Date & Time</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Date & Time</h2>
 
                             {/* Date Range Preview */}
                             {formData.eventDate && formData.endDate && isMultiDayEvent() && (
-                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                                     <div className="flex items-center">
-                                        <Calendar className="h-4 w-4 text-blue-600 mr-2" />
-                                        <span className="text-sm text-blue-700 font-medium">
+                                        <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-2" />
+                                        <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
                                             Multi-day event: {eventDuration} days
                                         </span>
                                     </div>
@@ -885,7 +884,7 @@ const EditEventPage = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Start Date & Time *
                                     </label>
                                     <input
@@ -893,14 +892,13 @@ const EditEventPage = () => {
                                         name="eventDate"
                                         value={formData.eventDate}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.eventDate ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.eventDate ? 'border-red-500' : ''}`}
                                     />
                                     {formErrors.eventDate && <p className="text-red-500 text-sm mt-1">{formErrors.eventDate}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         End Date & Time
                                     </label>
                                     <input
@@ -908,17 +906,16 @@ const EditEventPage = () => {
                                         name="endDate"
                                         value={formData.endDate}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.endDate ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.endDate ? 'border-red-500' : ''}`}
                                     />
                                     {formErrors.endDate && <p className="text-red-500 text-sm mt-1">{formErrors.endDate}</p>}
-                                    <p className="text-xs text-gray-600 mt-1">
+                                    <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
                                         Leave empty for single-session events
                                     </p>
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Registration Deadline
                                     </label>
                                     <input
@@ -926,11 +923,10 @@ const EditEventPage = () => {
                                         name="registrationDeadline"
                                         value={formData.registrationDeadline}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.registrationDeadline ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.registrationDeadline ? 'border-red-500' : ''}`}
                                     />
                                     {formErrors.registrationDeadline && <p className="text-red-500 text-sm mt-1">{formErrors.registrationDeadline}</p>}
-                                    <p className="text-xs text-gray-600 mt-1">
+                                    <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
                                         When should registration close? (optional)
                                     </p>
                                 </div>
@@ -939,7 +935,7 @@ const EditEventPage = () => {
 
                         {/* Location */}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Location</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Location</h2>
                             <div className="space-y-4">
                                 <div className="flex items-center">
                                     <input
@@ -949,26 +945,25 @@ const EditEventPage = () => {
                                         onChange={handleInputChange}
                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                     />
-                                    <label className="ml-2 text-sm text-gray-700">
+                                    <label className={`ml-2 text-sm ${themeClasses.text}`}>
                                         This is an online event
                                     </label>
                                 </div>
 
                                 {!formData.isOnline && (
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Venue *
                                         </label>
                                         <select
                                             name="venueId"
                                             value={formData.venueId || ''}
                                             onChange={handleInputChange}
-                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.venueId ? 'border-red-500' : 'border-gray-300'
-                                                }`}
+                                            className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.venueId ? 'border-red-500' : ''}`}
                                         >
-                                            <option value="" className="text-gray-500">Select venue</option>
+                                            <option value="" className={themeClasses.textMuted}>Select venue</option>
                                             {venues.map(venue => (
-                                                <option key={venue.venueId} value={venue.venueId} className="text-gray-900">
+                                                <option key={venue.venueId} value={venue.venueId} className={themeClasses.text}>
                                                     {venue.name} - {venue.city} (Capacity: {venue.capacity})
                                                 </option>
                                             ))}
@@ -978,7 +973,7 @@ const EditEventPage = () => {
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Location Details
                                     </label>
                                     <input
@@ -986,7 +981,7 @@ const EditEventPage = () => {
                                         name="location"
                                         value={formData.location}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                                         placeholder={formData.isOnline ? "Meeting link or platform details" : "Additional location information"}
                                     />
                                 </div>
@@ -996,14 +991,14 @@ const EditEventPage = () => {
                         {/* Enhanced Ticket Types Section */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-semibold text-gray-900">Ticket Types</h2>
+                                <h2 className={`text-lg font-semibold ${themeClasses.text}`}>Ticket Types</h2>
                                 <button
                                     type="button"
                                     onClick={openCreateTicketForm}
                                     disabled={!canCreate}
                                     className={`flex items-center px-4 py-2 rounded-lg text-sm transition-colors ${canCreate
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                         }`}
                                     title={canCreate ? 'Add new ticket type' : 'Cannot create ticket types - event is published or has sales'}
                                 >
@@ -1013,9 +1008,9 @@ const EditEventPage = () => {
                             </div>
 
                             {/* Smart Editing Rules Notice */}
-                            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <h3 className="text-sm font-medium text-blue-800 mb-2">💡 Smart Ticket Type Editing</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-blue-700">
+                            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">💡 Smart Ticket Type Editing</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-blue-700 dark:text-blue-300">
                                     <div>
                                         <p className="font-medium mb-1">✅ When you CAN edit:</p>
                                         <ul className="space-y-1">
@@ -1037,25 +1032,25 @@ const EditEventPage = () => {
 
                             {/* Ticket Types Stats */}
                             <div className="grid grid-cols-3 gap-4 mb-6">
-                                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                    <div className="text-2xl font-bold text-gray-900">{ticketTypes.length}</div>
-                                    <div className="text-sm text-gray-600">Total Types</div>
+                                <div className={`${themeClasses.card} p-4 rounded-lg ${themeClasses.border} border`}>
+                                    <div className={`text-2xl font-bold ${themeClasses.text}`}>{ticketTypes.length}</div>
+                                    <div className={`text-sm ${themeClasses.textMuted}`}>Total Types</div>
                                 </div>
-                                <div className="bg-white p-4 rounded-lg border border-green-200">
-                                    <div className="text-2xl font-bold text-green-600">{editableTickets}</div>
-                                    <div className="text-sm text-gray-600">Editable</div>
+                                <div className={`${themeClasses.card} p-4 rounded-lg border-green-200 dark:border-green-800 border`}>
+                                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{editableTickets}</div>
+                                    <div className={`text-sm ${themeClasses.textMuted}`}>Editable</div>
                                 </div>
-                                <div className="bg-white p-4 rounded-lg border border-red-200">
-                                    <div className="text-2xl font-bold text-red-600">{lockedTickets}</div>
-                                    <div className="text-sm text-gray-600">Locked</div>
+                                <div className={`${themeClasses.card} p-4 rounded-lg border-red-200 dark:border-red-800 border`}>
+                                    <div className="text-2xl font-bold text-red-600 dark:text-red-400">{lockedTickets}</div>
+                                    <div className={`text-sm ${themeClasses.textMuted}`}>Locked</div>
                                 </div>
                             </div>
 
                             {ticketTypes.length === 0 ? (
-                                <div className="text-center py-8 border border-gray-200 rounded-lg bg-gray-50">
-                                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No ticket types yet</h3>
-                                    <p className="text-gray-600 mb-4">Add ticket types to start selling tickets for your event</p>
+                                <div className={`text-center py-8 ${themeClasses.border} border rounded-lg ${themeClasses.isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                                    <Users className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
+                                    <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>No ticket types yet</h3>
+                                    <p className={`${themeClasses.textMuted} mb-4`}>Add ticket types to start selling tickets for your event</p>
                                     {canCreate && (
                                         <button
                                             type="button"
@@ -1074,11 +1069,11 @@ const EditEventPage = () => {
                                         const { canEdit } = canEditTicketType(ticket);
 
                                         return (
-                                            <div key={ticket.ticketTypeId || index} className="p-6 border border-gray-200 rounded-lg bg-white">
+                                            <div key={ticket.ticketTypeId || index} className={`p-6 ${themeClasses.border} border rounded-lg ${themeClasses.card}`}>
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-1">
                                                         <div className="flex items-center space-x-3 mb-3">
-                                                            <h3 className="text-lg font-medium text-gray-900">
+                                                            <h3 className={`text-lg font-medium ${themeClasses.text}`}>
                                                                 {ticket.name || `Ticket Type ${index + 1}`}
                                                             </h3>
                                                             <div className={`px-2 py-1 rounded-full text-xs font-medium ${editStatus.bgColor} ${editStatus.borderColor} border`}>
@@ -1092,33 +1087,33 @@ const EditEventPage = () => {
                                                         </div>
 
                                                         {ticket.description && (
-                                                            <p className="text-gray-600 mb-4">{ticket.description}</p>
+                                                            <p className={`${themeClasses.textMuted} mb-4`}>{ticket.description}</p>
                                                         )}
 
                                                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                                                             <div>
-                                                                <span className="font-medium text-gray-600">Price:</span>
-                                                                <p className="text-gray-900 font-medium">RM {ticket.price}</p>
+                                                                <span className={`font-medium ${themeClasses.textMuted}`}>Price:</span>
+                                                                <p className={`${themeClasses.text} font-medium`}>RM {ticket.price}</p>
                                                             </div>
                                                             <div>
-                                                                <span className="font-medium text-gray-600">Available:</span>
-                                                                <p className="text-gray-900">{ticket.quantityAvailable}</p>
+                                                                <span className={`font-medium ${themeClasses.textMuted}`}>Available:</span>
+                                                                <p className={themeClasses.text}>{ticket.quantityAvailable}</p>
                                                             </div>
                                                             <div>
-                                                                <span className="font-medium text-gray-600">Sold:</span>
-                                                                <p className={`font-medium ${ticket.quantitySold > 0 ? 'text-blue-600' : 'text-gray-900'}`}>
+                                                                <span className={`font-medium ${themeClasses.textMuted}`}>Sold:</span>
+                                                                <p className={`font-medium ${ticket.quantitySold > 0 ? 'text-blue-600 dark:text-blue-400' : themeClasses.text}`}>
                                                                     {ticket.quantitySold}
                                                                 </p>
                                                             </div>
                                                             <div>
-                                                                <span className="font-medium text-gray-600">Status:</span>
-                                                                <p className="text-gray-900">{ticket.isActive ? 'Active' : 'Inactive'}</p>
+                                                                <span className={`font-medium ${themeClasses.textMuted}`}>Status:</span>
+                                                                <p className={themeClasses.text}>{ticket.isActive ? 'Active' : 'Inactive'}</p>
                                                             </div>
                                                         </div>
 
                                                         {/* Progress bar for sales */}
                                                         <div className="mt-4">
-                                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                            <div className={`w-full ${themeClasses.isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2`}>
                                                                 <div
                                                                     className={`h-2 rounded-full ${ticket.quantitySold > 0 ? 'bg-blue-600' : 'bg-gray-400'}`}
                                                                     style={{
@@ -1126,13 +1121,13 @@ const EditEventPage = () => {
                                                                     }}
                                                                 ></div>
                                                             </div>
-                                                            <p className="text-xs text-gray-500 mt-1">
+                                                            <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
                                                                 {ticket.quantityAvailable - ticket.quantitySold} remaining
                                                             </p>
                                                         </div>
 
                                                         {/* Edit status explanation */}
-                                                        <div className="mt-4 text-xs text-gray-600">
+                                                        <div className={`mt-4 text-xs ${themeClasses.textMuted}`}>
                                                             <strong>Edit Status:</strong> {editStatus.reason}
                                                         </div>
                                                     </div>
@@ -1143,8 +1138,8 @@ const EditEventPage = () => {
                                                             onClick={() => openEditTicketForm(ticket)}
                                                             disabled={!canEdit}
                                                             className={`p-2 rounded-lg transition-colors ${canEdit
-                                                                    ? 'text-blue-600 hover:bg-blue-50 cursor-pointer'
-                                                                    : 'text-gray-400 cursor-not-allowed bg-gray-50'
+                                                                ? 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer'
+                                                                : `${themeClasses.textMuted} cursor-not-allowed ${themeClasses.isDark ? 'bg-gray-800' : 'bg-gray-50'}`
                                                                 }`}
                                                             title={canEdit ? 'Edit ticket type' : editStatus.reason}
                                                         >
@@ -1161,9 +1156,9 @@ const EditEventPage = () => {
 
                         {/* Publishing Options */}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Publishing Options</h2>
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                                <p className="text-sm text-yellow-700">
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Publishing Options</h2>
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+                                <p className="text-sm text-yellow-700 dark:text-yellow-300">
                                     <strong>Note:</strong> Publishing status is managed separately via the publish/unpublish buttons in your events list.
                                     This setting here is for reference only.
                                 </p>
@@ -1177,21 +1172,21 @@ const EditEventPage = () => {
                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                     disabled
                                 />
-                                <label className="ml-2 text-sm text-gray-500">
+                                <label className={`ml-2 text-sm ${themeClasses.textMuted}`}>
                                     Published (visible to the public) - {formData.isPublished ? 'Currently Published' : 'Currently Unpublished'}
                                 </label>
                             </div>
-                            <p className="text-xs text-gray-600 mt-1">
+                            <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
                                 Use the publish/unpublish buttons in the events list to change this status
                             </p>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <div className={`flex justify-end space-x-4 pt-6 border-t ${themeClasses.border}`}>
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                className={`px-6 py-2 ${themeClasses.border} border ${themeClasses.text} rounded-lg ${themeClasses.hover} transition-colors`}
                                 disabled={loading}
                             >
                                 Cancel
@@ -1220,13 +1215,13 @@ const EditEventPage = () => {
                 {/* Create Ticket Type Modal */}
                 {showCreateTicketForm && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className={`${themeClasses.card} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-xl font-semibold text-gray-900">Create Ticket Type</h2>
+                                    <h2 className={`text-xl font-semibold ${themeClasses.text}`}>Create Ticket Type</h2>
                                     <button
                                         onClick={() => setShowCreateTicketForm(false)}
-                                        className="text-gray-400 hover:text-gray-600"
+                                        className={`${themeClasses.textMuted} hover:${themeClasses.text}`}
                                     >
                                         <X className="h-6 w-6" />
                                     </button>
@@ -1234,7 +1229,7 @@ const EditEventPage = () => {
 
                                 <form onSubmit={handleCreateTicketType} className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Ticket Type Name *
                                         </label>
                                         <input
@@ -1242,14 +1237,14 @@ const EditEventPage = () => {
                                             name="name"
                                             value={createTicketData.name}
                                             onChange={handleCreateTicketInputChange}
-                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${ticketFormErrors.name ? 'border-red-500' : 'border-gray-300'}`}
+                                            className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${ticketFormErrors.name ? 'border-red-500' : ''}`}
                                             placeholder="e.g., General Admission, VIP, Early Bird"
                                         />
                                         {ticketFormErrors.name && <p className="text-red-500 text-sm mt-1">{ticketFormErrors.name}</p>}
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Description
                                         </label>
                                         <textarea
@@ -1257,14 +1252,14 @@ const EditEventPage = () => {
                                             value={createTicketData.description}
                                             onChange={handleCreateTicketInputChange}
                                             rows={3}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                                             placeholder="Optional description of what this ticket includes..."
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                 Price (RM) *
                                             </label>
                                             <input
@@ -1274,14 +1269,14 @@ const EditEventPage = () => {
                                                 onChange={handleCreateTicketInputChange}
                                                 min="0"
                                                 step="0.01"
-                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${ticketFormErrors.price ? 'border-red-500' : 'border-gray-300'}`}
+                                                className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${ticketFormErrors.price ? 'border-red-500' : ''}`}
                                                 placeholder="0.00"
                                             />
                                             {ticketFormErrors.price && <p className="text-red-500 text-sm mt-1">{ticketFormErrors.price}</p>}
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                 Quantity Available *
                                             </label>
                                             <input
@@ -1290,18 +1285,18 @@ const EditEventPage = () => {
                                                 value={createTicketData.quantityAvailable}
                                                 onChange={handleCreateTicketInputChange}
                                                 min="1"
-                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${ticketFormErrors.quantityAvailable ? 'border-red-500' : 'border-gray-300'}`}
+                                                className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${ticketFormErrors.quantityAvailable ? 'border-red-500' : ''}`}
                                                 placeholder="Number of tickets available"
                                             />
                                             {ticketFormErrors.quantityAvailable && <p className="text-red-500 text-sm mt-1">{ticketFormErrors.quantityAvailable}</p>}
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                                    <div className={`flex justify-end space-x-4 pt-6 border-t ${themeClasses.border}`}>
                                         <button
                                             type="button"
                                             onClick={() => setShowCreateTicketForm(false)}
-                                            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                            className={`px-6 py-2 ${themeClasses.border} border ${themeClasses.text} rounded-lg ${themeClasses.hover} transition-colors`}
                                         >
                                             Cancel
                                         </button>
@@ -1332,16 +1327,16 @@ const EditEventPage = () => {
                 {/* Edit Ticket Type Modal */}
                 {showEditTicketForm && editingTicketType && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className={`${themeClasses.card} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-xl font-semibold text-gray-900">Edit Ticket Type</h2>
+                                    <h2 className={`text-xl font-semibold ${themeClasses.text}`}>Edit Ticket Type</h2>
                                     <button
                                         onClick={() => {
                                             setShowEditTicketForm(false);
                                             setEditingTicketType(null);
                                         }}
-                                        className="text-gray-400 hover:text-gray-600"
+                                        className={`${themeClasses.textMuted} hover:${themeClasses.text}`}
                                     >
                                         <X className="h-6 w-6" />
                                     </button>
@@ -1349,16 +1344,16 @@ const EditEventPage = () => {
 
                                 <form onSubmit={handleUpdateTicketType} className="space-y-4">
                                     {/* Safe Edit Notice */}
-                                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                                        <h4 className="text-sm font-medium text-green-800 mb-2">✅ Safe to Edit</h4>
-                                        <p className="text-xs text-green-700">
+                                    <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                        <h4 className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">✅ Safe to Edit</h4>
+                                        <p className="text-xs text-green-700 dark:text-green-300">
                                             This ticket type can be safely modified because no tickets have been sold yet
                                             and the event is still in draft status.
                                         </p>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Ticket Type Name *
                                         </label>
                                         <input
@@ -1366,14 +1361,14 @@ const EditEventPage = () => {
                                             name="name"
                                             value={editTicketData.name}
                                             onChange={handleEditTicketInputChange}
-                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${ticketFormErrors.name ? 'border-red-500' : 'border-gray-300'}`}
+                                            className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${ticketFormErrors.name ? 'border-red-500' : ''}`}
                                             placeholder="e.g., General Admission, VIP, Early Bird"
                                         />
                                         {ticketFormErrors.name && <p className="text-red-500 text-sm mt-1">{ticketFormErrors.name}</p>}
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Description
                                         </label>
                                         <textarea
@@ -1381,14 +1376,14 @@ const EditEventPage = () => {
                                             value={editTicketData.description}
                                             onChange={handleEditTicketInputChange}
                                             rows={3}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                                             placeholder="Optional description of what this ticket includes..."
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                 Price (RM) *
                                             </label>
                                             <input
@@ -1398,14 +1393,14 @@ const EditEventPage = () => {
                                                 onChange={handleEditTicketInputChange}
                                                 min="0"
                                                 step="0.01"
-                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${ticketFormErrors.price ? 'border-red-500' : 'border-gray-300'}`}
+                                                className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${ticketFormErrors.price ? 'border-red-500' : ''}`}
                                                 placeholder="0.00"
                                             />
                                             {ticketFormErrors.price && <p className="text-red-500 text-sm mt-1">{ticketFormErrors.price}</p>}
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                 Quantity Available *
                                             </label>
                                             <input
@@ -1414,21 +1409,21 @@ const EditEventPage = () => {
                                                 value={editTicketData.quantityAvailable}
                                                 onChange={handleEditTicketInputChange}
                                                 min="1"
-                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${ticketFormErrors.quantityAvailable ? 'border-red-500' : 'border-gray-300'}`}
+                                                className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${ticketFormErrors.quantityAvailable ? 'border-red-500' : ''}`}
                                                 placeholder="Number of tickets available"
                                             />
                                             {ticketFormErrors.quantityAvailable && <p className="text-red-500 text-sm mt-1">{ticketFormErrors.quantityAvailable}</p>}
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                                    <div className={`flex justify-end space-x-4 pt-6 border-t ${themeClasses.border}`}>
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 setShowEditTicketForm(false);
                                                 setEditingTicketType(null);
                                             }}
-                                            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                            className={`px-6 py-2 ${themeClasses.border} border ${themeClasses.text} rounded-lg ${themeClasses.hover} transition-colors`}
                                         >
                                             Cancel
                                         </button>

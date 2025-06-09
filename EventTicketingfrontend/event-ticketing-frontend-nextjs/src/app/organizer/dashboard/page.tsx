@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { eventsApi } from '@/lib/api';
+import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 import {
     Calendar,
     Users,
@@ -59,6 +60,10 @@ interface Stats {
 
 const OrganizerDashboard: React.FC = () => {
     const { user, isOrganizer } = useAuth();
+    // Actually use the theme hooks!
+    const themeClasses = useThemeClasses();
+    const theme = useTheme();
+
     const [loading, setLoading] = useState(true);
     const [events, setEvents] = useState<Event[]>([]);
     const [stats, setStats] = useState<Stats>({
@@ -188,16 +193,16 @@ const OrganizerDashboard: React.FC = () => {
         trendValue?: string;
         color?: string;
     }> = ({ icon: Icon, title, value, subtitle, trend, trendValue, color = 'bg-blue-500' }) => (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className={`${themeClasses.card} p-6 rounded-lg shadow-sm ${themeClasses.border} border`}>
             <div className="flex items-center justify-between">
                 <div className="flex items-center">
                     <div className={`p-3 rounded-lg ${color}`}>
                         <Icon className="h-6 w-6 text-white" />
                     </div>
                     <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">{title}</p>
-                        <p className="text-2xl font-bold text-gray-900">{value}</p>
-                        {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+                        <p className={`text-sm font-medium ${themeClasses.textMuted}`}>{title}</p>
+                        <p className={`text-2xl font-bold ${themeClasses.text}`}>{value}</p>
+                        {subtitle && <p className={`text-sm ${themeClasses.textMuted}`}>{subtitle}</p>}
                     </div>
                 </div>
                 {trend && (
@@ -209,12 +214,6 @@ const OrganizerDashboard: React.FC = () => {
             </div>
         </div>
     );
-
-    
-
-    // Updated EventCard component section - replace the date/time display part in your existing component
-
-    // Updated EventCard component section - replace the date/time display part in your existing component
 
     const EventCard: React.FC<{ event: Event }> = ({ event }) => {
         // Helper function to normalize date to string
@@ -237,8 +236,6 @@ const OrganizerDashboard: React.FC = () => {
             // Compare just the date portion (ignore time)
             const startDateOnly = start.toDateString();
             const endDateOnly = end.toDateString();
-
-            console.log('Comparing dates:', { startDateOnly, endDateOnly, isMultiDay: startDateOnly !== endDateOnly });
 
             return startDateOnly !== endDateOnly;
         };
@@ -348,37 +345,23 @@ const OrganizerDashboard: React.FC = () => {
         const startDateTime = event.startDateTime || event.eventDate;
         const endDateTime = event.endDateTime || event.startDateTime || event.eventDate;
 
-        // Debug logging to see what data we're working with
-        console.log('Event data for date formatting:', {
-            eventId: event.eventId,
-            title: event.title,
-            startDateTime: startDateTime,
-            endDateTime: endDateTime,
-            eventDate: event.eventDate,
-            startDateObj: new Date(startDateTime),
-            endDateObj: new Date(endDateTime),
-            startDateString: new Date(startDateTime).toDateString(),
-            endDateString: new Date(endDateTime).toDateString(),
-            isSameDay: new Date(startDateTime).toDateString() === new Date(endDateTime).toDateString()
-        });
-
         return (
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div className={`${themeClasses.card} p-6 rounded-lg shadow-sm ${themeClasses.border} border ${themeClasses.hover} transition-shadow`}>
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.title}</h3>
-                        <p className="text-gray-600 text-sm line-clamp-2">{event.description}</p>
+                        <h3 className={`text-lg font-semibold ${themeClasses.text} mb-2`}>{event.title}</h3>
+                        <p className={`${themeClasses.textMuted} text-sm line-clamp-2`}>{event.description}</p>
                     </div>
                     <div className="flex flex-col gap-2 ml-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${event.isPublished
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
                             }`}>
                             {event.isPublished ? 'Published' : 'Draft'}
                         </span>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${event.isOnline
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-purple-100 text-purple-800'
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
                             }`}>
                             {event.isOnline ? 'Online' : 'In-Person'}
                         </span>
@@ -387,7 +370,7 @@ const OrganizerDashboard: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     {/* Date Range Display */}
-                    <div className="flex items-start text-sm text-gray-600">
+                    <div className={`flex items-start text-sm ${themeClasses.textMuted}`}>
                         <Calendar className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
                         <div className="flex flex-col">
                             <span className="font-medium">
@@ -396,7 +379,7 @@ const OrganizerDashboard: React.FC = () => {
                             {(() => {
                                 const duration = getEventDuration();
                                 return duration && duration > 1 ? (
-                                    <span className="text-xs text-blue-600 mt-1 font-medium">
+                                    <span className="text-xs text-blue-600 dark:text-blue-400 mt-1 font-medium">
                                         {duration} day event
                                     </span>
                                 ) : null;
@@ -405,43 +388,43 @@ const OrganizerDashboard: React.FC = () => {
                     </div>
 
                     {/* Time Range Display */}
-                    <div className="flex items-start text-sm text-gray-600">
+                    <div className={`flex items-start text-sm ${themeClasses.textMuted}`}>
                         <Clock className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
                         <div className="flex flex-col">
                             <span>
                                 {formatTimeRange(startDateTime, endDateTime)}
                             </span>
                             {isMultiDayEvent(startDateTime, endDateTime) && (
-                                <span className="text-xs text-gray-500 mt-1">
+                                <span className={`text-xs ${themeClasses.textMuted} mt-1`}>
                                     Multi-day schedule
                                 </span>
                             )}
                         </div>
                     </div>
 
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className={`flex items-center text-sm ${themeClasses.textMuted}`}>
                         {event.isOnline ? <Globe className="h-4 w-4 mr-2 flex-shrink-0" /> : <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />}
                         <span className="truncate">{event.venueName || 'Virtual Event'}</span>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className={`flex items-center text-sm ${themeClasses.textMuted}`}>
                         <Tag className="h-4 w-4 mr-2 flex-shrink-0" />
                         <span>{event.categoryName || 'Uncategorized'}</span>
                     </div>
                 </div>
 
                 {/* Event Stats */}
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg mb-4">
+                <div className={`flex justify-between items-center p-3 ${themeClasses.isDark ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg mb-4`}>
                     <div className="text-center">
-                        <p className="text-lg font-bold text-gray-900">{event.ticketsSold || 0}</p>
-                        <p className="text-xs text-gray-600">Tickets Sold</p>
+                        <p className={`text-lg font-bold ${themeClasses.text}`}>{event.ticketsSold || 0}</p>
+                        <p className={`text-xs ${themeClasses.textMuted}`}>Tickets Sold</p>
                     </div>
                     <div className="text-center">
-                        <p className="text-lg font-bold text-gray-900">{event.availableTickets + event.ticketsSold || 'Unlimited'}</p>
-                        <p className="text-xs text-gray-600">Max Capacity</p>
+                        <p className={`text-lg font-bold ${themeClasses.text}`}>{event.availableTickets + event.ticketsSold || 'Unlimited'}</p>
+                        <p className={`text-xs ${themeClasses.textMuted}`}>Max Capacity</p>
                     </div>
                     <div className="text-center">
-                        <p className="text-lg font-bold text-green-600">{event.currency} {(event.revenue || 0).toLocaleString()}</p>
-                        <p className="text-xs text-gray-600">Revenue</p>
+                        <p className="text-lg font-bold text-green-600 dark:text-green-400">{event.currency} {(event.revenue || 0).toLocaleString()}</p>
+                        <p className={`text-xs ${themeClasses.textMuted}`}>Revenue</p>
                     </div>
                 </div>
 
@@ -450,14 +433,14 @@ const OrganizerDashboard: React.FC = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={() => window.open(`/events/${event.eventId}`, '_blank')}
-                            className="flex items-center px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                            className="flex items-center px-3 py-2 text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                         >
                             <Eye className="h-4 w-4 mr-1" />
                             View
                         </button>
                         <button
                             onClick={() => window.location.href = `/organizer/events/${event.eventId}/edit`}
-                            className="flex items-center px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                            className={`flex items-center px-3 py-2 text-sm ${themeClasses.isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg transition-colors`}
                         >
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
@@ -467,15 +450,15 @@ const OrganizerDashboard: React.FC = () => {
                         <button
                             onClick={() => handlePublishEvent(event.eventId, event.isPublished)}
                             className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${event.isPublished
-                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:hover:bg-yellow-900/50'
+                                : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
                                 }`}
                         >
                             {event.isPublished ? 'Unpublish' : 'Publish'}
                         </button>
                         <button
                             onClick={() => handleDeleteEvent(event.eventId)}
-                            className="flex items-center px-3 py-2 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                            className="flex items-center px-3 py-2 text-sm bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                         >
                             <Trash2 className="h-4 w-4 mr-1" />
                             Delete
@@ -488,12 +471,12 @@ const OrganizerDashboard: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="p-8">
+            <div className={`p-8 min-h-screen ${themeClasses.background}`}>
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-center py-12">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                            <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+                            <p className={`mt-4 ${themeClasses.textMuted}`}>Loading your dashboard...</p>
                         </div>
                     </div>
                 </div>
@@ -502,14 +485,14 @@ const OrganizerDashboard: React.FC = () => {
     }
 
     return (
-        <div className="p-6">
+        <div className={`p-6 min-h-screen ${themeClasses.background}`}>
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                            <p className="text-gray-600 mt-1">Welcome back, {user?.firstName}! Here&apos;s what&apos;s happening with your events.</p>
+                            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>Dashboard</h1>
+                            <p className={`${themeClasses.textMuted} mt-1`}>Welcome back, {user?.firstName}! Here&apos;s what&apos;s happening with your events.</p>
                         </div>
                         <button
                             onClick={() => window.location.href = '/organizer/events/create'}
@@ -523,8 +506,8 @@ const OrganizerDashboard: React.FC = () => {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-600">{error}</p>
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800 rounded-lg">
+                        <p className="text-red-600 dark:text-red-400">{error}</p>
                     </div>
                 )}
 
@@ -560,11 +543,11 @@ const OrganizerDashboard: React.FC = () => {
                 {/* Recent Events */}
                 <div>
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900">Your Events</h2>
+                        <h2 className={`text-xl font-semibold ${themeClasses.text}`}>Your Events</h2>
                         {events.length > 6 && (
                             <button
                                 onClick={() => window.location.href = '/organizer/events'}
-                                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
                             >
                                 View all events →
                             </button>
@@ -572,10 +555,10 @@ const OrganizerDashboard: React.FC = () => {
                     </div>
 
                     {events.length === 0 ? (
-                        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No events yet</h3>
-                            <p className="text-gray-600 mb-6">Create your first event to get started with EventPro.</p>
+                        <div className={`text-center py-12 ${themeClasses.card} rounded-lg ${themeClasses.border} border`}>
+                            <Calendar className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
+                            <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>No events yet</h3>
+                            <p className={`${themeClasses.textMuted} mb-6`}>Create your first event to get started with EventPro.</p>
                             <button
                                 onClick={() => window.location.href = '/organizer/events/create'}
                                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"

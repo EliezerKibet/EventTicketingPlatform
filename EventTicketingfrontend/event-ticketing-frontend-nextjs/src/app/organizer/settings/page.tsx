@@ -68,15 +68,14 @@ interface UserPreferences {
     autoPublish: boolean;
 
     // Appearance preferences
-    // Enhanced appearance preferences 
-    theme: 'light' | 'dark' | 'auto'; 
+    theme: 'light' | 'dark' | 'auto';
     language: string;
     dateFormat: string;
-    timeFormat: '12h' | '24h';  
+    timeFormat: '12h' | '24h';
     currency: string;
-    accentColor: string;        
-    fontSize: 'small' | 'medium' | 'large';  
-    compactMode: boolean;    
+    accentColor: string;
+    fontSize: 'small' | 'medium' | 'large';
+    compactMode: boolean;
 }
 
 interface UserProfileData {
@@ -87,7 +86,6 @@ interface UserProfileData {
     state?: string;
     zipCode?: string;
     country?: string;
-    // Additional fields from UserProfile entity for UI
     bio?: string;
     website?: string;
     timeZone?: string;
@@ -162,8 +160,6 @@ const currencies = [
     { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' }
 ];
 
-
-
 const OrganizerSettings: React.FC = () => {
     // State declarations
     const [activeTab, setActiveTab] = useState('profile');
@@ -173,7 +169,7 @@ const OrganizerSettings: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
     const [error, setError] = useState<string | null>(null);
-    const { updateTheme } = useTheme();
+    const { updateTheme, isDark } = useTheme();
     const themeClasses = useThemeClasses();
 
     // User basic data (from User entity)
@@ -242,6 +238,16 @@ const OrganizerSettings: React.FC = () => {
         newPassword: '',
         confirmPassword: ''
     });
+
+    // Get theme-aware input styles
+    const getInputStyles = (hasError = false) => {
+        const baseStyles = `w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 placeholder-opacity-60`;
+        const themeStyles = isDark
+            ? `${themeClasses.card} ${themeClasses.text} ${themeClasses.border} placeholder-gray-400`
+            : `bg-white text-gray-900 border-gray-300 placeholder-gray-600`;
+        const errorStyles = hasError ? 'border-red-500' : '';
+        return `${baseStyles} ${themeStyles} ${errorStyles}`;
+    };
 
     // Authentication check
     const checkAuth = (): boolean => {
@@ -318,7 +324,6 @@ const OrganizerSettings: React.FC = () => {
                     state: organizationData.state || '',
                     zipCode: organizationData.zipCode || '',
                     country: organizationData.country || 'United States',
-                    // These come from user profile response
                     bio: userResponse.bio || '',
                     website: userResponse.website || '',
                     timeZone: userResponse.timeZone || 'America/New_York',
@@ -334,7 +339,6 @@ const OrganizerSettings: React.FC = () => {
                     state: '',
                     zipCode: '',
                     country: 'United States',
-                    // These come from user profile response  
                     bio: userResponse.bio || '',
                     website: userResponse.website || '',
                     timeZone: userResponse.timeZone || 'America/New_York',
@@ -370,7 +374,6 @@ const OrganizerSettings: React.FC = () => {
                     autoPublish: preferencesData.autoPublish ?? false,
 
                     // Appearance preferences
-
                     theme: (['light', 'dark', 'auto'].includes(preferencesData.theme) ? preferencesData.theme : 'light') as 'light' | 'dark' | 'auto',
                     language: preferencesData.language ?? 'en',
                     dateFormat: preferencesData.dateFormat ?? 'MM/dd/yyyy',
@@ -379,11 +382,9 @@ const OrganizerSettings: React.FC = () => {
                     accentColor: preferencesData.accentColor ?? 'blue',
                     fontSize: (['small', 'medium', 'large'].includes(preferencesData.fontSize) ? preferencesData.fontSize : 'medium') as 'small' | 'medium' | 'large',
                     compactMode: preferencesData.compactMode ?? false
-
                 });
             } catch (prefError) {
                 console.log('No preferences found, using defaults');
-                // Keep existing default preferences
             }
 
         } catch (error: any) {
@@ -422,7 +423,6 @@ const OrganizerSettings: React.FC = () => {
         setError(null);
 
         try {
-            // Update basic user info
             await userApi.updateProfile({
                 firstName: userData.firstName,
                 lastName: userData.lastName,
@@ -495,7 +495,6 @@ const OrganizerSettings: React.FC = () => {
                 dateFormat: userPreferences.dateFormat,
                 timeFormat: userPreferences.timeFormat,
                 currency: userPreferences.currency,
-                // ADD THESE NEW FIELDS:
                 accentColor: userPreferences.accentColor,
                 fontSize: userPreferences.fontSize,
                 compactMode: userPreferences.compactMode
@@ -580,7 +579,7 @@ const OrganizerSettings: React.FC = () => {
             [key]: value
         }));
 
-        // Update global theme immediately
+        // Update theme immediately for theme-related changes
         if (key === 'theme' || key === 'accentColor' || key === 'fontSize' || key === 'compactMode') {
             updateTheme({ [key]: value });
         }
@@ -597,6 +596,18 @@ const OrganizerSettings: React.FC = () => {
         }
     }, [authStatus]);
 
+    // Sync theme when preferences are loaded from API (only once when loading finishes)
+    useEffect(() => {
+        if (!profileLoading && authStatus === 'authenticated') {
+            updateTheme({
+                theme: userPreferences.theme,
+                accentColor: userPreferences.accentColor,
+                fontSize: userPreferences.fontSize,
+                compactMode: userPreferences.compactMode
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [profileLoading, authStatus]); // Only depend on loading state, not preferences
 
     // Tab configuration
     const tabs = [
@@ -614,7 +625,7 @@ const OrganizerSettings: React.FC = () => {
             type="button"
             onClick={() => !disabled && onChange(!enabled)}
             disabled={disabled}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-blue-600' : 'bg-gray-200'
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-blue-600' : isDark ? 'bg-gray-600' : 'bg-gray-200'
                 } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         >
             <span
@@ -628,55 +639,55 @@ const OrganizerSettings: React.FC = () => {
     const renderProfileTab = () => (
         <div className="space-y-6">
             {profileLoading && (
-                <div className="bg-white rounded-lg p-6 shadow-sm border">
+                <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
                     <div className="flex items-center justify-center h-32">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                        <span className="ml-3 text-black">Loading profile...</span>
+                        <span className={`ml-3 ${themeClasses.text}`}>Loading profile...</span>
                     </div>
                 </div>
             )}
 
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                     <div className="flex items-center">
-                        <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
-                        <span className="text-sm text-red-800">{error}</span>
+                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
+                        <span className="text-sm text-red-800 dark:text-red-300">{error}</span>
                     </div>
                 </div>
             )}
 
             {!profileLoading && (
-                <div className="bg-white rounded-lg p-6 shadow-sm border">
-                    <h3 className="text-lg font-semibold text-black mb-4">Personal Information</h3>
+                <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                    <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Personal Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-black mb-2">First Name</label>
+                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>First Name</label>
                             <input
                                 type="text"
                                 value={userData.firstName}
                                 onChange={(e) => setUserData({ ...userData, firstName: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                                className={getInputStyles()}
                                 disabled={loading}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-black mb-2">Last Name</label>
+                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Last Name</label>
                             <input
                                 type="text"
                                 value={userData.lastName}
                                 onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                                className={getInputStyles()}
                                 disabled={loading}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-black mb-2">Email</label>
+                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Email</label>
                             <div className="relative">
                                 <input
                                     type="email"
                                     value={userData.email}
                                     onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                                    className={getInputStyles()}
                                     disabled={loading}
                                 />
                                 {userData.isEmailVerified && (
@@ -684,17 +695,17 @@ const OrganizerSettings: React.FC = () => {
                                 )}
                             </div>
                             {!userData.isEmailVerified && (
-                                <p className="text-xs text-amber-600 mt-1">Email address not verified</p>
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Email address not verified</p>
                             )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-black mb-2">Phone Number</label>
+                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Phone Number</label>
                             <div className="relative">
                                 <input
                                     type="tel"
                                     value={userData.phoneNumber || ''}
                                     onChange={(e) => setUserData({ ...userData, phoneNumber: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                                    className={getInputStyles()}
                                     disabled={loading}
                                     placeholder="Optional"
                                 />
@@ -703,7 +714,7 @@ const OrganizerSettings: React.FC = () => {
                                 )}
                             </div>
                             {userData.phoneNumber && !userData.isPhoneVerified && (
-                                <p className="text-xs text-amber-600 mt-1">Phone number not verified</p>
+                                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Phone number not verified</p>
                             )}
                         </div>
                     </div>
@@ -711,23 +722,23 @@ const OrganizerSettings: React.FC = () => {
             )}
 
             {!profileLoading && (
-                <div className="bg-white rounded-lg p-6 shadow-sm border">
-                    <h3 className="text-lg font-semibold text-black mb-4">Change Password</h3>
+                <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                    <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Change Password</h3>
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-black mb-2">Current Password</label>
+                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Current Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     value={passwordData.currentPassword}
                                     onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black pr-10"
+                                    className={`${getInputStyles()} pr-10`}
                                     disabled={loading}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-2.5 text-gray-500"
+                                    className={`absolute right-3 top-2.5 ${themeClasses.textMuted}`}
                                     disabled={loading}
                                 >
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -735,23 +746,23 @@ const OrganizerSettings: React.FC = () => {
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-black mb-2">New Password</label>
+                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>New Password</label>
                             <input
                                 type="password"
                                 value={passwordData.newPassword}
                                 onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                                className={getInputStyles()}
                                 disabled={loading}
                                 placeholder="Minimum 6 characters"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-black mb-2">Confirm New Password</label>
+                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Confirm New Password</label>
                             <input
                                 type="password"
                                 value={passwordData.confirmPassword}
                                 onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                                className={getInputStyles()}
                                 disabled={loading}
                             />
                         </div>
@@ -772,47 +783,47 @@ const OrganizerSettings: React.FC = () => {
 
     const renderOrganizationTab = () => (
         <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Organization Information</h3>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Organization Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Company Name</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Company Name</label>
                         <input
                             type="text"
                             value={userProfile.companyName || ''}
                             onChange={(e) => setUserProfile({ ...userProfile, companyName: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Website</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Website</label>
                         <input
                             type="url"
                             value={userProfile.website || ''}
                             onChange={(e) => setUserProfile({ ...userProfile, website: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                             placeholder="https://example.com"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Business License</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Business License</label>
                         <input
                             type="text"
                             value={userProfile.businessLicense || ''}
                             onChange={(e) => setUserProfile({ ...userProfile, businessLicense: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                             placeholder="Business license number"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Time Zone</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Time Zone</label>
                         <select
                             value={userProfile.timeZone || 'America/New_York'}
                             onChange={(e) => setUserProfile({ ...userProfile, timeZone: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         >
                             <option value="America/New_York">Eastern Time</option>
@@ -825,12 +836,12 @@ const OrganizerSettings: React.FC = () => {
                 </div>
 
                 <div className="mt-4">
-                    <label className="block text-sm font-medium text-black mb-2">Address</label>
+                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Address</label>
                     <input
                         type="text"
                         value={userProfile.address || ''}
                         onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                        className={getInputStyles()}
                         disabled={loading}
                         placeholder="Street address"
                     />
@@ -838,54 +849,54 @@ const OrganizerSettings: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">City</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>City</label>
                         <input
                             type="text"
                             value={userProfile.city || ''}
                             onChange={(e) => setUserProfile({ ...userProfile, city: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">State</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>State</label>
                         <input
                             type="text"
                             value={userProfile.state || ''}
                             onChange={(e) => setUserProfile({ ...userProfile, state: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">ZIP Code</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>ZIP Code</label>
                         <input
                             type="text"
                             value={userProfile.zipCode || ''}
                             onChange={(e) => setUserProfile({ ...userProfile, zipCode: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Country</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Country</label>
                         <input
                             type="text"
                             value={userProfile.country || ''}
                             onChange={(e) => setUserProfile({ ...userProfile, country: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         />
                     </div>
                 </div>
 
                 <div className="mt-4">
-                    <label className="block text-sm font-medium text-black mb-2">Bio</label>
+                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Bio</label>
                     <textarea
                         value={userProfile.bio || ''}
                         onChange={(e) => setUserProfile({ ...userProfile, bio: e.target.value })}
                         rows={4}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                        className={getInputStyles()}
                         placeholder="Describe your organization and what types of events you organize..."
                         disabled={loading}
                     />
@@ -894,8 +905,8 @@ const OrganizerSettings: React.FC = () => {
                 <div className="mt-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Event Organizer</h4>
-                            <p className="text-xs text-gray-600">Enable organizer features for this account</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Event Organizer</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Enable organizer features for this account</p>
                         </div>
                         <Toggle
                             enabled={userData.isOrganizer || false}
@@ -910,13 +921,13 @@ const OrganizerSettings: React.FC = () => {
 
     const renderNotificationsTab = () => (
         <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Communication Preferences</h3>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Communication Preferences</h3>
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Email Notifications</h4>
-                            <p className="text-xs text-gray-600">Receive notifications via email</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Email Notifications</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Receive notifications via email</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.emailNotifications}
@@ -927,8 +938,8 @@ const OrganizerSettings: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">SMS Notifications</h4>
-                            <p className="text-xs text-gray-600">Receive notifications via text message</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>SMS Notifications</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Receive notifications via text message</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.smsNotifications}
@@ -939,13 +950,13 @@ const OrganizerSettings: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Event Notifications</h3>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Event Notifications</h3>
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">New Bookings</h4>
-                            <p className="text-xs text-gray-600">Get notified when someone books your event</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>New Bookings</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Get notified when someone books your event</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.newBookingNotifications}
@@ -956,8 +967,8 @@ const OrganizerSettings: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Cancellations</h4>
-                            <p className="text-xs text-gray-600">Get notified when bookings are cancelled</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Cancellations</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Get notified when bookings are cancelled</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.cancellationNotifications}
@@ -968,8 +979,8 @@ const OrganizerSettings: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Low Inventory</h4>
-                            <p className="text-xs text-gray-600">Get notified when ticket inventory is low</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Low Inventory</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Get notified when ticket inventory is low</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.lowInventoryNotifications}
@@ -980,13 +991,13 @@ const OrganizerSettings: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Report Notifications</h3>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Report Notifications</h3>
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Daily Reports</h4>
-                            <p className="text-xs text-gray-600">Receive daily sales and booking reports</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Daily Reports</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Receive daily sales and booking reports</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.dailyReports}
@@ -997,8 +1008,8 @@ const OrganizerSettings: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Weekly Reports</h4>
-                            <p className="text-xs text-gray-600">Receive weekly summary reports</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Weekly Reports</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Receive weekly summary reports</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.weeklyReports}
@@ -1009,8 +1020,8 @@ const OrganizerSettings: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Monthly Reports</h4>
-                            <p className="text-xs text-gray-600">Receive monthly analytics reports</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Monthly Reports</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Receive monthly analytics reports</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.monthlyReports}
@@ -1025,13 +1036,13 @@ const OrganizerSettings: React.FC = () => {
 
     const renderSecurityTab = () => (
         <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Account Security</h3>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Account Security</h3>
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Two-Factor Authentication</h4>
-                            <p className="text-xs text-gray-600">Add an extra layer of security to your account</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Two-Factor Authentication</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Add an extra layer of security to your account</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.twoFactorEnabled}
@@ -1042,8 +1053,8 @@ const OrganizerSettings: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Login Notifications</h4>
-                            <p className="text-xs text-gray-600">Get notified when someone logs into your account</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Login Notifications</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Get notified when someone logs into your account</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.loginNotifications}
@@ -1054,11 +1065,11 @@ const OrganizerSettings: React.FC = () => {
                 </div>
 
                 <div className="mt-6">
-                    <label className="block text-sm font-medium text-black mb-2">Session Timeout (minutes)</label>
+                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Session Timeout (minutes)</label>
                     <select
                         value={userPreferences.sessionTimeout}
                         onChange={(e) => updatePreference('sessionTimeout', parseInt(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                        className={getInputStyles()}
                         disabled={loading}
                     >
                         <option value={15}>15 minutes</option>
@@ -1074,15 +1085,15 @@ const OrganizerSettings: React.FC = () => {
 
     const renderEventsTab = () => (
         <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Default Event Settings</h3>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Default Event Settings</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Default Time Zone</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Default Time Zone</label>
                         <select
                             value={userPreferences.defaultTimeZone}
                             onChange={(e) => updatePreference('defaultTimeZone', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         >
                             <option value="America/New_York">Eastern Time</option>
@@ -1094,36 +1105,36 @@ const OrganizerSettings: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Default Duration (minutes)</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Default Duration (minutes)</label>
                         <input
                             type="number"
                             min="15"
                             step="15"
                             value={userPreferences.defaultEventDuration}
                             onChange={(e) => updatePreference('defaultEventDuration', parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Ticket Sale Start (days before)</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Ticket Sale Start (days before)</label>
                         <input
                             type="number"
                             min="0"
                             value={userPreferences.defaultTicketSaleStart}
                             onChange={(e) => updatePreference('defaultTicketSaleStart', parseInt(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Default Refund Policy</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Default Refund Policy</label>
                         <select
                             value={userPreferences.defaultRefundPolicy}
                             onChange={(e) => updatePreference('defaultRefundPolicy', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         >
                             <option value="flexible">Flexible - Full refund until 24h before</option>
@@ -1136,8 +1147,8 @@ const OrganizerSettings: React.FC = () => {
                 <div className="mt-6 space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Require Approval for Events</h4>
-                            <p className="text-xs text-gray-600">Events need admin approval before going live</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Require Approval for Events</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Events need admin approval before going live</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.requireApproval}
@@ -1148,8 +1159,8 @@ const OrganizerSettings: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Auto-Publish Events</h4>
-                            <p className="text-xs text-gray-600">Automatically publish events when created</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Auto-Publish Events</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Automatically publish events when created</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.autoPublish}
@@ -1165,12 +1176,12 @@ const OrganizerSettings: React.FC = () => {
     const renderAppearanceTab = () => (
         <div className="space-y-6">
             {/* Theme Selection */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
                 <div className="flex items-center space-x-2 mb-4">
-                    <Palette className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-lg font-semibold text-black">Theme</h3>
+                    <Palette className={`w-5 h-5 ${themeClasses.textMuted}`} />
+                    <h3 className={`text-lg font-semibold ${themeClasses.text}`}>Theme</h3>
                 </div>
-                <p className="text-sm text-gray-600 mb-6">Choose your preferred interface theme</p>
+                <p className={`text-sm ${themeClasses.textMuted} mb-6`}>Choose your preferred interface theme</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {themes.map((theme) => {
@@ -1182,8 +1193,8 @@ const OrganizerSettings: React.FC = () => {
                                 key={theme.id}
                                 onClick={() => updatePreference('theme', theme.id as any)}
                                 className={`relative p-4 rounded-lg border-2 transition-all ${isSelected
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                    : `border-gray-200 dark:border-gray-600 ${themeClasses.hover}`
                                     }`}
                             >
                                 {isSelected && (
@@ -1193,11 +1204,11 @@ const OrganizerSettings: React.FC = () => {
                                 )}
 
                                 <div className="flex items-center space-x-3 mb-3">
-                                    <Icon className="w-5 h-5 text-gray-600" />
-                                    <span className="font-medium text-black">{theme.name}</span>
+                                    <Icon className={`w-5 h-5 ${themeClasses.textMuted}`} />
+                                    <span className={`font-medium ${themeClasses.text}`}>{theme.name}</span>
                                 </div>
 
-                                <p className="text-xs text-gray-500 mb-3">{theme.description}</p>
+                                <p className={`text-xs ${themeClasses.textMuted} mb-3`}>{theme.description}</p>
 
                                 <div className={`${theme.preview.bg} ${theme.preview.border} border rounded p-2 space-y-1`}>
                                     <div className={`h-2 bg-blue-500 rounded`}></div>
@@ -1211,9 +1222,9 @@ const OrganizerSettings: React.FC = () => {
             </div>
 
             {/* Accent Color */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Accent Color</h3>
-                <p className="text-sm text-gray-600 mb-6">Choose your preferred accent color</p>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Accent Color</h3>
+                <p className={`text-sm ${themeClasses.textMuted} mb-6`}>Choose your preferred accent color</p>
 
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
                     {accentColors.map((color) => (
@@ -1221,15 +1232,15 @@ const OrganizerSettings: React.FC = () => {
                             key={color.id}
                             onClick={() => updatePreference('accentColor', color.id)}
                             className={`relative p-3 rounded-lg border-2 transition-all ${userPreferences.accentColor === color.id
-                                    ? 'border-gray-400'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? `border-gray-400 ${themeClasses.card}`
+                                : `${themeClasses.border} ${themeClasses.hover}`
                                 }`}
                         >
                             <div className={`w-8 h-8 ${color.class} rounded-full mx-auto mb-2`}></div>
-                            <span className="text-xs text-gray-600">{color.name}</span>
+                            <span className={`text-xs ${themeClasses.textMuted}`}>{color.name}</span>
                             {userPreferences.accentColor === color.id && (
                                 <div className="absolute top-1 right-1">
-                                    <Check className="w-3 h-3 text-gray-600" />
+                                    <Check className={`w-3 h-3 ${themeClasses.textMuted}`} />
                                 </div>
                             )}
                         </button>
@@ -1238,23 +1249,23 @@ const OrganizerSettings: React.FC = () => {
             </div>
 
             {/* Display Settings */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Display Settings</h3>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Display Settings</h3>
 
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-black mb-3">Font Size</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-3`}>Font Size</label>
                         <div className="grid grid-cols-3 gap-3">
                             {(['small', 'medium', 'large'] as const).map((size) => (
                                 <button
                                     key={size}
                                     onClick={() => updatePreference('fontSize', size)}
                                     className={`p-3 rounded-lg border-2 transition-all ${userPreferences.fontSize === size
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                        : `${themeClasses.border} ${themeClasses.hover}`
                                         }`}
                                 >
-                                    <div className={`${size === 'small' ? 'text-sm' : size === 'large' ? 'text-lg' : 'text-base'} text-black font-medium capitalize`}>
+                                    <div className={`${size === 'small' ? 'text-sm' : size === 'large' ? 'text-lg' : 'text-base'} ${themeClasses.text} font-medium capitalize`}>
                                         {size}
                                     </div>
                                 </button>
@@ -1264,8 +1275,8 @@ const OrganizerSettings: React.FC = () => {
 
                     <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="text-sm font-medium text-black">Compact Mode</h4>
-                            <p className="text-xs text-gray-500">Reduce spacing between elements</p>
+                            <h4 className={`text-sm font-medium ${themeClasses.text}`}>Compact Mode</h4>
+                            <p className={`text-xs ${themeClasses.textMuted}`}>Reduce spacing between elements</p>
                         </div>
                         <Toggle
                             enabled={userPreferences.compactMode}
@@ -1277,19 +1288,19 @@ const OrganizerSettings: React.FC = () => {
             </div>
 
             {/* Localization */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
                 <div className="flex items-center space-x-2 mb-4">
-                    <Globe className="w-5 h-5 text-gray-600" />
-                    <h3 className="text-lg font-semibold text-black">Localization</h3>
+                    <Globe className={`w-5 h-5 ${themeClasses.textMuted}`} />
+                    <h3 className={`text-lg font-semibold ${themeClasses.text}`}>Localization</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Language</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Language</label>
                         <select
                             value={userPreferences.language}
                             onChange={(e) => updatePreference('language', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         >
                             {languages.map((lang) => (
@@ -1301,11 +1312,11 @@ const OrganizerSettings: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Date Format</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Date Format</label>
                         <select
                             value={userPreferences.dateFormat}
                             onChange={(e) => updatePreference('dateFormat', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         >
                             <option value="MM/dd/yyyy">12/25/2024 (US)</option>
@@ -1316,11 +1327,11 @@ const OrganizerSettings: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-black mb-2">Currency</label>
+                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Currency</label>
                         <select
                             value={userPreferences.currency}
                             onChange={(e) => updatePreference('currency', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-black"
+                            className={getInputStyles()}
                             disabled={loading}
                         >
                             {currencies.map((curr) => (
@@ -1333,40 +1344,40 @@ const OrganizerSettings: React.FC = () => {
                 </div>
 
                 <div className="mt-4">
-                    <label className="block text-sm font-medium text-black mb-2">Time Format</label>
+                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>Time Format</label>
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             onClick={() => updatePreference('timeFormat', '12h')}
                             className={`p-2 rounded-lg border-2 transition-all ${userPreferences.timeFormat === '12h'
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : `${themeClasses.border} ${themeClasses.hover}`
                                 }`}
                         >
-                            <div className="text-sm font-medium text-black">12-hour</div>
-                            <div className="text-xs text-gray-500">2:30 PM</div>
+                            <div className={`text-sm font-medium ${themeClasses.text}`}>12-hour</div>
+                            <div className={`text-xs ${themeClasses.textMuted}`}>2:30 PM</div>
                         </button>
                         <button
                             onClick={() => updatePreference('timeFormat', '24h')}
                             className={`p-2 rounded-lg border-2 transition-all ${userPreferences.timeFormat === '24h'
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : `${themeClasses.border} ${themeClasses.hover}`
                                 }`}
                         >
-                            <div className="text-sm font-medium text-black">24-hour</div>
-                            <div className="text-xs text-gray-500">14:30</div>
+                            <div className={`text-sm font-medium ${themeClasses.text}`}>24-hour</div>
+                            <div className={`text-xs ${themeClasses.textMuted}`}>14:30</div>
                         </button>
                     </div>
                 </div>
             </div>
 
             {/* Live Preview */}
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-black mb-4">Live Preview</h3>
+            <div className={`${themeClasses.card} rounded-lg p-6 shadow-sm border ${themeClasses.border}`}>
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Live Preview</h3>
 
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
+                <div className={`border-2 border-dashed ${themeClasses.border} rounded-lg p-6 ${isDark ? 'bg-gray-800/30' : 'bg-gray-50'}`}>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-semibold text-black">Sample Dashboard</h4>
+                            <h4 className={`text-lg font-semibold ${themeClasses.text}`}>Sample Dashboard</h4>
                             <button
                                 className="px-4 py-2 rounded-lg text-white"
                                 style={{ backgroundColor: accentColors.find(c => c.id === userPreferences.accentColor)?.rgb }}
@@ -1376,21 +1387,21 @@ const OrganizerSettings: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="text-sm text-gray-500">Revenue</div>
-                                <div className="text-2xl font-bold text-black">
+                            <div className={`${themeClasses.card} p-4 rounded-lg border ${themeClasses.border}`}>
+                                <div className={`text-sm ${themeClasses.textMuted}`}>Revenue</div>
+                                <div className={`text-2xl font-bold ${themeClasses.text}`}>
                                     {currencies.find(c => c.code === userPreferences.currency)?.symbol}12,345
                                 </div>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="text-sm text-gray-500">Next Event</div>
-                                <div className="text-sm font-medium text-black">
+                            <div className={`${themeClasses.card} p-4 rounded-lg border ${themeClasses.border}`}>
+                                <div className={`text-sm ${themeClasses.textMuted}`}>Next Event</div>
+                                <div className={`text-sm font-medium ${themeClasses.text}`}>
                                     Dec 25, 2024 at {userPreferences.timeFormat === '12h' ? '2:30 PM' : '14:30'}
                                 </div>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-gray-200">
-                                <div className="text-sm text-gray-500">Language</div>
-                                <div className="text-sm font-medium text-black">
+                            <div className={`${themeClasses.card} p-4 rounded-lg border ${themeClasses.border}`}>
+                                <div className={`text-sm ${themeClasses.textMuted}`}>Language</div>
+                                <div className={`text-sm font-medium ${themeClasses.text}`}>
                                     {languages.find(l => l.code === userPreferences.language)?.name}
                                 </div>
                             </div>
@@ -1421,7 +1432,7 @@ const OrganizerSettings: React.FC = () => {
                 <div className="flex items-center justify-center min-h-screen">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                        <p className="text-black">Checking authentication...</p>
+                        <p className={themeClasses.text}>Checking authentication...</p>
                     </div>
                 </div>
             )}
@@ -1429,10 +1440,10 @@ const OrganizerSettings: React.FC = () => {
             {/* Unauthenticated state */}
             {authStatus === 'unauthenticated' && (
                 <div className="flex items-center justify-center min-h-screen">
-                    <div className="text-center bg-white p-8 rounded-lg shadow-md">
+                    <div className={`text-center ${themeClasses.card} p-8 rounded-lg shadow-md`}>
                         <User className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-black mb-2">Authentication Required</h2>
-                        <p className="text-black mb-4">Please log in to access your settings.</p>
+                        <h2 className={`text-2xl font-bold ${themeClasses.text} mb-2`}>Authentication Required</h2>
+                        <p className={`${themeClasses.textMuted} mb-4`}>Please log in to access your settings.</p>
                         <button
                             onClick={() => window.location.href = '/login'}
                             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -1448,7 +1459,7 @@ const OrganizerSettings: React.FC = () => {
                 <>
                     <div className="mb-8">
                         <h1 className={`text-3xl font-bold ${themeClasses.text} mb-2`}>Settings</h1>
-                        <p className={themeClasses.text}>Manage your account and event preferences</p>
+                        <p className={themeClasses.textMuted}>Manage your account and event preferences</p>
                     </div>
 
                     <div className="flex flex-col lg:flex-row gap-8">
@@ -1466,7 +1477,7 @@ const OrganizerSettings: React.FC = () => {
                                                     setError(null);
                                                 }}
                                                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${activeTab === tab.id
-                                                    ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800'
                                                     : `${themeClasses.text} ${themeClasses.hover}`
                                                     }`}
                                             >
@@ -1504,10 +1515,10 @@ const OrganizerSettings: React.FC = () => {
 
                             {/* Success message */}
                             {saved && (
-                                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                     <div className="flex items-center">
-                                        <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                                        <span className="text-sm text-green-800">Settings saved successfully!</span>
+                                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
+                                        <span className="text-sm text-green-800 dark:text-green-300">Settings saved successfully!</span>
                                     </div>
                                 </div>
                             )}

@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
+import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 import {
     BarChart,
     Bar,
@@ -168,6 +169,9 @@ interface StatCardProps {
 }
 
 const OrganizerAnalytics: React.FC = () => {
+    const themeClasses = useThemeClasses();
+    const { isDark } = useTheme();
+
     const [selectedPeriod, setSelectedPeriod] = useState<string>('last30days');
     const [loading, setLoading] = useState<boolean>(false);
     const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -176,6 +180,11 @@ const OrganizerAnalytics: React.FC = () => {
 
     // Configure your backend API URL - update this to match your C# API port
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
+    // Chart colors that work well in both themes
+    const COLORS = isDark
+        ? ['#60A5FA', '#F87171', '#34D399', '#FBBF24', '#A78BFA', '#22D3EE']
+        : ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#06B6D4'];
 
     // Check authentication status
     const checkAuth = (): boolean => {
@@ -392,16 +401,15 @@ const OrganizerAnalytics: React.FC = () => {
         }
     }, [selectedPeriod, authStatus]);
 
-    const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#06B6D4'];
-
+    // Theme-aware StatCard component
     const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, trend, color = "blue" }) => (
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div className={`${themeClasses.card} rounded-lg shadow-md p-6 border-l-4 border-blue-500`}>
             <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-black">{title}</p>
-                    <p className="text-2xl font-bold text-black">{value}</p>
+                    <p className={`text-sm font-medium ${themeClasses.textMuted}`}>{title}</p>
+                    <p className={`text-2xl font-bold ${themeClasses.text}`}>{value}</p>
                     {trend && (
-                        <p className="text-sm text-black flex items-center mt-1">
+                        <p className={`text-sm ${themeClasses.textMuted} flex items-center mt-1`}>
                             <TrendingUp className="w-4 h-4 mr-1" />
                             {trend}
                         </p>
@@ -412,13 +420,29 @@ const OrganizerAnalytics: React.FC = () => {
         </div>
     );
 
+    // Custom Tooltip for charts with theme support
+    const CustomTooltip = ({ active, payload, label, isDark }: any) => {
+        if (!active || !payload || !payload.length) return null;
+
+        return (
+            <div className={`${isDark ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} border rounded-lg p-3 shadow-lg`}>
+                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+                {payload.map((entry: any, index: number) => (
+                    <p key={index} className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`} style={{ color: entry.color }}>
+                        {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+                    </p>
+                ))}
+            </div>
+        );
+    };
+
     // Show authentication required screen
     if (authStatus === 'checking') {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className={`flex items-center justify-center min-h-screen ${themeClasses.background}`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className="text-black">Checking authentication...</p>
+                    <p className={themeClasses.text}>Checking authentication...</p>
                 </div>
             </div>
         );
@@ -426,11 +450,11 @@ const OrganizerAnalytics: React.FC = () => {
 
     if (authStatus === 'unauthenticated') {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <div className="text-center bg-white p-8 rounded-lg shadow-md">
+            <div className={`flex items-center justify-center min-h-screen ${themeClasses.background}`}>
+                <div className={`text-center ${themeClasses.card} p-8 rounded-lg shadow-md`}>
                     <WifiOff className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-black mb-2">Authentication Required</h2>
-                    <p className="text-black mb-4">Please log in to view the analytics dashboard.</p>
+                    <h2 className={`text-2xl font-bold ${themeClasses.text} mb-2`}>Authentication Required</h2>
+                    <p className={`${themeClasses.textMuted} mb-4`}>Please log in to view the analytics dashboard.</p>
                     <button
                         onClick={() => window.location.href = '/login'}
                         className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -444,19 +468,19 @@ const OrganizerAnalytics: React.FC = () => {
 
     if (!analyticsData) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className={`flex items-center justify-center min-h-screen ${themeClasses.background}`}>
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+        <div className={`max-w-7xl mx-auto p-6 ${themeClasses.background} min-h-screen`}>
             <div className="mb-8">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-black mb-2">Analytics Dashboard</h1>
-                        <p className="text-black">Comprehensive insights for your events</p>
+                        <h1 className={`text-3xl font-bold ${themeClasses.text} mb-2`}>Analytics Dashboard</h1>
+                        <p className={themeClasses.textMuted}>Comprehensive insights for your events</p>
                     </div>
                     <button
                         onClick={fetchAnalyticsData}
@@ -470,12 +494,12 @@ const OrganizerAnalytics: React.FC = () => {
 
                 {/* Show API errors if any */}
                 {apiErrors.length > 0 && (
-                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                         <div className="flex items-center">
-                            <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
-                            <h3 className="text-sm font-medium text-black">Some data couldn&apos;t be loaded:</h3>
+                            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" />
+                            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Some data couldn&apos;t be loaded:</h3>
                         </div>
-                        <ul className="mt-2 text-sm text-black list-disc list-inside">
+                        <ul className="mt-2 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
                             {apiErrors.map((error, index) => (
                                 <li key={index}>{error}</li>
                             ))}
@@ -487,7 +511,7 @@ const OrganizerAnalytics: React.FC = () => {
                     <select
                         value={selectedPeriod}
                         onChange={(e) => setSelectedPeriod(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                        className={`px-4 py-2 border ${themeClasses.border} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.card} ${themeClasses.text}`}
                     >
                         <option value="last7days">Last 7 Days</option>
                         <option value="last30days">Last 30 Days</option>
@@ -528,29 +552,30 @@ const OrganizerAnalytics: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Top Revenue Events */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center text-black">
+                <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
+                    <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                         <DollarSign className="w-5 h-5 mr-2 text-green-500" />
                         Top Revenue Events
                     </h3>
                     {analyticsData.revenue.events.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={analyticsData.revenue.events}>
-                                <CartesianGrid strokeDasharray="3 3" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#374151' : '#E5E7EB'} />
                                 <XAxis
                                     dataKey="eventName"
                                     angle={-45}
                                     textAnchor="end"
                                     height={100}
                                     fontSize={12}
+                                    tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }}
                                 />
-                                <YAxis />
-                                <Tooltip formatter={(value: any) => [`$${value.toLocaleString()}`, 'Revenue']} />
-                                <Bar dataKey="totalRevenue" fill="#3B82F6" />
+                                <YAxis tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
+                                <Tooltip content={<CustomTooltip isDark={isDark} />} />
+                                <Bar dataKey="totalRevenue" fill={COLORS[0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="flex items-center justify-center h-64 text-black">
+                        <div className={`flex items-center justify-center h-64 ${themeClasses.textMuted}`}>
                             <div className="text-center">
                                 <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                                 <p>No events with revenue data yet</p>
@@ -561,8 +586,8 @@ const OrganizerAnalytics: React.FC = () => {
                 </div>
 
                 {/* Payment Methods */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-lg font-semibold mb-4 text-black">Payment Method Distribution</h3>
+                <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
+                    <h3 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>Payment Method Distribution</h3>
                     {analyticsData.payments.methods.length > 0 ? (
                         <div className="flex flex-col lg:flex-row items-center">
                             <ResponsiveContainer width="60%" height={250}>
@@ -579,7 +604,7 @@ const OrganizerAnalytics: React.FC = () => {
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(value: any) => [`${value}%`, 'Share']} />
+                                    <Tooltip content={<CustomTooltip isDark={isDark} />} />
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="w-full lg:w-40% space-y-2">
@@ -590,19 +615,19 @@ const OrganizerAnalytics: React.FC = () => {
                                                 className="w-3 h-3 rounded-full mr-2"
                                                 style={{ backgroundColor: COLORS[index % COLORS.length] }}
                                             />
-                                            <span className="text-sm text-black">{method.paymentMethod}</span>
+                                            <span className={`text-sm ${themeClasses.text}`}>{method.paymentMethod}</span>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-sm font-medium text-black">{method.percentage}%</span>
+                                            <span className={`text-sm font-medium ${themeClasses.text}`}>{method.percentage}%</span>
                                             <br />
-                                            <span className="text-xs text-black">{method.orderCount} orders</span>
+                                            <span className={`text-xs ${themeClasses.textMuted}`}>{method.orderCount} orders</span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center h-64 text-black">
+                        <div className={`flex items-center justify-center h-64 ${themeClasses.textMuted}`}>
                             <div className="text-center">
                                 <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                                 <p>No payment data available</p>
@@ -613,8 +638,8 @@ const OrganizerAnalytics: React.FC = () => {
             </div>
 
             {/* Event Capacity Utilization */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                <h3 className="text-lg font-semibold mb-4 flex items-center text-black">
+            <div className={`${themeClasses.card} rounded-lg shadow-md p-6 mb-8`}>
+                <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                     <Users className="w-5 h-5 mr-2 text-blue-500" />
                     Event Capacity Utilization
                 </h3>
@@ -623,11 +648,11 @@ const OrganizerAnalytics: React.FC = () => {
                         {analyticsData.capacity.events.map((event: CapacityData) => (
                             <div key={event.eventId} className="flex items-center space-x-4">
                                 <div className="w-1/3">
-                                    <p className="font-medium text-sm text-black">{event.eventName}</p>
-                                    <p className="text-xs text-black">{event.ticketsSold}/{event.maxCapacity} tickets</p>
+                                    <p className={`font-medium text-sm ${themeClasses.text}`}>{event.eventName}</p>
+                                    <p className={`text-xs ${themeClasses.textMuted}`}>{event.ticketsSold}/{event.maxCapacity} tickets</p>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                    <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-3`}>
                                         <div
                                             className={`h-3 rounded-full ${event.utilizationPercentage >= 90 ? 'bg-green-500' :
                                                 event.utilizationPercentage >= 70 ? 'bg-yellow-500' : 'bg-red-500'
@@ -637,13 +662,13 @@ const OrganizerAnalytics: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-medium text-black">{event.utilizationPercentage.toFixed(1)}%</p>
+                                    <p className={`font-medium ${themeClasses.text}`}>{event.utilizationPercentage.toFixed(1)}%</p>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="flex items-center justify-center h-32 text-black">
+                    <div className={`flex items-center justify-center h-32 ${themeClasses.textMuted}`}>
                         <div className="text-center">
                             <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                             <p>No events found for the selected period</p>
@@ -654,20 +679,20 @@ const OrganizerAnalytics: React.FC = () => {
 
             {/* Seasonal Trends */}
             {analyticsData.seasonal.monthlyTrends.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center text-black">
+                <div className={`${themeClasses.card} rounded-lg shadow-md p-6 mb-8`}>
+                    <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                         <Calendar className="w-5 h-5 mr-2 text-purple-500" />
                         Monthly Trends
                     </h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={analyticsData.seasonal.monthlyTrends}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="month" />
-                            <YAxis yAxisId="left" />
-                            <YAxis yAxisId="right" orientation="right" />
-                            <Tooltip />
-                            <Bar yAxisId="left" dataKey="eventCount" fill="#8B5CF6" name="Events" />
-                            <Line yAxisId="right" type="monotone" dataKey="totalRevenue" stroke="#10B981" strokeWidth={2} name="Revenue ($)" />
+                            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#374151' : '#E5E7EB'} />
+                            <XAxis dataKey="month" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
+                            <YAxis yAxisId="left" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
+                            <YAxis yAxisId="right" orientation="right" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
+                            <Tooltip content={<CustomTooltip isDark={isDark} />} />
+                            <Bar yAxisId="left" dataKey="eventCount" fill={COLORS[4]} name="Events" />
+                            <Line yAxisId="right" type="monotone" dataKey="totalRevenue" stroke={COLORS[2]} strokeWidth={2} name="Revenue ($)" />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
@@ -675,20 +700,20 @@ const OrganizerAnalytics: React.FC = () => {
 
             {/* Demographics */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-lg font-semibold mb-4 text-black">Gender Distribution</h3>
+                <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
+                    <h3 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>Gender Distribution</h3>
                     {analyticsData.demographics.genderDistribution.some(group => group.count > 0) ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={analyticsData.demographics.genderDistribution}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="gender" />
-                                <YAxis />
-                                <Tooltip formatter={(value: any) => [value, 'Count']} />
-                                <Bar dataKey="count" fill="#8B5CF6" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#374151' : '#E5E7EB'} />
+                                <XAxis dataKey="gender" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
+                                <YAxis tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
+                                <Tooltip content={<CustomTooltip isDark={isDark} />} />
+                                <Bar dataKey="count" fill={COLORS[4]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="flex items-center justify-center h-64 text-black">
+                        <div className={`flex items-center justify-center h-64 ${themeClasses.textMuted}`}>
                             <div className="text-center">
                                 <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                                 <p>No demographic data available</p>
@@ -698,37 +723,37 @@ const OrganizerAnalytics: React.FC = () => {
                 </div>
 
                 {/* Venue Performance */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center text-black">
+                <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
+                    <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                         <MapPin className="w-5 h-5 mr-2 text-blue-500" />
                         Venue Performance
                     </h3>
                     {analyticsData.venues.performance.length > 0 ? (
                         <div className="space-y-4">
                             {analyticsData.venues.performance.map((venue: VenuePerformanceData) => (
-                                <div key={venue.venueId} className="border border-gray-200 rounded-lg p-4">
+                                <div key={venue.venueId} className={`border ${themeClasses.border} rounded-lg p-4`}>
                                     <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-semibold text-black">{venue.venueName}</h4>
+                                        <h4 className={`font-semibold ${themeClasses.text}`}>{venue.venueName}</h4>
                                     </div>
                                     <div className="grid grid-cols-3 gap-4 text-sm">
                                         <div>
-                                            <p className="text-black">Events</p>
-                                            <p className="font-medium text-black">{venue.eventCount}</p>
+                                            <p className={themeClasses.textMuted}>Events</p>
+                                            <p className={`font-medium ${themeClasses.text}`}>{venue.eventCount}</p>
                                         </div>
                                         <div>
-                                            <p className="text-black">Avg Attendance</p>
-                                            <p className="font-medium text-black">{venue.avgAttendance}</p>
+                                            <p className={themeClasses.textMuted}>Avg Attendance</p>
+                                            <p className={`font-medium ${themeClasses.text}`}>{venue.avgAttendance}</p>
                                         </div>
                                         <div>
-                                            <p className="text-black">Revenue</p>
-                                            <p className="font-medium text-black">${venue.totalRevenue.toLocaleString()}</p>
+                                            <p className={themeClasses.textMuted}>Revenue</p>
+                                            <p className={`font-medium ${themeClasses.text}`}>${venue.totalRevenue.toLocaleString()}</p>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center h-48 text-black">
+                        <div className={`flex items-center justify-center h-48 ${themeClasses.textMuted}`}>
                             <div className="text-center">
                                 <MapPin className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                                 <p>No venue data available</p>
@@ -739,40 +764,40 @@ const OrganizerAnalytics: React.FC = () => {
             </div>
 
             {/* Low Attendance Events */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center text-black">
+            <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
+                <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                     <AlertTriangle className="w-5 h-5 mr-2 text-red-500" />
                     Events Needing Attention
                 </h3>
                 {analyticsData.lowAttendance.events.length > 0 ? (
                     <div className="space-y-6">
                         {analyticsData.lowAttendance.events.map((event: LowAttendanceEventData) => (
-                            <div key={event.eventId} className="border border-red-200 rounded-lg p-4 bg-red-50">
+                            <div key={event.eventId} className="border border-red-200 dark:border-red-800 rounded-lg p-4 bg-red-50 dark:bg-red-900/20">
                                 <div className="flex justify-between items-start mb-3">
                                     <div>
-                                        <h4 className="font-semibold text-lg text-black">{event.eventName}</h4>
-                                        <p className="text-sm text-black">
+                                        <h4 className={`font-semibold text-lg ${themeClasses.text}`}>{event.eventName}</h4>
+                                        <p className={`text-sm ${themeClasses.textMuted}`}>
                                             {event.ticketsSold}/{event.maxCapacity} tickets sold ({event.utilizationPercentage}% utilization)
                                         </p>
-                                        <p className="text-sm text-black font-medium">
+                                        <p className={`text-sm ${themeClasses.text} font-medium`}>
                                             ⏰ {event.daysUntilEvent} days until event
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-                                            <span className="text-red-700 font-bold">{event.utilizationPercentage}%</span>
+                                        <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                                            <span className="text-red-700 dark:text-red-400 font-bold">{event.utilizationPercentage}%</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {event.ticketTypes.length > 0 && (
                                     <div className="mb-4">
-                                        <h5 className="font-medium text-black mb-2">Ticket Types:</h5>
+                                        <h5 className={`font-medium ${themeClasses.text} mb-2`}>Ticket Types:</h5>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
                                             {event.ticketTypes.map((ticket: TicketTypeData, index: number) => (
-                                                <div key={index} className="bg-white p-2 rounded border">
-                                                    <p className="font-medium text-black">{ticket.typeName}</p>
-                                                    <p className="text-black">${ticket.price} - {ticket.sold} sold</p>
+                                                <div key={index} className={`${themeClasses.card} p-2 rounded border ${themeClasses.border}`}>
+                                                    <p className={`font-medium ${themeClasses.text}`}>{ticket.typeName}</p>
+                                                    <p className={themeClasses.textMuted}>${ticket.price} - {ticket.sold} sold</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -781,16 +806,16 @@ const OrganizerAnalytics: React.FC = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <h5 className="font-medium text-black mb-2">Potential Issues:</h5>
-                                        <ul className="list-disc list-inside text-sm space-y-1 text-black">
+                                        <h5 className={`font-medium ${themeClasses.text} mb-2`}>Potential Issues:</h5>
+                                        <ul className={`list-disc list-inside text-sm space-y-1 ${themeClasses.textMuted}`}>
                                             {event.potentialIssues.map((issue: string, index: number) => (
                                                 <li key={index}>{issue}</li>
                                             ))}
                                         </ul>
                                     </div>
                                     <div>
-                                        <h5 className="font-medium text-black mb-2">Recommendations:</h5>
-                                        <ul className="list-disc list-inside text-sm space-y-1 text-black">
+                                        <h5 className={`font-medium ${themeClasses.text} mb-2`}>Recommendations:</h5>
+                                        <ul className={`list-disc list-inside text-sm space-y-1 ${themeClasses.textMuted}`}>
                                             {event.recommendations.map((rec: string, index: number) => (
                                                 <li key={index}>{rec}</li>
                                             ))}
@@ -801,7 +826,7 @@ const OrganizerAnalytics: React.FC = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="flex items-center justify-center h-32 text-black">
+                    <div className={`flex items-center justify-center h-32 ${themeClasses.textMuted}`}>
                         <div className="text-center">
                             <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-400" />
                             <p>All events are performing well!</p>

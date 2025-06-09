@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Calendar, MapPin, Globe, Users, DollarSign, Plus, Trash2, Save, ArrowLeft, AlertCircle, Clock } from 'lucide-react';
+import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 
 // Local interfaces to avoid import issues
 interface Category {
@@ -48,6 +49,8 @@ interface EventFormData {
 const CreateEventPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
+    const themeClasses = useThemeClasses();
+
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
     const [venues, setVenues] = useState<Venue[]>([]);
@@ -441,10 +444,10 @@ const CreateEventPage = () => {
 
     if (!user || !isOrganizer) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
                 </div>
             </div>
         );
@@ -453,33 +456,33 @@ const CreateEventPage = () => {
     const eventDuration = getEventDuration();
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className={`min-h-screen ${themeClasses.background}`}>
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+                        className={`flex items-center ${themeClasses.textMuted} hover:${themeClasses.text} mb-4`}
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back
                     </button>
-                    <h1 className="text-3xl font-bold text-gray-900">Create New Event</h1>
-                    <p className="text-gray-600 mt-1">Fill out the details to create your event</p>
+                    <h1 className={`text-3xl font-bold ${themeClasses.text}`}>Create New Event</h1>
+                    <p className={`${themeClasses.textMuted} mt-1`}>Fill out the details to create your event</p>
 
                     {/* Show event duration if multi-day */}
                     {eventDuration && eventDuration > 1 && (
-                        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                             <Clock className="h-4 w-4 mr-1" />
                             {eventDuration} day event
                         </div>
                     )}
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className={`${themeClasses.card} rounded-lg shadow-sm ${themeClasses.border} border`}>
                     {/* Success/Error Messages */}
                     {success && (
-                        <div className="p-4 bg-green-50 border-b border-green-200">
+                        <div className="p-4 bg-green-50 dark:bg-green-900/20 border-b border-green-200 dark:border-green-800">
                             <div className="flex items-center">
                                 <div className="flex-shrink-0">
                                     <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -487,18 +490,18 @@ const CreateEventPage = () => {
                                     </svg>
                                 </div>
                                 <div className="ml-3">
-                                    <p className="text-sm text-green-700">{success}</p>
+                                    <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {error && (
-                        <div className="p-4 bg-red-50 border-b border-red-200">
+                        <div className="p-4 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
                             <div className="flex items-center">
                                 <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
                                 <div className="ml-3">
-                                    <p className="text-sm text-red-700">{error}</p>
+                                    <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
                                 </div>
                             </div>
                         </div>
@@ -507,10 +510,10 @@ const CreateEventPage = () => {
                     <form onSubmit={handleSubmit} className="p-6 space-y-8">
                         {/* Basic Information */}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Basic Information</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Event Title *
                                     </label>
                                     <input
@@ -518,15 +521,14 @@ const CreateEventPage = () => {
                                         name="title"
                                         value={formData.title}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 ${formErrors.title ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.title ? 'border-red-500' : ''}`}
                                         placeholder="Enter event title"
                                     />
                                     {formErrors.title && <p className="text-red-500 text-sm mt-1">{formErrors.title}</p>}
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Description *
                                     </label>
                                     <textarea
@@ -534,27 +536,25 @@ const CreateEventPage = () => {
                                         value={formData.description}
                                         onChange={handleInputChange}
                                         rows={4}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 ${formErrors.description ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.description ? 'border-red-500' : ''}`}
                                         placeholder="Describe your event in detail..."
                                     />
                                     {formErrors.description && <p className="text-red-500 text-sm mt-1">{formErrors.description}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Category *
                                     </label>
                                     <select
                                         name="categoryId"
                                         value={formData.categoryId}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.categoryId ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.categoryId ? 'border-red-500' : ''}`}
                                     >
-                                        <option value="" className="text-gray-500">Select category</option>
+                                        <option value="" className={themeClasses.textMuted}>Select category</option>
                                         {categories.map(category => (
-                                            <option key={category.categoryId} value={category.categoryId} className="text-gray-900">
+                                            <option key={category.categoryId} value={category.categoryId} className={themeClasses.text}>
                                                 {category.name}
                                             </option>
                                         ))}
@@ -563,7 +563,7 @@ const CreateEventPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Max Capacity *
                                     </label>
                                     <input
@@ -572,15 +572,14 @@ const CreateEventPage = () => {
                                         value={formData.maxCapacity}
                                         onChange={handleInputChange}
                                         min="1"
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 ${formErrors.maxCapacity ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.maxCapacity ? 'border-red-500' : ''}`}
                                         placeholder="Maximum attendees"
                                     />
                                     {formErrors.maxCapacity && <p className="text-red-500 text-sm mt-1">{formErrors.maxCapacity}</p>}
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Event Image URL
                                     </label>
                                     <input
@@ -588,7 +587,7 @@ const CreateEventPage = () => {
                                         name="imageUrl"
                                         value={formData.imageUrl}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                                         placeholder="https://example.com/event-image.jpg"
                                     />
                                 </div>
@@ -597,14 +596,14 @@ const CreateEventPage = () => {
 
                         {/* Date & Time */}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Date & Time</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Date & Time</h2>
 
                             {/* Date Range Preview */}
                             {formData.eventDate && formData.endDate && isMultiDayEvent() && (
-                                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                                     <div className="flex items-center">
-                                        <Calendar className="h-4 w-4 text-blue-600 mr-2" />
-                                        <span className="text-sm text-blue-700 font-medium">
+                                        <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-2" />
+                                        <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
                                             Multi-day event: {eventDuration} days
                                         </span>
                                     </div>
@@ -613,7 +612,7 @@ const CreateEventPage = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Start Date & Time *
                                     </label>
                                     <input
@@ -621,14 +620,13 @@ const CreateEventPage = () => {
                                         name="eventDate"
                                         value={formData.eventDate}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.eventDate ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.eventDate ? 'border-red-500' : ''}`}
                                     />
                                     {formErrors.eventDate && <p className="text-red-500 text-sm mt-1">{formErrors.eventDate}</p>}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         End Date & Time
                                     </label>
                                     <input
@@ -636,17 +634,16 @@ const CreateEventPage = () => {
                                         name="endDate"
                                         value={formData.endDate}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.endDate ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.endDate ? 'border-red-500' : ''}`}
                                     />
                                     {formErrors.endDate && <p className="text-red-500 text-sm mt-1">{formErrors.endDate}</p>}
-                                    <p className="text-xs text-gray-600 mt-1">
+                                    <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
                                         Leave empty for single-session events
                                     </p>
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Registration Deadline
                                     </label>
                                     <input
@@ -654,11 +651,10 @@ const CreateEventPage = () => {
                                         name="registrationDeadline"
                                         value={formData.registrationDeadline}
                                         onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.registrationDeadline ? 'border-red-500' : 'border-gray-300'
-                                            }`}
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.registrationDeadline ? 'border-red-500' : ''}`}
                                     />
                                     {formErrors.registrationDeadline && <p className="text-red-500 text-sm mt-1">{formErrors.registrationDeadline}</p>}
-                                    <p className="text-xs text-gray-600 mt-1">
+                                    <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
                                         When should registration close? (optional)
                                     </p>
                                 </div>
@@ -667,7 +663,7 @@ const CreateEventPage = () => {
 
                         {/* Location */}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Location</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Location</h2>
                             <div className="space-y-4">
                                 <div className="flex items-center">
                                     <input
@@ -677,26 +673,25 @@ const CreateEventPage = () => {
                                         onChange={handleInputChange}
                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                     />
-                                    <label className="ml-2 text-sm text-gray-700">
+                                    <label className={`ml-2 text-sm ${themeClasses.text}`}>
                                         This is an online event
                                     </label>
                                 </div>
 
                                 {!formData.isOnline && (
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                             Venue *
                                         </label>
                                         <select
                                             name="venueId"
                                             value={formData.venueId || ''}
                                             onChange={handleInputChange}
-                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 ${formErrors.venueId ? 'border-red-500' : 'border-gray-300'
-                                                }`}
+                                            className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.venueId ? 'border-red-500' : ''}`}
                                         >
-                                            <option value="" className="text-gray-500">Select venue</option>
+                                            <option value="" className={themeClasses.textMuted}>Select venue</option>
                                             {venues.map(venue => (
-                                                <option key={venue.venueId} value={venue.venueId} className="text-gray-900">
+                                                <option key={venue.venueId} value={venue.venueId} className={themeClasses.text}>
                                                     {venue.name} - {venue.city} (Capacity: {venue.capacity})
                                                 </option>
                                             ))}
@@ -706,7 +701,7 @@ const CreateEventPage = () => {
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                         Location Details
                                     </label>
                                     <input
@@ -714,7 +709,7 @@ const CreateEventPage = () => {
                                         name="location"
                                         value={formData.location}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
+                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                                         placeholder={formData.isOnline ? "Meeting link or platform details" : "Additional location information"}
                                     />
                                 </div>
@@ -724,11 +719,11 @@ const CreateEventPage = () => {
                         {/* Ticket Types */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-lg font-semibold text-gray-900">Ticket Types</h2>
+                                <h2 className={`text-lg font-semibold ${themeClasses.text}`}>Ticket Types</h2>
                                 <button
                                     type="button"
                                     onClick={addTicketType}
-                                    className="flex items-center px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                                    className="flex items-center px-3 py-2 text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50"
                                 >
                                     <Plus className="h-4 w-4 mr-1" />
                                     Add Ticket Type
@@ -737,9 +732,9 @@ const CreateEventPage = () => {
 
                             <div className="space-y-4">
                                 {ticketTypes.map((ticket, index) => (
-                                    <div key={index} className="p-4 border border-gray-200 rounded-lg">
+                                    <div key={index} className={`p-4 ${themeClasses.border} border rounded-lg`}>
                                         <div className="flex justify-between items-start mb-4">
-                                            <h3 className="text-md font-medium text-gray-900">
+                                            <h3 className={`text-md font-medium ${themeClasses.text}`}>
                                                 Ticket Type {index + 1}
                                             </h3>
                                             {ticketTypes.length > 1 && (
@@ -755,15 +750,14 @@ const CreateEventPage = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                     Ticket Name *
                                                 </label>
                                                 <input
                                                     type="text"
                                                     value={ticket.name}
                                                     onChange={(e) => handleTicketTypeChange(index, 'name', e.target.value)}
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 ${formErrors[`ticketName_${index}`] ? 'border-red-500' : 'border-gray-300'
-                                                        }`}
+                                                    className={`w-full px-3 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors[`ticketName_${index}`] ? 'border-red-500' : ''}`}
                                                     placeholder="e.g., General Admission"
                                                 />
                                                 {formErrors[`ticketName_${index}`] && (
@@ -772,7 +766,7 @@ const CreateEventPage = () => {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                     Price (RM)
                                                 </label>
                                                 <input
@@ -781,13 +775,13 @@ const CreateEventPage = () => {
                                                     onChange={(e) => handleTicketTypeChange(index, 'price', parseFloat(e.target.value) || 0)}
                                                     min="0"
                                                     step="0.01"
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
+                                                    className={`w-full px-3 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                                                     placeholder="0.00"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                     Quantity *
                                                 </label>
                                                 <input
@@ -795,8 +789,7 @@ const CreateEventPage = () => {
                                                     value={ticket.quantity}
                                                     onChange={(e) => handleTicketTypeChange(index, 'quantity', parseInt(e.target.value) || 0)}
                                                     min="1"
-                                                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900 ${formErrors[`ticketQuantity_${index}`] ? 'border-red-500' : 'border-gray-300'
-                                                        }`}
+                                                    className={`w-full px-3 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors[`ticketQuantity_${index}`] ? 'border-red-500' : ''}`}
                                                     placeholder="100"
                                                 />
                                                 {formErrors[`ticketQuantity_${index}`] && (
@@ -805,14 +798,14 @@ const CreateEventPage = () => {
                                             </div>
 
                                             <div className="md:col-span-3">
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
                                                     Description
                                                 </label>
                                                 <textarea
                                                     value={ticket.description}
                                                     onChange={(e) => handleTicketTypeChange(index, 'description', e.target.value)}
                                                     rows={2}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 text-gray-900"
+                                                    className={`w-full px-3 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
                                                     placeholder="Optional description for this ticket type"
                                                 />
                                             </div>
@@ -825,7 +818,7 @@ const CreateEventPage = () => {
                                                         onChange={(e) => handleTicketTypeChange(index, 'isActive', e.target.checked)}
                                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                     />
-                                                    <label className="ml-2 text-sm text-gray-700">
+                                                    <label className={`ml-2 text-sm ${themeClasses.text}`}>
                                                         Active (available for purchase)
                                                     </label>
                                                 </div>
@@ -838,7 +831,7 @@ const CreateEventPage = () => {
 
                         {/* Publishing Options */}
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4">Publishing Options</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Publishing Options</h2>
                             <div className="flex items-center">
                                 <input
                                     type="checkbox"
@@ -847,21 +840,21 @@ const CreateEventPage = () => {
                                     onChange={handleInputChange}
                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                 />
-                                <label className="ml-2 text-sm text-gray-700">
+                                <label className={`ml-2 text-sm ${themeClasses.text}`}>
                                     Publish event immediately (make it visible to the public)
                                 </label>
                             </div>
-                            <p className="text-xs text-gray-600 mt-1">
+                            <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
                                 You can always publish or unpublish your event later from the dashboard
                             </p>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <div className={`flex justify-end space-x-4 pt-6 border-t ${themeClasses.border}`}>
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                className={`px-6 py-2 ${themeClasses.border} border ${themeClasses.text} rounded-lg ${themeClasses.hover} transition-colors`}
                                 disabled={loading}
                             >
                                 Cancel

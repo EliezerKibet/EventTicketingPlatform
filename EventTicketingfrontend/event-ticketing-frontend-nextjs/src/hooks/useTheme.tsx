@@ -159,19 +159,29 @@ export const useTheme = () => {
 export const useThemeClasses = () => {
     const [isDark, setIsDark] = useState(false);
     const observerRef = useRef<MutationObserver | null>(null);
+    const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
         const updateDarkMode = () => {
             const currentIsDark = document.documentElement.classList.contains('dark');
-            setIsDark(prevIsDark => {
-                // Only update if the value actually changed
-                if (prevIsDark !== currentIsDark) {
-                    return currentIsDark;
-                }
-                return prevIsDark;
-            });
+
+            // Clear any pending update
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+
+            // Defer the state update to avoid React warning
+            updateTimeoutRef.current = setTimeout(() => {
+                setIsDark(prevIsDark => {
+                    // Only update if the value actually changed
+                    if (prevIsDark !== currentIsDark) {
+                        return currentIsDark;
+                    }
+                    return prevIsDark;
+                });
+            }, 0);
         };
 
         // Initial check
@@ -203,6 +213,11 @@ export const useThemeClasses = () => {
         window.addEventListener('themeChange', handleThemeChange);
 
         return () => {
+            // Clean up timeout
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+
             if (observerRef.current) {
                 observerRef.current.disconnect();
             }
