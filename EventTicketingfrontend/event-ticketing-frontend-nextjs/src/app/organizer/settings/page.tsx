@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { userApi } from '@/lib/api';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
-import { useI18n } from '@/hooks/useSafeI18n';
+import { useI18nContext } from '@/components/providers/I18nProvider';
 import LanguageSettings from '@/components/LanguageSettings';
 import {
     User,
@@ -178,7 +178,7 @@ const OrganizerSettings: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
     const [error, setError] = useState<string | null>(null);
-    const { t } = useI18n();
+    const { t, changeLanguage, currentLanguage } = useI18nContext();
 
     // UPDATED: Use enhanced theme hooks
     const { updateTheme, isDark, isCompact } = useTheme();
@@ -208,19 +208,66 @@ const OrganizerSettings: React.FC = () => {
         businessLicense: ''
     });
 
+    const dateFormats = [
+        { id: 'MM/dd/yyyy', name: 'MM/DD/YYYY', example: '12/31/2024' },
+        { id: 'dd/MM/yyyy', name: 'DD/MM/YYYY', example: '31/12/2024' },
+        { id: 'yyyy-MM-dd', name: 'YYYY-MM-DD', example: '2024-12-31' },
+        { id: 'dd-MM-yyyy', name: 'DD-MM-YYYY', example: '31-12-2024' },
+        { id: 'MMM dd, yyyy', name: 'MMM DD, YYYY', example: 'Dec 31, 2024' },
+        { id: 'dd MMM yyyy', name: 'DD MMM YYYY', example: '31 Dec 2024' }
+    ];
+
     const renderLanguageTab = () => (
         <div className="space-y-6">
-            <LanguageSettings
-                userPreferences={{
-                    language: userPreferences.language,
-                    timeFormat: userPreferences.timeFormat,
-                    dateFormat: userPreferences.dateFormat, // You already have this in your interface
-                    currency: userPreferences.currency
-                }}
-                onLanguageChange={(languageCode) => updatePreference('language', languageCode)}
-                onPreferenceChange={(key, value) => updatePreference(key as keyof UserPreferences, value)}
-                disabled={loading}
-            />
+            {/* Primary Language Settings */}
+            {/* Primary Language Settings */}
+            <div className={`${themeClasses.themeCard} ${themeClasses.compactCard} rounded-lg shadow-sm border ${themeClasses.themeBorder}`}>
+                <div className="flex items-center space-x-2 mb-4">
+                    <Languages className={`w-5 h-5 ${themeClasses.themeMutedFg}`} />
+                    <h3 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg}`}>Language & Region</h3>
+                </div>
+                <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg} mb-6`}>
+                    Configure your language preferences and regional formats
+                </p>
+
+                <div className="space-y-6">
+                    {/* Language Selection */}
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-3`}>
+                            Interface Language
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {languages.map((lang) => (
+                                <button
+                                    key={lang.code}
+                                    onClick={() => updatePreference('language', lang.code)}
+                                    className={`p-3 rounded-lg border-2 transition-all text-left ${
+                                        // Use currentLanguage from useI18n hook
+                                        currentLanguage === lang.code
+                                            ? 'accent-border bg-blue-50 dark:bg-blue-900/20'
+                                            : `${themeClasses.themeBorder} ${themeClasses.hover}`
+                                        }`}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-lg">{lang.flag}</span>
+                                            <span className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>
+                                                {lang.name}
+                                            </span>
+                                        </div>
+                                        {currentLanguage === lang.code && (
+                                            <Check className="w-4 h-4 accent-text" />
+                                        )}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Rest of your renderLanguageTab content stays the same */}
+            {/* ... Time & Date Formats, Currency Settings, Live Preview ... */}
         </div>
     );
 
@@ -321,45 +368,53 @@ const OrganizerSettings: React.FC = () => {
         setError(null);
 
         try {
-            // Fetch user basic info using existing userApi
-            const userResponse = await userApi.getProfile();
-            setUserData({
-                userId: userResponse.userId,
-                firstName: userResponse.firstName || '',
-                lastName: userResponse.lastName || '',
-                email: userResponse.email || '',
-                phoneNumber: userResponse.phoneNumber || '',
-                dateOfBirth: userResponse.dateOfBirth || '',
-                profileImageUrl: userResponse.profileImageUrl || '',
-                isEmailVerified: userResponse.isEmailVerified || false,
-                isPhoneVerified: userResponse.isPhoneVerified || false,
-                createdAt: userResponse.createdAt || '',
-                lastLoginAt: userResponse.lastLoginAt || '',
-                status: userResponse.status || '',
-                bio: userResponse.bio || '',
-                website: userResponse.website || '',
-                timeZone: userResponse.timeZone || '',
-                isOrganizer: userResponse.isOrganizer || false,
-                roles: userResponse.roles || []
-            });
+            // OPTIMIZATION: Load all data in parallel instead of sequentially
+            const [userResponse, organizationData, preferencesData] = await Promise.allSettled([
+                userApi.getProfile(),
+                userApi.getOrganization(),
+                userApi.getPreferences()
+            ]);
 
-            // Fetch user organization using existing userApi
-            try {
-                const organizationData = await userApi.getOrganization();
-                setUserProfile({
-                    companyName: organizationData.companyName || '',
-                    businessLicense: organizationData.businessLicense || '',
-                    address: organizationData.address || '',
-                    city: organizationData.city || '',
-                    state: organizationData.state || '',
-                    zipCode: organizationData.zipCode || '',
-                    country: organizationData.country || 'United States',
-                    bio: userResponse.bio || '',
-                    website: userResponse.website || '',
-                    timeZone: userResponse.timeZone || 'America/New_York',
-                    isOrganizer: userResponse.isOrganizer || false
+            // Handle user profile data
+            if (userResponse.status === 'fulfilled') {
+                setUserData({
+                    userId: userResponse.value.userId,
+                    firstName: userResponse.value.firstName || '',
+                    lastName: userResponse.value.lastName || '',
+                    email: userResponse.value.email || '',
+                    phoneNumber: userResponse.value.phoneNumber || '',
+                    dateOfBirth: userResponse.value.dateOfBirth || '',
+                    profileImageUrl: userResponse.value.profileImageUrl || '',
+                    isEmailVerified: userResponse.value.isEmailVerified || false,
+                    isPhoneVerified: userResponse.value.isPhoneVerified || false,
+                    createdAt: userResponse.value.createdAt || '',
+                    lastLoginAt: userResponse.value.lastLoginAt || '',
+                    status: userResponse.value.status || '',
+                    bio: userResponse.value.bio || '',
+                    website: userResponse.value.website || '',
+                    timeZone: userResponse.value.timeZone || '',
+                    isOrganizer: userResponse.value.isOrganizer || false,
+                    roles: userResponse.value.roles || []
                 });
-            } catch (orgError) {
+            }
+
+            // Handle organization data
+            if (organizationData.status === 'fulfilled') {
+                setUserProfile({
+                    companyName: organizationData.value.companyName || '',
+                    businessLicense: organizationData.value.businessLicense || '',
+                    address: organizationData.value.address || '',
+                    city: organizationData.value.city || '',
+                    state: organizationData.value.state || '',
+                    zipCode: organizationData.value.zipCode || '',
+                    country: organizationData.value.country || 'United States',
+                    bio: userResponse.status === 'fulfilled' ? userResponse.value.bio || '' : '',
+                    website: userResponse.status === 'fulfilled' ? userResponse.value.website || '' : '',
+                    timeZone: userResponse.status === 'fulfilled' ? userResponse.value.timeZone || 'America/New_York' : 'America/New_York',
+                    isOrganizer: userResponse.status === 'fulfilled' ? userResponse.value.isOrganizer || false : false
+                });
+            } else {
+                // Fallback for organization data
                 console.log('No organization data found, using defaults');
                 setUserProfile({
                     companyName: '',
@@ -369,58 +424,47 @@ const OrganizerSettings: React.FC = () => {
                     state: '',
                     zipCode: '',
                     country: 'United States',
-                    bio: userResponse.bio || '',
-                    website: userResponse.website || '',
-                    timeZone: userResponse.timeZone || 'America/New_York',
-                    isOrganizer: userResponse.isOrganizer || false
+                    bio: userResponse.status === 'fulfilled' ? userResponse.value.bio || '' : '',
+                    website: userResponse.status === 'fulfilled' ? userResponse.value.website || '' : '',
+                    timeZone: userResponse.status === 'fulfilled' ? userResponse.value.timeZone || 'America/New_York' : 'America/New_York',
+                    isOrganizer: userResponse.status === 'fulfilled' ? userResponse.value.isOrganizer || false : false
                 });
             }
 
-            // UPDATED: Fetch user preferences - REMOVED dateFormat
-            try {
-                const preferencesData = await userApi.getPreferences();
+            // Handle preferences data
+            if (preferencesData.status === 'fulfilled') {
                 setUserPreferences({
-                    // ... existing notification preferences ...
-                    emailNotifications: preferencesData.emailNotifications ?? true,
-                    smsNotifications: preferencesData.smsNotifications ?? false,
-                    newBookingNotifications: preferencesData.newBookingNotifications ?? true,
-                    cancellationNotifications: preferencesData.cancellationNotifications ?? true,
-                    lowInventoryNotifications: preferencesData.lowInventoryNotifications ?? true,
-                    dailyReports: preferencesData.dailyReports ?? false,
-                    weeklyReports: preferencesData.weeklyReports ?? true,
-                    monthlyReports: preferencesData.monthlyReports ?? true,
-
-                    // ... existing security preferences ...
-                    twoFactorEnabled: preferencesData.twoFactorEnabled ?? false,
-                    sessionTimeout: preferencesData.sessionTimeout ?? 30,
-                    loginNotifications: preferencesData.loginNotifications ?? true,
-
-                    // ... existing event defaults ...
-                    defaultTimeZone: preferencesData.defaultTimeZone ?? 'America/New_York',
-                    defaultEventDuration: preferencesData.defaultEventDuration ?? 120,
-                    defaultTicketSaleStart: preferencesData.defaultTicketSaleStart ?? 30,
-                    defaultRefundPolicy: preferencesData.defaultRefundPolicy ?? 'flexible',
-                    requireApproval: preferencesData.requireApproval ?? false,
-                    autoPublish: preferencesData.autoPublish ?? false,
-
-                    // IMPORTANT: Make sure dateFormat is included here:
-                    dateFormat: preferencesData.dateFormat ?? 'MM/dd/yyyy', // ADD THIS LINE
-
-                    // ... existing appearance preferences ...
-                    theme: (['light', 'dark', 'auto'].includes(preferencesData.theme) ? preferencesData.theme : 'light') as 'light' | 'dark' | 'auto',
-                    language: preferencesData.language ?? 'en',
-                    timeFormat: (['12h', '24h'].includes(preferencesData.timeFormat) ? preferencesData.timeFormat : '12h') as '12h' | '24h',
-                    currency: preferencesData.currency ?? 'USD',
-                    accentColor: preferencesData.accentColor ?? 'blue',
-                    fontSize: (['small', 'medium', 'large'].includes(preferencesData.fontSize) ? preferencesData.fontSize : 'medium') as 'small' | 'medium' | 'large',
-                    compactMode: preferencesData.compactMode ?? false
+                    emailNotifications: preferencesData.value.emailNotifications ?? true,
+                    smsNotifications: preferencesData.value.smsNotifications ?? false,
+                    newBookingNotifications: preferencesData.value.newBookingNotifications ?? true,
+                    cancellationNotifications: preferencesData.value.cancellationNotifications ?? true,
+                    lowInventoryNotifications: preferencesData.value.lowInventoryNotifications ?? true,
+                    dailyReports: preferencesData.value.dailyReports ?? false,
+                    weeklyReports: preferencesData.value.weeklyReports ?? true,
+                    monthlyReports: preferencesData.value.monthlyReports ?? true,
+                    twoFactorEnabled: preferencesData.value.twoFactorEnabled ?? false,
+                    sessionTimeout: preferencesData.value.sessionTimeout ?? 30,
+                    loginNotifications: preferencesData.value.loginNotifications ?? true,
+                    defaultTimeZone: preferencesData.value.defaultTimeZone ?? 'America/New_York',
+                    defaultEventDuration: preferencesData.value.defaultEventDuration ?? 120,
+                    defaultTicketSaleStart: preferencesData.value.defaultTicketSaleStart ?? 30,
+                    defaultRefundPolicy: preferencesData.value.defaultRefundPolicy ?? 'flexible',
+                    requireApproval: preferencesData.value.requireApproval ?? false,
+                    autoPublish: preferencesData.value.autoPublish ?? false,
+                    dateFormat: preferencesData.value.dateFormat ?? 'MM/dd/yyyy',
+                    theme: (['light', 'dark', 'auto'].includes(preferencesData.value.theme) ? preferencesData.value.theme : 'light') as 'light' | 'dark' | 'auto',
+                    language: preferencesData.value.language ?? 'en',
+                    timeFormat: (['12h', '24h'].includes(preferencesData.value.timeFormat) ? preferencesData.value.timeFormat : '12h') as '12h' | '24h',
+                    currency: preferencesData.value.currency ?? 'USD',
+                    accentColor: preferencesData.value.accentColor ?? 'blue',
+                    fontSize: (['small', 'medium', 'large'].includes(preferencesData.value.fontSize) ? preferencesData.value.fontSize : 'medium') as 'small' | 'medium' | 'large',
+                    compactMode: preferencesData.value.compactMode ?? false
                 });
-            } catch (prefError) {
+            } else {
                 console.log('No preferences found, using defaults');
-                // ALSO ADD: Default preferences when API fails
                 setUserPreferences(prev => ({
                     ...prev,
-                    dateFormat: 'MM/dd/yyyy' // Ensure this is set even on error
+                    dateFormat: 'MM/dd/yyyy'
                 }));
             }
 
@@ -428,7 +472,7 @@ const OrganizerSettings: React.FC = () => {
             console.error('Error fetching user data:', error);
             setError(error.message || 'Failed to load user data');
 
-            // Fallback to localStorage
+            // Fallback to localStorage only if all API calls failed
             const storedUser = localStorage.getItem('user');
             if (storedUser) {
                 try {
@@ -453,6 +497,34 @@ const OrganizerSettings: React.FC = () => {
             setProfileLoading(false);
         }
     };
+
+    const LoadingSkeleton: React.FC = () => (
+        <div className="space-y-6">
+            <div className={`${themeClasses.themeCard} rounded-lg ${themeClasses.compactCard} shadow-sm border ${themeClasses.themeBorder}`}>
+                <div className="animate-pulse">
+                    <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-1/4 mb-4"></div>
+                    <div className="space-y-3">
+                        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                            <div className="h-10 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className={`${themeClasses.themeCard} rounded-lg ${themeClasses.compactCard} shadow-sm border ${themeClasses.themeBorder}`}>
+                <div className="animate-pulse">
+                    <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-1/3 mb-4"></div>
+                    <div className="space-y-3">
+                        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded"></div>
+                        <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-2/3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
 
     // Keep existing update functions but remove dateFormat from updateUserPreferences
     const updateUserProfile = async (): Promise<void> => {
@@ -534,7 +606,7 @@ const OrganizerSettings: React.FC = () => {
                 accentColor: userPreferences.accentColor,
                 fontSize: userPreferences.fontSize,
                 compactMode: userPreferences.compactMode,
-                dateFormat: userPreferences.dateFormat // MAKE SURE THIS IS INCLUDED
+                dateFormat: userPreferences.dateFormat 
             });
 
             setSaved(true);
@@ -546,6 +618,229 @@ const OrganizerSettings: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const renderOrganizationTab = () => (
+        <div className="space-y-6">
+            <div className={`${themeClasses.themeCard} rounded-lg ${themeClasses.compactCard} shadow-sm border ${themeClasses.themeBorder}`}>
+                <h3 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg} mb-4`}>Organization Information</h3>
+                <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.compactGap}`}>
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Company Name</label>
+                        <input
+                            type="text"
+                            value={userProfile.companyName || ''}
+                            onChange={(e) => setUserProfile({ ...userProfile, companyName: e.target.value })}
+                            className={getInputStyles()}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Business License</label>
+                        <input
+                            type="text"
+                            value={userProfile.businessLicense || ''}
+                            onChange={(e) => setUserProfile({ ...userProfile, businessLicense: e.target.value })}
+                            className={getInputStyles()}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Address</label>
+                        <input
+                            type="text"
+                            value={userProfile.address || ''}
+                            onChange={(e) => setUserProfile({ ...userProfile, address: e.target.value })}
+                            className={getInputStyles()}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>City</label>
+                        <input
+                            type="text"
+                            value={userProfile.city || ''}
+                            onChange={(e) => setUserProfile({ ...userProfile, city: e.target.value })}
+                            className={getInputStyles()}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>State</label>
+                        <input
+                            type="text"
+                            value={userProfile.state || ''}
+                            onChange={(e) => setUserProfile({ ...userProfile, state: e.target.value })}
+                            className={getInputStyles()}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>ZIP Code</label>
+                        <input
+                            type="text"
+                            value={userProfile.zipCode || ''}
+                            onChange={(e) => setUserProfile({ ...userProfile, zipCode: e.target.value })}
+                            className={getInputStyles()}
+                            disabled={loading}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderNotificationsTab = () => (
+        <div className="space-y-6">
+            <div className={`${themeClasses.themeCard} rounded-lg ${themeClasses.compactCard} shadow-sm border ${themeClasses.themeBorder}`}>
+                <h3 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg} mb-4`}>Email Notifications</h3>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>New Bookings</h4>
+                            <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Get notified when someone books your event</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.newBookingNotifications}
+                            onChange={(enabled) => updatePreference('newBookingNotifications', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>Cancellations</h4>
+                            <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Get notified when bookings are cancelled</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.cancellationNotifications}
+                            onChange={(enabled) => updatePreference('cancellationNotifications', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>Daily Reports</h4>
+                            <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Receive daily summary of bookings and revenue</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.dailyReports}
+                            onChange={(enabled) => updatePreference('dailyReports', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>Weekly Reports</h4>
+                            <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Receive weekly analytics and insights</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.weeklyReports}
+                            onChange={(enabled) => updatePreference('weeklyReports', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderSecurityTab = () => (
+        <div className="space-y-6">
+            <div className={`${themeClasses.themeCard} rounded-lg ${themeClasses.compactCard} shadow-sm border ${themeClasses.themeBorder}`}>
+                <h3 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg} mb-4`}>Security Settings</h3>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>Two-Factor Authentication</h4>
+                            <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Add an extra layer of security to your account</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.twoFactorEnabled}
+                            onChange={(enabled) => updatePreference('twoFactorEnabled', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>Login Notifications</h4>
+                            <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Get notified of new login attempts</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.loginNotifications}
+                            onChange={(enabled) => updatePreference('loginNotifications', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Session Timeout (minutes)</label>
+                        <input
+                            type="number"
+                            value={userPreferences.sessionTimeout}
+                            onChange={(e) => updatePreference('sessionTimeout', parseInt(e.target.value) || 30)}
+                            className={getInputStyles()}
+                            disabled={loading}
+                            min="5"
+                            max="480"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderEventsTab = () => (
+        <div className="space-y-6">
+            <div className={`${themeClasses.themeCard} rounded-lg ${themeClasses.compactCard} shadow-sm border ${themeClasses.themeBorder}`}>
+                <h3 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg} mb-4`}>Event Defaults</h3>
+                <div className="space-y-4">
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Default Event Duration (minutes)</label>
+                        <input
+                            type="number"
+                            value={userPreferences.defaultEventDuration}
+                            onChange={(e) => updatePreference('defaultEventDuration', parseInt(e.target.value) || 120)}
+                            className={getInputStyles()}
+                            disabled={loading}
+                            min="15"
+                            step="15"
+                        />
+                    </div>
+                    <div>
+                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Ticket Sale Start (days before event)</label>
+                        <input
+                            type="number"
+                            value={userPreferences.defaultTicketSaleStart}
+                            onChange={(e) => updatePreference('defaultTicketSaleStart', parseInt(e.target.value) || 30)}
+                            className={getInputStyles()}
+                            disabled={loading}
+                            min="1"
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>Require Approval</h4>
+                            <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Require approval before events go live</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.requireApproval}
+                            onChange={(enabled) => updatePreference('requireApproval', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h4 className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>Auto Publish</h4>
+                            <p className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Automatically publish events when created</p>
+                        </div>
+                        <Toggle
+                            enabled={userPreferences.autoPublish}
+                            onChange={(enabled) => updatePreference('autoPublish', enabled)}
+                            disabled={loading}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     const changePassword = async (): Promise<void> => {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -596,12 +891,38 @@ const OrganizerSettings: React.FC = () => {
             case 'notifications':
             case 'security':
             case 'events':
-            case 'language': // ADD THIS LINE
+            case 'language':
             case 'appearance':
                 await updateUserPreferences();
                 break;
             default:
                 await updateUserProfile();
+        }
+    };
+
+
+    const renderTabContent = () => {
+        if (profileLoading) {
+            return <LoadingSkeleton />;
+        }
+
+        switch (activeTab) {
+            case 'profile':
+                return renderProfileTab();
+            case 'organization':
+                return renderOrganizationTab();
+            case 'notifications':
+                return renderNotificationsTab();
+            case 'security':
+                return renderSecurityTab();
+            case 'language':
+                return renderLanguageTab();
+            case 'events':
+                return renderEventsTab();
+            case 'appearance':
+                return renderAppearanceTab();
+            default:
+                return renderProfileTab();
         }
     };
 
@@ -619,7 +940,15 @@ const OrganizerSettings: React.FC = () => {
         if (key === 'theme' || key === 'accentColor' || key === 'fontSize' || key === 'compactMode') {
             updateTheme({ [key]: value });
         }
+
+        // Update language immediately when language changes
+        if (key === 'language') {
+            changeLanguage(value as string);
+            // Also trigger a re-render by updating the state
+            window.dispatchEvent(new Event('languageChange'));
+        }
     };
+
 
     // Keep existing useEffect hooks
     useEffect(() => {
@@ -643,13 +972,22 @@ const OrganizerSettings: React.FC = () => {
         }
     }, [profileLoading, authStatus]);
 
+    useEffect(() => {
+        if (currentLanguage && userPreferences.language !== currentLanguage) {
+            setUserPreferences(prev => ({
+                ...prev,
+                language: currentLanguage
+            }));
+        }
+    }, [currentLanguage]);
+
     // Tab configuration
     const tabs = [
         { id: 'profile', name: 'Profile', icon: User },
         { id: 'organization', name: 'Organization', icon: Building2 },
         { id: 'notifications', name: 'Notifications', icon: Bell },
         { id: 'security', name: 'Security', icon: Shield },
-        { id: 'language', name: t('language'), icon: Globe },
+        { id: 'language', name: 'Language & Region', icon: Languages }, // Updated name
         { id: 'events', name: 'Event Defaults', icon: Calendar },
         { id: 'appearance', name: 'Appearance', icon: Palette }
     ];
@@ -933,129 +1271,40 @@ const OrganizerSettings: React.FC = () => {
                 </div>
             </div>
 
-            {/* UPDATED: Localization - REMOVED Date Format, changed to 2 columns */}
-            <div className={`${themeClasses.themeCard} ${themeClasses.compactCard} rounded-lg shadow-sm border ${themeClasses.themeBorder}`}>
-                <div className="flex items-center space-x-2 mb-4">
-                    <Globe className={`w-5 h-5 ${themeClasses.themeMutedFg}`} />
-                    <h3 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg}`}>Localization</h3>
-                </div>
-
-                {/* UPDATED: Changed from 3 columns to 2 columns since we removed date format */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Language</label>
-                        <select
-                            value={userPreferences.language}
-                            onChange={(e) => updatePreference('language', e.target.value)}
-                            className={getInputStyles()}
-                            disabled={loading}
-                        >
-                            {languages.map((lang) => (
-                                <option key={lang.code} value={lang.code}>
-                                    {lang.flag} {lang.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Currency</label>
-                        <select
-                            value={userPreferences.currency}
-                            onChange={(e) => updatePreference('currency', e.target.value)}
-                            className={getInputStyles()}
-                            disabled={loading}
-                        >
-                            {currencies.map((curr) => (
-                                <option key={curr.code} value={curr.code}>
-                                    {curr.symbol} {curr.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                <div className="mt-4">
-                    <label className={`block ${themeClasses.textSm} font-medium ${themeClasses.themeFg} mb-2`}>Time Format</label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            onClick={() => updatePreference('timeFormat', '12h')}
-                            className={`p-2 rounded-lg border-2 transition-all ${userPreferences.timeFormat === '12h'
-                                ? 'accent-border bg-blue-50 dark:bg-blue-900/20'
-                                : `${themeClasses.themeBorder} ${themeClasses.hover}`
-                                }`}
-                        >
-                            <div className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>12-hour</div>
-                            <div className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>2:30 PM</div>
-                        </button>
-                        <button
-                            onClick={() => updatePreference('timeFormat', '24h')}
-                            className={`p-2 rounded-lg border-2 transition-all ${userPreferences.timeFormat === '24h'
-                                ? 'accent-border bg-blue-50 dark:bg-blue-900/20'
-                                : `${themeClasses.themeBorder} ${themeClasses.hover}`
-                                }`}
-                        >
-                            <div className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>24-hour</div>
-                            <div className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>14:30</div>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* UPDATED: Live Preview - Removed date format reference */}
-            <div className={`${themeClasses.themeCard} ${themeClasses.compactCard} rounded-lg shadow-sm border ${themeClasses.themeBorder}`}>
-                <h3 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg} mb-4`}>Live Preview</h3>
-
-                <div className={`border-2 border-dashed ${themeClasses.themeBorder} rounded-lg p-6 ${isDark ? 'bg-gray-800/30' : 'bg-gray-50'}`}>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h4 className={`${themeClasses.textLg} font-semibold ${themeClasses.themeFg}`}>Sample Dashboard</h4>
-                            <button className="btn-accent">
-                                Create Event
-                            </button>
-                        </div>
-
-                        <div className={`grid grid-cols-1 md:grid-cols-3 ${themeClasses.compactGap}`}>
-                            <div className={`${themeClasses.themeCard} p-4 rounded-lg border ${themeClasses.themeBorder}`}>
-                                <div className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Revenue</div>
-                                <div className={`${themeClasses.textXl} font-bold ${themeClasses.themeFg}`}>
-                                    {currencies.find(c => c.code === userPreferences.currency)?.symbol}12,345
-                                </div>
-                            </div>
-                            <div className={`${themeClasses.themeCard} p-4 rounded-lg border ${themeClasses.themeBorder}`}>
-                                <div className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Next Event</div>
-                                <div className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>
-                                    {userPreferences.timeFormat === '12h' ? '2:30 PM' : '14:30'}
-                                </div>
-                            </div>
-                            <div className={`${themeClasses.themeCard} p-4 rounded-lg border ${themeClasses.themeBorder}`}>
-                                <div className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>Language</div>
-                                <div className={`${themeClasses.textSm} font-medium ${themeClasses.themeFg}`}>
-                                    {languages.find(l => l.code === userPreferences.language)?.name}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 
-    // Keep other render functions (renderOrganizationTab, renderNotificationsTab, etc.) 
-    // but apply theme classes to them as well - I'll skip them for brevity
 
-    const renderTabContent = () => {
-        switch (activeTab) {
-            case 'profile': return renderProfileTab();
-            // case 'organization': return renderOrganizationTab(); // Uncomment when you implement these
-            // case 'notifications': return renderNotificationsTab();
-            // case 'security': return renderSecurityTab();
-            // case 'events': return renderEventsTab();
-            case 'language': return renderLanguageTab(); // ADD THIS LINE
-            case 'appearance': return renderAppearanceTab();
-            default: return renderProfileTab();
+    const CACHE_KEY = 'userPreferencesCache';
+    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+    const getCachedPreferences = (): UserPreferences | null => {
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < CACHE_DURATION) {
+                    return data;
+                }
+            }
+        } catch (error) {
+            console.error('Error reading cached preferences:', error);
+        }
+        return null;
+    };
+
+    const setCachedPreferences = (preferences: UserPreferences): void => {
+        try {
+            const cacheData = {
+                data: preferences,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+        } catch (error) {
+            console.error('Error caching preferences:', error);
         }
     };
+
 
     // UPDATED: Main render with full theme integration
     return (

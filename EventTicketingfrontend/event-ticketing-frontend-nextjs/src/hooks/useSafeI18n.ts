@@ -49,6 +49,17 @@ export const SUPPORTED_LANGUAGES = [
         dateFormat: 'dd.MM.yyyy',
         timeFormat: '24h',
         currency: 'EUR'
+    },
+    {
+        code: 'it', // ADD ITALIAN HERE
+        name: 'Italian',
+        nativeName: 'Italiano',
+        flag: '🇮🇹',
+        direction: 'ltr',
+        region: 'IT',
+        dateFormat: 'dd/MM/yyyy',
+        timeFormat: '24h',
+        currency: 'EUR'
     }
 ];
 
@@ -101,6 +112,10 @@ export interface TranslationKeys {
     eventTime: string;
     eventLocation: string;
     ticketPrice: string;
+    eventsSubtitle: string, // NEW
+    allEvents: string, // NEW
+    searchEvents: string, // NEW
+    unpublished: string, // NEW
 
     // Appearance
     theme: string;
@@ -210,6 +225,10 @@ const translations: Record<string, TranslationKeys> = {
         eventTime: 'Event Time',
         eventLocation: 'Event Location',
         ticketPrice: 'Ticket Price',
+        eventsSubtitle: 'Manage your events and track their performance', // NEW
+        allEvents: 'All Events',
+        unpublished: 'Unpublished',
+        searchEvents: 'Search events...',
 
         // Appearance
         theme: 'Theme',
@@ -309,6 +328,10 @@ const translations: Record<string, TranslationKeys> = {
         eventTime: 'Hora del Evento',
         eventLocation: 'Ubicación del Evento',
         ticketPrice: 'Precio del Boleto',
+        eventsSubtitle: 'Gestiona tus eventos y rastrea su rendimiento', // NEW
+        allEvents: 'Todos los Eventos',
+        unpublished: 'No Publicado',
+        searchEvents: 'Buscar eventos...',
 
         // Appearance
         theme: 'Tema',
@@ -408,6 +431,10 @@ const translations: Record<string, TranslationKeys> = {
         eventTime: 'Heure de l\'Événement',
         eventLocation: 'Lieu de l\'Événement',
         ticketPrice: 'Prix du Billet',
+        eventsSubtitle: 'Gérez vos événements et suivez leurs performances',
+        allEvents: 'Tous les Événements',
+        unpublished: 'Non Publié',
+        searchEvents: 'Rechercher des événements...',
 
         // Appearance
         theme: 'Thème',
@@ -507,6 +534,10 @@ const translations: Record<string, TranslationKeys> = {
         eventTime: 'Veranstaltungszeit',
         eventLocation: 'Veranstaltungsort',
         ticketPrice: 'Ticketpreis',
+        eventsSubtitle: 'Verwalten Sie Ihre Veranstaltungen und verfolgen Sie deren Leistung',
+        allEvents: 'Alle Veranstaltungen',
+        unpublished: 'Unveröffentlicht',
+        searchEvents: 'Veranstaltungen suchen...',
 
         // Appearance
         theme: 'Theme',
@@ -557,6 +588,109 @@ const translations: Record<string, TranslationKeys> = {
         createFirstEventPrompt: 'Erstellen Sie Ihre erste Veranstaltung, um mit EventPro zu beginnen.',
         publishedCount: '{count} veröffentlicht',
         dayEvent: '{count}-tägige Veranstaltung'
+    },
+    it: {
+        // Common
+        save: 'Salva',
+        cancel: 'Annulla',
+        delete: 'Elimina',
+        edit: 'Modifica',
+        view: 'Visualizza',
+        loading: 'Caricamento...',
+        error: 'Errore',
+        success: 'Successo',
+        confirm: 'Conferma',
+
+        // Navigation
+        dashboard: 'Dashboard',
+        events: 'Eventi',
+        settings: 'Impostazioni',
+        profile: 'Profilo',
+        logout: 'Disconnetti',
+
+        // Settings
+        personalInformation: 'Informazioni Personali',
+        organization: 'Organizzazione',
+        notifications: 'Notifiche',
+        security: 'Sicurezza',
+        appearance: 'Aspetto',
+        language: 'Lingua',
+        preferences: 'Preferenze',
+
+        // Profile
+        firstName: 'Nome',
+        lastName: 'Cognome',
+        email: 'Email',
+        phoneNumber: 'Numero di Telefono',
+        companyName: 'Nome Azienda',
+        address: 'Indirizzo',
+        city: 'Città',
+        state: 'Regione',
+        zipCode: 'CAP',
+        country: 'Paese',
+
+        // Events
+        createEvent: 'Crea Evento',
+        eventTitle: 'Titolo Evento',
+        eventDescription: 'Descrizione Evento',
+        eventDate: 'Data Evento',
+        eventTime: 'Ora Evento',
+        eventLocation: 'Luogo Evento',
+        ticketPrice: 'Prezzo Biglietto',
+        eventsSubtitle: 'Gestisci i tuoi eventi e monitora le loro prestazioni',
+        allEvents: 'Tutti gli Eventi',
+        unpublished: 'Non Pubblicato',
+        searchEvents: 'Cerca eventi...',
+
+        // Appearance
+        theme: 'Tema',
+        lightMode: 'Modalità Chiara',
+        darkMode: 'Modalità Scura',
+        autoMode: 'Modalità Automatica',
+        accentColor: 'Colore Accent',
+        fontSize: 'Dimensione Font',
+        compactMode: 'Modalità Compatta',
+
+        // Time and Date
+        timeFormat: 'Formato Ora',
+        dateFormat: 'Formato Data',
+        currency: 'Valuta',
+        timezone: 'Fuso Orario',
+
+        // Messages
+        saveSuccess: 'Impostazioni salvate con successo!',
+        saveError: 'Errore nel salvare le impostazioni',
+        loadError: 'Errore nel caricare i dati',
+        invalidInput: 'Input non valido',
+        requiredField: 'Questo campo è obbligatorio',
+
+        // Dashboard specific
+        welcomeBack: 'Bentornato, {name}!',
+        yourEvents: 'I Tuoi Eventi',
+        virtualEvent: 'Evento Virtuale',
+        viewAllEvents: 'Visualizza tutti gli eventi →',
+        upcomingEvents: 'Eventi Prossimi',
+        unpublish: 'Rimuovi Pubblicazione',
+        unlimited: 'Illimitato',
+        uncategorized: 'Senza Categoria',
+        totalRevenue: 'Ricavi Totali',
+        totalEvents: 'Eventi Totali',
+        ticketsSold: 'Biglietti Venduti',
+        revenue: 'Ricavi',
+        published: 'Pubblicato',
+        publish: 'Pubblica',
+        online: 'Online',
+        noEventsYet: 'Nessun evento ancora',
+        multiDaySchedule: 'Programma multi-giorno',
+        maxCapacity: 'Capacità Massima',
+        loadingDashboard: 'Caricamento dashboard...',
+        inPerson: 'Di Persona',
+        draft: 'Bozza',
+        dashboardError: 'Errore nel caricare i dati del dashboard',
+        createYourFirstEvent: 'Crea il Tuo Primo Evento',
+        createFirstEventPrompt: 'Crea il tuo primo evento per iniziare con EventPro.',
+        publishedCount: '{count} pubblicati',
+        dayEvent: 'Evento di {count} giorni'
     }
 };
 

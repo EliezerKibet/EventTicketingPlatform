@@ -327,32 +327,34 @@ interface UserPreferences {
 }
 
 interface UpdateUserPreferencesDto {
-    emailNotifications: boolean;
-    smsNotifications: boolean;
-    newBookingNotifications: boolean;
-    cancellationNotifications: boolean;
-    lowInventoryNotifications: boolean;
-    dailyReports: boolean;
-    weeklyReports: boolean;
-    monthlyReports: boolean;
-    twoFactorEnabled: boolean;
-    sessionTimeout: number;
-    loginNotifications: boolean;
+    // ALL fields should be optional to allow partial updates
+    emailNotifications?: boolean;
+    smsNotifications?: boolean;
+    newBookingNotifications?: boolean;
+    cancellationNotifications?: boolean;
+    lowInventoryNotifications?: boolean;
+    dailyReports?: boolean;
+    weeklyReports?: boolean;
+    monthlyReports?: boolean;
+    twoFactorEnabled?: boolean;
+    sessionTimeout?: number;
+    loginNotifications?: boolean;
     defaultTimeZone?: string;
-    defaultEventDuration: number;
-    defaultTicketSaleStart: number;
+    defaultEventDuration?: number;
+    defaultTicketSaleStart?: number;
     defaultRefundPolicy?: string;
-    requireApproval: boolean;
-    autoPublish: boolean;
-    theme: string;
-    language: string;
-    dateFormat: string;
-    timeFormat: string;
-    currency: string;
-    accentColor: string;
-    fontSize: string;
-    compactMode: boolean;
+    requireApproval?: boolean;
+    autoPublish?: boolean;
+    theme?: string;        // Made optional
+    language?: string;     // Made optional  
+    dateFormat?: string;   // Made optional
+    timeFormat?: string;   // Made optional
+    currency?: string;     // Made optional
+    accentColor?: string;  // Made optional
+    fontSize?: string;     // Made optional
+    compactMode?: boolean; // Made optional
 }
+
 
 interface ChangePasswordDto {
     currentPassword: string;
@@ -479,15 +481,52 @@ export const userApi = {
         }
     },
 
-    updatePreferences: async (preferencesData: UpdateUserPreferencesDto): Promise<UserPreferences> => {
+    updatePreferences: async (preferences: Partial<UpdateUserPreferencesDto>): Promise<UserPreferences> => {
         try {
-            console.log('⚙️ Updating user preferences');
-            const response = await api.put('/user/preferences', preferencesData);
+            console.log('⚙️ Updating user preferences:', preferences);
+            const response = await api.put('/user/preferences', preferences);
             console.log('⚙️ Successfully updated user preferences');
             return response.data;
         } catch (error: any) {
-            console.error('⚙️ Error updating preferences:', error.message);
+            console.error('⚙️ Error updating preferences:', {
+                message: error.message,
+                status: error.response?.status,
+                data: error.response?.data,
+                payload: preferences
+            });
             throw new Error(`Failed to update preferences: ${error.message}`);
+        }
+    },
+
+    updateLanguageOnly: async (language: string): Promise<void> => {
+        try {
+            console.log('🌐 Updating language preference only:', language);
+
+            // Try PATCH method first (if backend supports it)
+            try {
+                await api.patch('/user/preferences/language', { language });
+                console.log('🌐 Language updated via PATCH endpoint');
+                return;
+            } catch (patchError) {
+                console.log('🌐 PATCH endpoint not available, using PUT with minimal data');
+            }
+
+            // Fallback: Use PUT with minimal required data
+            const minimalUpdate = {
+                language,
+                // Add any other fields that might be required by your backend
+                emailNotifications: true,
+                smsNotifications: false,
+                theme: 'light',
+                fontSize: 'medium',
+                compactMode: false
+            };
+
+            await api.put('/user/preferences', minimalUpdate);
+            console.log('🌐 Language updated via PUT with minimal data');
+        } catch (error: any) {
+            console.error('🌐 Language-only update failed:', error.message);
+            throw error;
         }
     }
 };

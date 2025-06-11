@@ -25,6 +25,7 @@ import {
     Filter,
     Download
 } from 'lucide-react';
+import { useI18n } from '../../../components/providers/I18nProvider';
 
 // Interfaces
 interface Event {
@@ -82,6 +83,7 @@ const TicketsPage = () => {
     const { user, isOrganizer } = useAuth();
     const themeClasses = useThemeClasses();
     const { isDark } = useTheme();
+    const { t } = useI18n();
 
     const [activeTab, setActiveTab] = useState<'types' | 'validate' | 'checkin'>('types');
     const [loading, setLoading] = useState(true);
@@ -156,11 +158,11 @@ const TicketsPage = () => {
                 })));
             } else {
                 console.error('Failed to fetch events:', response.status);
-                setError('Failed to fetch your events');
+                setError(t('failedToFetchVenues'));
             }
         } catch (error) {
             console.error('Error fetching events:', error);
-            setError('Failed to fetch events');
+            setError(t('failedToFetchVenues'));
         }
     };
 
@@ -193,7 +195,7 @@ const TicketsPage = () => {
             setTicketTypes(allTicketTypes);
         } catch (error) {
             console.error('Error fetching ticket types:', error);
-            setError('Failed to fetch ticket types');
+            setError(t('failedToCreateTicketType'));
         } finally {
             setLoading(false);
         }
@@ -211,10 +213,10 @@ const TicketsPage = () => {
     const validateForm = () => {
         const errors: Record<string, string> = {};
 
-        if (!formData.eventId) errors.eventId = 'Event is required';
-        if (!formData.name.trim()) errors.name = 'Ticket type name is required';
-        if (!formData.price || parseFloat(formData.price) < 0) errors.price = 'Valid price is required';
-        if (!formData.quantity || parseInt(formData.quantity) <= 0) errors.quantity = 'Quantity must be greater than 0';
+        if (!formData.eventId) errors.eventId = t('eventRequired');
+        if (!formData.name.trim()) errors.name = t('ticketTypeNameRequired');
+        if (!formData.price || parseFloat(formData.price) < 0) errors.price = t('priceRequired');
+        if (!formData.quantity || parseInt(formData.quantity) <= 0) errors.quantity = t('quantityGreaterThanZero');
 
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
@@ -273,7 +275,7 @@ const TicketsPage = () => {
 
             if (response.ok) {
                 console.log('✅ Created ticket type:', errorData);
-                setSuccess('Ticket type created successfully!');
+                setSuccess(t('ticketTypeCreatedSuccessfully'));
                 await fetchTicketTypes();
                 resetForm();
                 setTimeout(() => setSuccess(''), 3000);
@@ -281,20 +283,20 @@ const TicketsPage = () => {
                 console.error('❌ Ticket type creation failed:', errorData);
 
                 if (response.status === 400) {
-                    setError(`Bad Request: ${errorData.message || 'Invalid data provided. Check that the event exists and you have permission to create ticket types for it.'}`);
+                    setError(`${t('error')}: ${errorData.message || t('invalidInput')}`);
                 } else if (response.status === 401) {
-                    setError('You are not authorized. Please log in again.');
+                    setError(t('error'));
                 } else if (response.status === 403) {
-                    setError('You do not have permission to create ticket types for this event.');
+                    setError(t('error'));
                 } else if (response.status === 404) {
-                    setError('Event not found. Please make sure the event exists.');
+                    setError(t('noEventsFound'));
                 } else {
-                    setError(errorData.message || `Failed to create ticket type (HTTP ${response.status})`);
+                    setError(errorData.message || t('failedToCreateTicketType'));
                 }
             }
         } catch (error) {
             console.error('💥 Network error creating ticket type:', error);
-            setError('Network error. Please check your connection and try again.');
+            setError(t('loadError'));
         } finally {
             setFormLoading(false);
         }
@@ -302,7 +304,7 @@ const TicketsPage = () => {
 
     const handleValidateTicket = async () => {
         if (!ticketNumber.trim()) {
-            setError('Please enter a ticket number');
+            setError(t('enterTicketNumber'));
             return;
         }
 
@@ -325,11 +327,11 @@ const TicketsPage = () => {
                 setValidationResult(data);
             } else {
                 const errorData = await response.json();
-                setError(errorData.message || 'Failed to validate ticket');
+                setError(errorData.message || t('error'));
             }
         } catch (error) {
             console.error('Error validating ticket:', error);
-            setError('Failed to validate ticket. Please try again.');
+            setError(t('error'));
         } finally {
             setValidating(false);
         }
@@ -337,7 +339,7 @@ const TicketsPage = () => {
 
     const handleCheckInTicket = async () => {
         if (!checkInNumber.trim()) {
-            setError('Please enter a ticket number');
+            setError(t('enterTicketNumber'));
             return;
         }
 
@@ -358,15 +360,15 @@ const TicketsPage = () => {
             if (response.ok) {
                 const data = await response.json();
                 setCheckInResult(data);
-                setSuccess('Ticket checked in successfully!');
+                setSuccess(t('ticketCheckedInSuccessfully'));
                 setTimeout(() => setSuccess(''), 3000);
             } else {
                 const errorData = await response.json();
-                setError(errorData.message || 'Failed to check in ticket');
+                setError(errorData.message || t('error'));
             }
         } catch (error) {
             console.error('Error checking in ticket:', error);
-            setError('Failed to check in ticket. Please try again.');
+            setError(t('error'));
         } finally {
             setCheckingIn(false);
         }
@@ -403,7 +405,7 @@ const TicketsPage = () => {
             <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>{t('loading')}</p>
                 </div>
             </div>
         );
@@ -419,24 +421,24 @@ const TicketsPage = () => {
                         className={`flex items-center ${themeClasses.textMuted} hover:${themeClasses.text} mb-4 transition-colors`}
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
+                        {t('back')}
                     </button>
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>Ticket Management</h1>
-                            <p className={`${themeClasses.textMuted} mt-1`}>Manage ticket types, validate tickets, and handle check-ins</p>
+                            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>{t('ticketManagement')}</h1>
+                            <p className={`${themeClasses.textMuted} mt-1`}>{t('manageTicketTypes')}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Important Notice */}
                 <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">⚠️ Important: Ticket Type Creation Limitations</h3>
+                    <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">{t('importantTicketLimitations')}</h3>
                     <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
-                        <li>• <strong>Published events:</strong> Ticket types cannot be modified to preserve existing sales data</li>
-                        <li>• <strong>Events with sales:</strong> Ticket type editing is locked once tickets are sold</li>
-                        <li>• <strong>To create ticket types:</strong> Events must be in DRAFT status with no existing sales</li>
-                        <li>• <strong>Alternative:</strong> Create a new event if you need different ticket types</li>
+                        <li>{t('cannotModifyPublished')}</li>
+                        <li>{t('editingLockedAfterSales')}</li>
+                        <li>{t('draftStatusForCreation')}</li>
+                        <li>{t('createNewEventAlternative')}</li>
                     </ul>
                 </div>
 
@@ -468,21 +470,21 @@ const TicketsPage = () => {
                                 className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${getTabStyles(activeTab === 'types')}`}
                             >
                                 <Ticket className="h-4 w-4 inline mr-2" />
-                                Ticket Types
+                                {t('ticketTypes')}
                             </button>
                             <button
                                 onClick={() => setActiveTab('validate')}
                                 className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${getTabStyles(activeTab === 'validate')}`}
                             >
                                 <QrCode className="h-4 w-4 inline mr-2" />
-                                Validate Tickets
+                                {t('validateTickets')}
                             </button>
                             <button
                                 onClick={() => setActiveTab('checkin')}
                                 className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${getTabStyles(activeTab === 'checkin')}`}
                             >
                                 <CheckCircle className="h-4 w-4 inline mr-2" />
-                                Check-in
+                                {t('checkIn')}
                             </button>
                         </nav>
                     </div>
@@ -499,10 +501,10 @@ const TicketsPage = () => {
                                     className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
-                                    Create Ticket Type
+                                    {t('createTicketTypeAction')}
                                 </button>
                                 <div className={`text-sm ${themeClasses.textMuted}`}>
-                                    <span className="font-medium">Note:</span> Only works for draft events without existing sales
+                                    <span className="font-medium">{t('required')}:</span> {t('onlyWorksForDraft')}
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -510,14 +512,14 @@ const TicketsPage = () => {
                                     onClick={() => router.push('/organizer/events/create')}
                                     className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
                                 >
-                                    Create New Event
+                                    {t('createNewEventLink')}
                                 </button>
                                 <span className={themeClasses.textMuted}>|</span>
                                 <button
                                     onClick={() => router.push('/organizer/events')}
                                     className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
                                 >
-                                    Manage Events
+                                    {t('manageEventsLink')}
                                 </button>
                             </div>
                         </div>
@@ -531,7 +533,7 @@ const TicketsPage = () => {
                                         type="text"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Search ticket types..."
+                                        placeholder={t('searchEvents')}
                                         className={`w-full pl-10 pr-4 py-2 border ${themeClasses.border} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.card} ${themeClasses.text} placeholder-opacity-60 ${isDark ? 'placeholder-gray-400' : 'placeholder-gray-600'}`}
                                     />
                                 </div>
@@ -541,7 +543,7 @@ const TicketsPage = () => {
                                         onChange={(e) => setSelectedEvent(e.target.value)}
                                         className={`w-full px-4 py-2 border ${themeClasses.border} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.card} ${themeClasses.text}`}
                                     >
-                                        <option value="">All Events</option>
+                                        <option value="">{t('allEvents')}</option>
                                         {events.map(event => (
                                             <option key={event.eventId} value={event.eventId.toString()}>
                                                 {event.title}
@@ -557,14 +559,14 @@ const TicketsPage = () => {
                             {loading ? (
                                 <div className="flex items-center justify-center py-12">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                    <span className={`ml-2 ${themeClasses.textMuted}`}>Loading ticket types...</span>
+                                    <span className={`ml-2 ${themeClasses.textMuted}`}>{t('loadingTicketTypes')}</span>
                                 </div>
                             ) : filteredTicketTypes.length === 0 ? (
                                 <div className="text-center py-12">
                                     <Ticket className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
-                                    <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>No ticket types found</h3>
+                                    <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>{t('noTicketTypesFound')}</h3>
                                     <p className={themeClasses.textMuted}>
-                                        {searchTerm || selectedEvent ? 'Try adjusting your filters' : 'Create your first ticket type'}
+                                        {searchTerm || selectedEvent ? t('adjustFiltersOrCreate') : t('createFirstTicketTypePrompt')}
                                     </p>
                                 </div>
                             ) : (
@@ -573,19 +575,19 @@ const TicketsPage = () => {
                                         <thead className={`${isDark ? 'bg-gray-800' : 'bg-gray-50'} border-b ${themeClasses.border}`}>
                                             <tr>
                                                 <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                                    Ticket Type
+                                                    {t('ticketType')}
                                                 </th>
                                                 <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                                    Event
+                                                    {t('event')}
                                                 </th>
                                                 <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                                    Price
+                                                    {t('price')}
                                                 </th>
                                                 <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                                    Availability
+                                                    {t('availability')}
                                                 </th>
                                                 <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                                    Status
+                                                    {t('status')}
                                                 </th>
                                             </tr>
                                         </thead>
@@ -601,7 +603,7 @@ const TicketsPage = () => {
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">
-                                                        <div className={`text-sm ${themeClasses.text}`}>{ticketType.eventTitle || 'Unknown Event'}</div>
+                                                        <div className={`text-sm ${themeClasses.text}`}>{ticketType.eventTitle || t('noEventsFound')}</div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className={`flex items-center text-sm ${themeClasses.text}`}>
@@ -628,7 +630,7 @@ const TicketsPage = () => {
                                                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                                             : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                                             }`}>
-                                                            {ticketType.isActive ? 'Active' : 'Inactive'}
+                                                            {ticketType.isActive ? t('active') : t('inactive')}
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -645,14 +647,14 @@ const TicketsPage = () => {
                 {activeTab === 'validate' && (
                     <div className="space-y-6">
                         <div className={`${themeClasses.card} rounded-lg shadow-sm border ${themeClasses.border} p-6`}>
-                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Validate Ticket</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>{t('validateTicket')}</h2>
                             <div className="flex space-x-4">
                                 <div className="flex-1">
                                     <input
                                         type="text"
                                         value={ticketNumber}
                                         onChange={(e) => setTicketNumber(e.target.value)}
-                                        placeholder="Enter ticket number"
+                                        placeholder={t('enterTicketNumber')}
                                         className={getInputStyles()}
                                     />
                                 </div>
@@ -664,12 +666,12 @@ const TicketsPage = () => {
                                     {validating ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                            Validating...
+                                            {t('validating')}
                                         </>
                                     ) : (
                                         <>
                                             <QrCode className="h-4 w-4 mr-2" />
-                                            Validate
+                                            {t('validate')}
                                         </>
                                     )}
                                 </button>
@@ -690,7 +692,7 @@ const TicketsPage = () => {
                                             ? 'text-green-800 dark:text-green-200'
                                             : 'text-red-800 dark:text-red-200'
                                             }`}>
-                                            {validationResult.isValid ? 'Valid Ticket' : 'Invalid Ticket'}
+                                            {validationResult.isValid ? t('validTicket') : t('invalidTicket')}
                                         </h3>
                                     </div>
 
@@ -699,13 +701,13 @@ const TicketsPage = () => {
                                             ? 'text-green-700 dark:text-green-300'
                                             : 'text-red-700 dark:text-red-300'
                                             }`}>
-                                            <p><span className="font-medium">Ticket Number:</span> {validationResult.ticket.ticketNumber}</p>
-                                            <p><span className="font-medium">Event:</span> {validationResult.ticket.eventTitle}</p>
-                                            <p><span className="font-medium">Type:</span> {validationResult.ticket.ticketTypeName}</p>
-                                            <p><span className="font-medium">Attendee:</span> {validationResult.ticket.attendeeName}</p>
-                                            <p><span className="font-medium">Status:</span>
+                                            <p><span className="font-medium">{t('ticketNumber')}:</span> {validationResult.ticket.ticketNumber}</p>
+                                            <p><span className="font-medium">{t('event')}:</span> {validationResult.ticket.eventTitle}</p>
+                                            <p><span className="font-medium">{t('ticketType')}:</span> {validationResult.ticket.ticketTypeName}</p>
+                                            <p><span className="font-medium">{t('attendeeName')}:</span> {validationResult.ticket.attendeeName}</p>
+                                            <p><span className="font-medium">{t('status')}:</span>
                                                 <span className={`ml-1 ${validationResult.ticket.isUsed ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                                                    {validationResult.ticket.isUsed ? 'Already Used' : 'Not Used'}
+                                                    {validationResult.ticket.isUsed ? t('alreadyUsed') : t('notUsed')}
                                                 </span>
                                             </p>
                                         </div>
@@ -727,14 +729,14 @@ const TicketsPage = () => {
                 {activeTab === 'checkin' && (
                     <div className="space-y-6">
                         <div className={`${themeClasses.card} rounded-lg shadow-sm border ${themeClasses.border} p-6`}>
-                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Check-in Ticket</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>{t('checkInTicket')}</h2>
                             <div className="flex space-x-4">
                                 <div className="flex-1">
                                     <input
                                         type="text"
                                         value={checkInNumber}
                                         onChange={(e) => setCheckInNumber(e.target.value)}
-                                        placeholder="Enter ticket number to check-in"
+                                        placeholder={t('enterTicketNumberCheckIn')}
                                         className={getInputStyles()}
                                     />
                                 </div>
@@ -746,12 +748,12 @@ const TicketsPage = () => {
                                     {checkingIn ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                            Checking in...
+                                            {t('checkingIn')}
                                         </>
                                     ) : (
                                         <>
                                             <CheckCircle className="h-4 w-4 mr-2" />
-                                            Check-in
+                                            {t('checkIn')}
                                         </>
                                     )}
                                 </button>
@@ -761,13 +763,13 @@ const TicketsPage = () => {
                                 <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                     <div className="flex items-center mb-2">
                                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                                        <h3 className="font-medium text-green-800 dark:text-green-200">Ticket Checked In Successfully</h3>
+                                        <h3 className="font-medium text-green-800 dark:text-green-200">{t('ticketCheckedInSuccessfully')}</h3>
                                     </div>
                                     <div className="space-y-2 text-sm text-green-700 dark:text-green-300">
-                                        <p><span className="font-medium">Ticket Number:</span> {checkInResult.ticketNumber}</p>
-                                        <p><span className="font-medium">Attendee:</span> {checkInResult.attendeeName}</p>
-                                        <p><span className="font-medium">Event:</span> {checkInResult.eventTitle}</p>
-                                        <p><span className="font-medium">Type:</span> {checkInResult.ticketTypeName}</p>
+                                        <p><span className="font-medium">{t('ticketNumber')}:</span> {checkInResult.ticketNumber}</p>
+                                        <p><span className="font-medium">{t('attendeeName')}:</span> {checkInResult.attendeeName}</p>
+                                        <p><span className="font-medium">{t('event')}:</span> {checkInResult.eventTitle}</p>
+                                        <p><span className="font-medium">{t('ticketType')}:</span> {checkInResult.ticketTypeName}</p>
                                     </div>
                                 </div>
                             )}
@@ -781,7 +783,7 @@ const TicketsPage = () => {
                         <div className={`${themeClasses.card} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl`}>
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className={`text-xl font-semibold ${themeClasses.text}`}>Create Ticket Type</h2>
+                                    <h2 className={`text-xl font-semibold ${themeClasses.text}`}>{t('createTicketType')}</h2>
                                     <button
                                         onClick={resetForm}
                                         className={`${themeClasses.textMuted} hover:${themeClasses.text} transition-colors`}
@@ -793,19 +795,19 @@ const TicketsPage = () => {
                                 <form onSubmit={handleCreateTicketType} className="space-y-4">
                                     {/* Business Rules Warning */}
                                     <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                                        <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">⚠️ Ticket Creation Requirements</h4>
+                                        <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">{t('businessRulesWarning')}</h4>
                                         <ul className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
-                                            <li>• Event must be in <strong>DRAFT</strong> status (not published)</li>
-                                            <li>• Event must have <strong>no existing ticket sales</strong></li>
-                                            <li>• You must be the <strong>event organizer</strong></li>
-                                            <li>• If this fails, edit ticket types during event creation instead</li>
+                                            <li>• {t('eventMustBeDraft')}</li>
+                                            <li>• {t('noExistingTicketSales')}</li>
+                                            <li>• {t('mustBeEventOrganizer')}</li>
+                                            <li>• {t('editTicketsDuringCreation')}</li>
                                         </ul>
                                     </div>
 
                                     {/* Event Selection */}
                                     <div>
                                         <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                            Event *
+                                            {t('event')} *
                                         </label>
                                         <select
                                             name="eventId"
@@ -813,7 +815,7 @@ const TicketsPage = () => {
                                             onChange={handleInputChange}
                                             className={getInputStyles(!!formErrors.eventId)}
                                         >
-                                            <option value="">Select an event</option>
+                                            <option value="">{t('selectAnEvent')}</option>
                                             {events.map(event => (
                                                 <option key={event.eventId} value={event.eventId.toString()}>
                                                     {event.title} (ID: {event.eventId})
@@ -823,7 +825,7 @@ const TicketsPage = () => {
                                         {formErrors.eventId && <p className="text-red-500 text-sm mt-1">{formErrors.eventId}</p>}
                                         {events.length === 0 && (
                                             <p className="text-amber-600 dark:text-amber-400 text-sm mt-1">
-                                                No events found. You need to create an event first before creating ticket types.
+                                                {t('needCreateEventFirst')}
                                             </p>
                                         )}
                                     </div>
@@ -831,7 +833,7 @@ const TicketsPage = () => {
                                     {/* Ticket Type Name */}
                                     <div>
                                         <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                            Ticket Type Name *
+                                            {t('ticketTypeName')} *
                                         </label>
                                         <input
                                             type="text"
@@ -847,7 +849,7 @@ const TicketsPage = () => {
                                     {/* Description */}
                                     <div>
                                         <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                            Description
+                                            {t('description')}
                                         </label>
                                         <textarea
                                             name="description"
@@ -855,7 +857,7 @@ const TicketsPage = () => {
                                             onChange={handleInputChange}
                                             rows={3}
                                             className={getInputStyles()}
-                                            placeholder="Optional description of what this ticket includes..."
+                                            placeholder={t('optionalTicketDescription')}
                                         />
                                     </div>
 
@@ -863,7 +865,7 @@ const TicketsPage = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Price (RM) *
+                                                {t('price')} *
                                             </label>
                                             <input
                                                 type="number"
@@ -880,7 +882,7 @@ const TicketsPage = () => {
 
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Quantity *
+                                                {t('quantity')} *
                                             </label>
                                             <input
                                                 type="number"
@@ -889,7 +891,7 @@ const TicketsPage = () => {
                                                 onChange={handleInputChange}
                                                 min="1"
                                                 className={getInputStyles(!!formErrors.quantity)}
-                                                placeholder="Number of tickets available"
+                                                placeholder={t('maximumAttendees')}
                                             />
                                             {formErrors.quantity && <p className="text-red-500 text-sm mt-1">{formErrors.quantity}</p>}
                                         </div>
@@ -902,7 +904,7 @@ const TicketsPage = () => {
                                             onClick={resetForm}
                                             className={`px-6 py-2 border ${themeClasses.border} ${themeClasses.textMuted} rounded-lg ${themeClasses.hover} transition-colors`}
                                         >
-                                            Cancel
+                                            {t('cancel')}
                                         </button>
                                         <button
                                             type="submit"
@@ -912,12 +914,12 @@ const TicketsPage = () => {
                                             {formLoading ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                    Creating...
+                                                    {t('creatingEvent')}
                                                 </>
                                             ) : (
                                                 <>
                                                     <Save className="h-4 w-4 mr-2" />
-                                                    Create Ticket Type
+                                                    {t('createTicketType')}
                                                 </>
                                             )}
                                         </button>

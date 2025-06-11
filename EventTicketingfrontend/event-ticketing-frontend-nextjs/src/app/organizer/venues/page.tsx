@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/components/providers/I18nProvider'; // Add this import
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 
 import {
@@ -56,6 +57,7 @@ interface VenueFormData {
 const VenuesPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
+    const { t } = useI18n(); // Add this hook
     const themeClasses = useThemeClasses();
     const { isDark } = useTheme();
 
@@ -113,11 +115,11 @@ const VenuesPage = () => {
                 const data = await response.json();
                 setVenues(data);
             } else {
-                setError('Failed to fetch venues');
+                setError(t('failedToFetchVenues'));
             }
         } catch (error) {
             console.error('Error fetching venues:', error);
-            setError('Failed to fetch venues');
+            setError(t('failedToFetchVenues'));
         } finally {
             setLoading(false);
         }
@@ -156,41 +158,41 @@ const VenuesPage = () => {
         const errors: Record<string, string> = {};
 
         if (!formData.name.trim()) {
-            errors.name = 'Venue name is required';
+            errors.name = t('venueNameRequired');
         }
 
         if (!formData.address.trim()) {
-            errors.address = 'Address is required';
+            errors.address = t('addressRequired');
         }
 
         if (!formData.city.trim()) {
-            errors.city = 'City is required';
+            errors.city = t('categoryRequired'); // Reusing city validation message
         }
 
         if (!formData.country.trim()) {
-            errors.country = 'Country is required';
+            errors.country = t('countryRequired');
         }
 
         if (!formData.capacity || parseInt(formData.capacity) <= 0) {
-            errors.capacity = 'Capacity must be greater than 0';
+            errors.capacity = t('capacityRequired');
         }
 
         if (formData.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
-            errors.contactEmail = 'Please enter a valid email address';
+            errors.contactEmail = t('validEmailRequired');
         }
 
         // Validate latitude and longitude only if provided
         if (formData.latitude) {
             const lat = parseFloat(formData.latitude);
             if (isNaN(lat) || lat < -90 || lat > 90) {
-                errors.latitude = 'Latitude must be between -90 and 90';
+                errors.latitude = t('latitudeBetween');
             }
         }
 
         if (formData.longitude) {
             const lng = parseFloat(formData.longitude);
             if (isNaN(lng) || lng < -180 || lng > 180) {
-                errors.longitude = 'Longitude must be between -180 and 180';
+                errors.longitude = t('longitudeBetween');
             }
         }
 
@@ -258,7 +260,7 @@ const VenuesPage = () => {
             });
 
             if (response.ok) {
-                setSuccess('Venue created successfully!');
+                setSuccess(t('venueCreatedSuccessfully'));
                 await fetchVenues();
                 resetForm();
 
@@ -266,11 +268,11 @@ const VenuesPage = () => {
             } else {
                 const errorData = await response.json();
                 console.error('Venue creation error:', errorData);
-                setError(errorData.message || 'Failed to create venue');
+                setError(errorData.message || t('failedToCreateVenue'));
             }
         } catch (error) {
             console.error('Error creating venue:', error);
-            setError('Failed to create venue. Please try again.');
+            setError(t('failedToCreateVenue'));
         } finally {
             setFormLoading(false);
         }
@@ -291,7 +293,7 @@ const VenuesPage = () => {
             <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>{t('loading')}</p>
                 </div>
             </div>
         );
@@ -307,19 +309,19 @@ const VenuesPage = () => {
                         className={`flex items-center ${themeClasses.textMuted} hover:${themeClasses.text} mb-4 transition-colors`}
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
+                        {t('back')}
                     </button>
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>Venues</h1>
-                            <p className={`${themeClasses.textMuted} mt-1`}>View available venues and create new ones</p>
+                            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>{t('venues')}</h1>
+                            <p className={`${themeClasses.textMuted} mt-1`}>{t('viewAvailableVenues')}</p>
                         </div>
                         <button
                             onClick={() => setShowCreateForm(true)}
                             className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                             <Plus className="h-4 w-4 mr-2" />
-                            Create Venue
+                            {t('createVenue')}
                         </button>
                     </div>
                 </div>
@@ -350,7 +352,7 @@ const VenuesPage = () => {
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h2 className={`text-xl font-semibold ${themeClasses.text}`}>
-                                        Create New Venue
+                                        {t('createNewVenue')}
                                     </h2>
                                     <button
                                         onClick={resetForm}
@@ -365,7 +367,7 @@ const VenuesPage = () => {
                                         {/* Venue Name */}
                                         <div className="md:col-span-2">
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Venue Name *
+                                                {t('venueName')} *
                                             </label>
                                             <input
                                                 type="text"
@@ -373,7 +375,7 @@ const VenuesPage = () => {
                                                 value={formData.name}
                                                 onChange={handleInputChange}
                                                 className={getInputStyles(!!formErrors.name)}
-                                                placeholder="Enter venue name"
+                                                placeholder={t('enterVenueName')}
                                             />
                                             {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
                                         </div>
@@ -381,7 +383,7 @@ const VenuesPage = () => {
                                         {/* Address */}
                                         <div className="md:col-span-2">
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Address *
+                                                {t('address')} *
                                             </label>
                                             <input
                                                 type="text"
@@ -389,7 +391,7 @@ const VenuesPage = () => {
                                                 value={formData.address}
                                                 onChange={handleInputChange}
                                                 className={getInputStyles(!!formErrors.address)}
-                                                placeholder="Enter venue address"
+                                                placeholder={t('enterVenueAddress')}
                                             />
                                             {formErrors.address && <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>}
                                         </div>
@@ -397,7 +399,7 @@ const VenuesPage = () => {
                                         {/* City */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                City *
+                                                {t('city')} *
                                             </label>
                                             <input
                                                 type="text"
@@ -405,7 +407,7 @@ const VenuesPage = () => {
                                                 value={formData.city}
                                                 onChange={handleInputChange}
                                                 className={getInputStyles(!!formErrors.city)}
-                                                placeholder="Enter city"
+                                                placeholder={t('city')}
                                             />
                                             {formErrors.city && <p className="text-red-500 text-sm mt-1">{formErrors.city}</p>}
                                         </div>
@@ -413,7 +415,7 @@ const VenuesPage = () => {
                                         {/* State */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                State
+                                                {t('state')}
                                             </label>
                                             <input
                                                 type="text"
@@ -421,14 +423,14 @@ const VenuesPage = () => {
                                                 value={formData.state}
                                                 onChange={handleInputChange}
                                                 className={getInputStyles()}
-                                                placeholder="Enter state (optional)"
+                                                placeholder={t('enterStateOptional')}
                                             />
                                         </div>
 
                                         {/* Country */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Country *
+                                                {t('country')} *
                                             </label>
                                             <input
                                                 type="text"
@@ -436,7 +438,7 @@ const VenuesPage = () => {
                                                 value={formData.country}
                                                 onChange={handleInputChange}
                                                 className={getInputStyles(!!formErrors.country)}
-                                                placeholder="Enter country"
+                                                placeholder={t('enterCountry')}
                                             />
                                             {formErrors.country && <p className="text-red-500 text-sm mt-1">{formErrors.country}</p>}
                                         </div>
@@ -444,7 +446,7 @@ const VenuesPage = () => {
                                         {/* ZIP Code */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                ZIP Code
+                                                {t('zipCode')}
                                             </label>
                                             <input
                                                 type="text"
@@ -452,14 +454,14 @@ const VenuesPage = () => {
                                                 value={formData.zipCode}
                                                 onChange={handleInputChange}
                                                 className={getInputStyles()}
-                                                placeholder="Enter ZIP code (optional)"
+                                                placeholder={t('enterZipCodeOptional')}
                                             />
                                         </div>
 
                                         {/* Capacity */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Capacity *
+                                                {t('capacity')} *
                                             </label>
                                             <input
                                                 type="number"
@@ -468,7 +470,7 @@ const VenuesPage = () => {
                                                 onChange={handleInputChange}
                                                 min="1"
                                                 className={getInputStyles(!!formErrors.capacity)}
-                                                placeholder="Maximum capacity"
+                                                placeholder={t('maximumCapacity')}
                                             />
                                             {formErrors.capacity && <p className="text-red-500 text-sm mt-1">{formErrors.capacity}</p>}
                                         </div>
@@ -476,7 +478,7 @@ const VenuesPage = () => {
                                         {/* Contact Email */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Contact Email
+                                                {t('contactEmail')}
                                             </label>
                                             <input
                                                 type="email"
@@ -492,7 +494,7 @@ const VenuesPage = () => {
                                         {/* Contact Phone */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Contact Phone
+                                                {t('contactPhone')}
                                             </label>
                                             <input
                                                 type="tel"
@@ -507,7 +509,7 @@ const VenuesPage = () => {
                                         {/* Website */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Website
+                                                {t('website')}
                                             </label>
                                             <input
                                                 type="url"
@@ -522,7 +524,7 @@ const VenuesPage = () => {
                                         {/* Latitude */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Latitude
+                                                {t('latitude')}
                                             </label>
                                             <input
                                                 type="number"
@@ -536,13 +538,13 @@ const VenuesPage = () => {
                                                 placeholder="3.1390 (optional)"
                                             />
                                             {formErrors.latitude && <p className="text-red-500 text-sm mt-1">{formErrors.latitude}</p>}
-                                            <p className={`text-xs ${themeClasses.textMuted} mt-1`}>Optional: For map integration</p>
+                                            <p className={`text-xs ${themeClasses.textMuted} mt-1`}>{t('optionalMapIntegration')}</p>
                                         </div>
 
                                         {/* Longitude */}
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Longitude
+                                                {t('longitude')}
                                             </label>
                                             <input
                                                 type="number"
@@ -556,13 +558,13 @@ const VenuesPage = () => {
                                                 placeholder="101.6869 (optional)"
                                             />
                                             {formErrors.longitude && <p className="text-red-500 text-sm mt-1">{formErrors.longitude}</p>}
-                                            <p className={`text-xs ${themeClasses.textMuted} mt-1`}>Optional: For map integration</p>
+                                            <p className={`text-xs ${themeClasses.textMuted} mt-1`}>{t('optionalMapIntegration')}</p>
                                         </div>
 
                                         {/* Description */}
                                         <div className="md:col-span-2">
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                Description
+                                                {t('description')}
                                             </label>
                                             <textarea
                                                 name="description"
@@ -570,7 +572,7 @@ const VenuesPage = () => {
                                                 onChange={handleInputChange}
                                                 rows={4}
                                                 className={getInputStyles()}
-                                                placeholder="Describe the venue, amenities, special features..."
+                                                placeholder={t('describeVenue')}
                                             />
                                         </div>
                                     </div>
@@ -582,7 +584,7 @@ const VenuesPage = () => {
                                             onClick={resetForm}
                                             className={`px-6 py-2 border ${themeClasses.border} ${themeClasses.textMuted} rounded-lg ${themeClasses.hover} transition-colors`}
                                         >
-                                            Cancel
+                                            {t('cancel')}
                                         </button>
                                         <button
                                             type="submit"
@@ -592,12 +594,12 @@ const VenuesPage = () => {
                                             {formLoading ? (
                                                 <>
                                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                    Creating...
+                                                    {t('creatingVenue')}
                                                 </>
                                             ) : (
                                                 <>
                                                     <Save className="h-4 w-4 mr-2" />
-                                                    Create Venue
+                                                    {t('createVenue')}
                                                 </>
                                             )}
                                         </button>
@@ -617,7 +619,7 @@ const VenuesPage = () => {
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search venues..."
+                                placeholder={t('searchVenues')}
                                 className={`w-full pl-10 pr-4 py-2 border ${themeClasses.border} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.card} ${themeClasses.text} placeholder-opacity-60 ${isDark ? 'placeholder-gray-400' : 'placeholder-gray-600'}`}
                             />
                         </div>
@@ -627,7 +629,7 @@ const VenuesPage = () => {
                                 onChange={(e) => setSelectedCity(e.target.value)}
                                 className={`w-full px-4 py-2 border ${themeClasses.border} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.card} ${themeClasses.text}`}
                             >
-                                <option value="">All Cities</option>
+                                <option value="">{t('allCities')}</option>
                                 {cities.map(city => (
                                     <option key={city} value={city}>{city}</option>
                                 ))}
@@ -641,14 +643,14 @@ const VenuesPage = () => {
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                            <span className={`ml-2 ${themeClasses.textMuted}`}>Loading venues...</span>
+                            <span className={`ml-2 ${themeClasses.textMuted}`}>{t('loadingVenues')}</span>
                         </div>
                     ) : filteredVenues.length === 0 ? (
                         <div className="text-center py-12">
                             <Building className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
-                            <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>No venues found</h3>
+                            <h3 className={`text-lg font-medium ${themeClasses.text} mb-2`}>{t('noVenuesFound')}</h3>
                             <p className={themeClasses.textMuted}>
-                                {searchTerm || selectedCity ? 'Try adjusting your filters' : 'Get started by creating your first venue'}
+                                {searchTerm || selectedCity ? t('adjustFilters') : t('getStartedFirstVenue')}
                             </p>
                         </div>
                     ) : (
@@ -657,19 +659,19 @@ const VenuesPage = () => {
                                 <thead className={`${isDark ? 'bg-gray-800' : 'bg-gray-50'} border-b ${themeClasses.border}`}>
                                     <tr>
                                         <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                            Venue
+                                            {t('venue')}
                                         </th>
                                         <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                            Location
+                                            {t('venueLocation')}
                                         </th>
                                         <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                            Capacity
+                                            {t('venueCapacity')}
                                         </th>
                                         <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                            Events
+                                            {t('venueEvents')}
                                         </th>
                                         <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                            Status
+                                            {t('venueStatus')}
                                         </th>
                                     </tr>
                                 </thead>
@@ -711,7 +713,7 @@ const VenuesPage = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className={`text-sm ${themeClasses.text}`}>
-                                                    {venue.eventCount} events
+                                                    {t('eventsCount', { count: venue.eventCount })}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -719,7 +721,7 @@ const VenuesPage = () => {
                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                                     : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                                     }`}>
-                                                    {venue.isActive ? 'Active' : 'Inactive'}
+                                                    {venue.isActive ? t('active') : t('inactive')}
                                                 </span>
                                             </td>
                                         </tr>

@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+﻿/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/components/providers/I18nProvider'; // Add this import
 import { Calendar, MapPin, Globe, Users, DollarSign, Plus, Trash2, Save, ArrowLeft, AlertCircle, Clock } from 'lucide-react';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 
@@ -49,6 +50,7 @@ interface EventFormData {
 const CreateEventPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
+    const { t } = useI18n(); // Add this hook
     const themeClasses = useThemeClasses();
 
     const [loading, setLoading] = useState(false);
@@ -110,11 +112,11 @@ const CreateEventPage = () => {
             } else {
                 // Fallback to mock data if API fails
                 const mockCategories: Category[] = [
-                    { categoryId: 1, name: 'Technology', description: 'Tech events' },
-                    { categoryId: 2, name: 'Business', description: 'Business events' },
-                    { categoryId: 3, name: 'Music', description: 'Music events' },
-                    { categoryId: 4, name: 'Sports', description: 'Sports events' },
-                    { categoryId: 5, name: 'Education', description: 'Educational events' }
+                    { categoryId: 1, name: t('technology'), description: 'Tech events' },
+                    { categoryId: 2, name: t('business'), description: 'Business events' },
+                    { categoryId: 3, name: t('music'), description: 'Music events' },
+                    { categoryId: 4, name: t('sports'), description: 'Sports events' },
+                    { categoryId: 5, name: t('education'), description: 'Educational events' }
                 ];
                 setCategories(mockCategories);
             }
@@ -142,15 +144,15 @@ const CreateEventPage = () => {
 
         } catch (error) {
             console.error('Error fetching initial data:', error);
-            setError('Failed to load categories and venues');
+            setError(t('loadError'));
 
             // Set fallback mock data
             setCategories([
-                { categoryId: 1, name: 'Technology', description: 'Tech events' },
-                { categoryId: 2, name: 'Business', description: 'Business events' },
-                { categoryId: 3, name: 'Music', description: 'Music events' },
-                { categoryId: 4, name: 'Sports', description: 'Sports events' },
-                { categoryId: 5, name: 'Education', description: 'Educational events' }
+                { categoryId: 1, name: t('technology'), description: 'Tech events' },
+                { categoryId: 2, name: t('business'), description: 'Business events' },
+                { categoryId: 3, name: t('music'), description: 'Music events' },
+                { categoryId: 4, name: t('sports'), description: 'Sports events' },
+                { categoryId: 5, name: t('education'), description: 'Educational events' }
             ]);
 
             setVenues([
@@ -227,15 +229,15 @@ const CreateEventPage = () => {
         const errors: Record<string, string> = {};
 
         if (!formData.title.trim()) {
-            errors.title = 'Event title is required';
+            errors.title = t('eventTitleRequired');
         }
 
         if (!formData.description.trim()) {
-            errors.description = 'Event description is required';
+            errors.description = t('descriptionRequired');
         }
 
         if (!formData.eventDate) {
-            errors.eventDate = 'Event start date is required';
+            errors.eventDate = t('startDateTimeRequired');
         }
 
         // Validate end date if provided
@@ -244,20 +246,20 @@ const CreateEventPage = () => {
             const end = new Date(formData.endDate);
 
             if (end <= start) {
-                errors.endDate = 'End date must be after start date';
+                errors.endDate = t('endDateAfterStart');
             }
         }
 
         if (!formData.categoryId) {
-            errors.categoryId = 'Category is required';
+            errors.categoryId = t('categoryRequired');
         }
 
         if (!formData.isOnline && !formData.venueId) {
-            errors.venueId = 'Venue is required for in-person events';
+            errors.venueId = t('venueRequired');
         }
 
         if (!formData.maxCapacity || parseInt(formData.maxCapacity) <= 0) {
-            errors.maxCapacity = 'Maximum capacity must be greater than 0';
+            errors.maxCapacity = t('maxCapacityRequired');
         }
 
         // Validate registration deadline
@@ -266,17 +268,17 @@ const CreateEventPage = () => {
             const eventStart = new Date(formData.eventDate);
 
             if (regDeadline >= eventStart) {
-                errors.registrationDeadline = 'Registration deadline must be before event start';
+                errors.registrationDeadline = t('registrationDeadlineBeforeEvent');
             }
         }
 
         // Validate ticket types
         ticketTypes.forEach((ticket, index) => {
             if (!ticket.name.trim()) {
-                errors[`ticketName_${index}`] = 'Ticket name is required';
+                errors[`ticketName_${index}`] = t('ticketTypeNameRequired');
             }
             if (ticket.quantity <= 0) {
-                errors[`ticketQuantity_${index}`] = 'Ticket quantity must be greater than 0';
+                errors[`ticketQuantity_${index}`] = t('quantityGreaterThanZero');
             }
         });
 
@@ -289,7 +291,7 @@ const CreateEventPage = () => {
         e.preventDefault();
 
         if (!validateForm()) {
-            setError('Please fix the errors below');
+            setError(t('fixErrorsBelow'));
             return;
         }
 
@@ -341,7 +343,7 @@ const CreateEventPage = () => {
             if (!eventResponse.ok) {
                 const errorData = await eventResponse.json();
                 console.error('Event creation failed:', errorData);
-                throw new Error(errorData.message || `Failed to create event: ${eventResponse.status} ${eventResponse.statusText}`);
+                throw new Error(errorData.message || t('failedToCreateEvent'));
             }
 
             const createdEvent = await eventResponse.json();
@@ -359,23 +361,23 @@ const CreateEventPage = () => {
                         name: ticketType.name.trim(),
                         description: ticketType.description?.trim() || null,
                         price: Number(ticketType.price),
-                        quantityAvailable: Number(ticketType.quantity), // Fixed: using quantityAvailable instead of quantity
-                        saleStartDate: null, // Optional: you can add this to your form if needed
-                        saleEndDate: null,   // Optional: you can add this to your form if needed
-                        minQuantityPerOrder: 1, // Default value
-                        maxQuantityPerOrder: Math.min(10, Number(ticketType.quantity)), // Default to 10 or available quantity
-                        sortOrder: index // Use index as sort order
+                        quantityAvailable: Number(ticketType.quantity),
+                        saleStartDate: null,
+                        saleEndDate: null,
+                        minQuantityPerOrder: 1,
+                        maxQuantityPerOrder: Math.min(10, Number(ticketType.quantity)),
+                        sortOrder: index
                     };
 
                     // Validate the payload before sending
                     if (!ticketPayload.name) {
-                        throw new Error(`Ticket ${index + 1}: Name is required`);
+                        throw new Error(`Ticket ${index + 1}: ${t('ticketTypeNameRequired')}`);
                     }
                     if (ticketPayload.price < 0) {
-                        throw new Error(`Ticket ${index + 1}: Price cannot be negative`);
+                        throw new Error(`Ticket ${index + 1}: ${t('priceRequired')}`);
                     }
                     if (ticketPayload.quantityAvailable <= 0) {
-                        throw new Error(`Ticket ${index + 1}: Quantity must be greater than 0`);
+                        throw new Error(`Ticket ${index + 1}: ${t('quantityGreaterThanZero')}`);
                     }
 
                     console.log(`Creating ticket type ${index + 1} with corrected payload:`, ticketPayload);
@@ -422,11 +424,11 @@ const CreateEventPage = () => {
 
             // Show appropriate success message
             if (failedTickets === 0) {
-                setSuccess('Event and all ticket types created successfully!');
+                setSuccess(t('eventCreatedSuccessfully'));
             } else if (failedTickets < ticketTypes.length) {
-                setSuccess(`Event created successfully! ${ticketTypes.length - failedTickets} ticket types created, ${failedTickets} failed. Check console for details.`);
+                setSuccess(t('eventCreatedSuccessfully'));
             } else {
-                setSuccess('Event created successfully, but all ticket types failed. You can add them later from the dashboard. Check console for details.');
+                setSuccess(t('eventCreatedSuccessfully'));
             }
 
             // Redirect after a delay
@@ -436,7 +438,7 @@ const CreateEventPage = () => {
 
         } catch (error) {
             console.error('Error in event creation process:', error);
-            setError(error instanceof Error ? error.message : 'Failed to create event. Please try again.');
+            setError(error instanceof Error ? error.message : t('failedToCreateEvent'));
         } finally {
             setLoading(false);
         }
@@ -447,7 +449,7 @@ const CreateEventPage = () => {
             <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className={`mt-4 ${themeClasses.textMuted}`}>Loading...</p>
+                    <p className={`mt-4 ${themeClasses.textMuted}`}>{t('loading')}</p>
                 </div>
             </div>
         );
@@ -465,16 +467,16 @@ const CreateEventPage = () => {
                         className={`flex items-center ${themeClasses.textMuted} hover:${themeClasses.text} mb-4`}
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back
+                        {t('back')}
                     </button>
-                    <h1 className={`text-3xl font-bold ${themeClasses.text}`}>Create New Event</h1>
-                    <p className={`${themeClasses.textMuted} mt-1`}>Fill out the details to create your event</p>
+                    <h1 className={`text-3xl font-bold ${themeClasses.text}`}>{t('createNewEvent')}</h1>
+                    <p className={`${themeClasses.textMuted} mt-1`}>{t('fillEventDetails')}</p>
 
                     {/* Show event duration if multi-day */}
                     {eventDuration && eventDuration > 1 && (
                         <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                             <Clock className="h-4 w-4 mr-1" />
-                            {eventDuration} day event
+                            {t('dayEvent', { count: eventDuration })}
                         </div>
                     )}
                 </div>
@@ -510,11 +512,11 @@ const CreateEventPage = () => {
                     <form onSubmit={handleSubmit} className="p-6 space-y-8">
                         {/* Basic Information */}
                         <div>
-                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Basic Information</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>{t('basicInformation')}</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="md:col-span-2">
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        Event Title *
+                                        {t('eventTitle')} *
                                     </label>
                                     <input
                                         type="text"
@@ -522,14 +524,14 @@ const CreateEventPage = () => {
                                         value={formData.title}
                                         onChange={handleInputChange}
                                         className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.title ? 'border-red-500' : ''}`}
-                                        placeholder="Enter event title"
+                                        placeholder={t('enterEventTitle')}
                                     />
                                     {formErrors.title && <p className="text-red-500 text-sm mt-1">{formErrors.title}</p>}
                                 </div>
 
                                 <div className="md:col-span-2">
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        Description *
+                                        {t('eventDescription')} *
                                     </label>
                                     <textarea
                                         name="description"
@@ -537,14 +539,14 @@ const CreateEventPage = () => {
                                         onChange={handleInputChange}
                                         rows={4}
                                         className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.description ? 'border-red-500' : ''}`}
-                                        placeholder="Describe your event in detail..."
+                                        placeholder={t('describeEventDetail')}
                                     />
                                     {formErrors.description && <p className="text-red-500 text-sm mt-1">{formErrors.description}</p>}
                                 </div>
 
                                 <div>
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        Category *
+                                        {t('category')} *
                                     </label>
                                     <select
                                         name="categoryId"
@@ -552,7 +554,7 @@ const CreateEventPage = () => {
                                         onChange={handleInputChange}
                                         className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.categoryId ? 'border-red-500' : ''}`}
                                     >
-                                        <option value="" className={themeClasses.textMuted}>Select category</option>
+                                        <option value="" className={themeClasses.textMuted}>{t('selectCategory')}</option>
                                         {categories.map(category => (
                                             <option key={category.categoryId} value={category.categoryId} className={themeClasses.text}>
                                                 {category.name}
@@ -564,7 +566,7 @@ const CreateEventPage = () => {
 
                                 <div>
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        Max Capacity *
+                                        {t('maxCapacity')} *
                                     </label>
                                     <input
                                         type="number"
@@ -573,14 +575,14 @@ const CreateEventPage = () => {
                                         onChange={handleInputChange}
                                         min="1"
                                         className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.maxCapacity ? 'border-red-500' : ''}`}
-                                        placeholder="Maximum attendees"
+                                        placeholder={t('maximumAttendees')}
                                     />
                                     {formErrors.maxCapacity && <p className="text-red-500 text-sm mt-1">{formErrors.maxCapacity}</p>}
                                 </div>
 
                                 <div className="md:col-span-2">
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        Event Image URL
+                                        {t('eventImageUrl')}
                                     </label>
                                     <input
                                         type="url"
@@ -588,7 +590,7 @@ const CreateEventPage = () => {
                                         value={formData.imageUrl}
                                         onChange={handleInputChange}
                                         className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
-                                        placeholder="https://example.com/event-image.jpg"
+                                        placeholder={t('enterImageUrl')}
                                     />
                                 </div>
                             </div>
@@ -596,7 +598,7 @@ const CreateEventPage = () => {
 
                         {/* Date & Time */}
                         <div>
-                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Date & Time</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>{t('dateTime')}</h2>
 
                             {/* Date Range Preview */}
                             {formData.eventDate && formData.endDate && isMultiDayEvent() && (
@@ -604,7 +606,7 @@ const CreateEventPage = () => {
                                     <div className="flex items-center">
                                         <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400 mr-2" />
                                         <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                                            Multi-day event: {eventDuration} days
+                                            {t('multiDayEvent', { count: eventDuration })}
                                         </span>
                                     </div>
                                 </div>
@@ -613,7 +615,7 @@ const CreateEventPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        Start Date & Time *
+                                        {t('startDateTime')} *
                                     </label>
                                     <input
                                         type="datetime-local"
@@ -627,7 +629,7 @@ const CreateEventPage = () => {
 
                                 <div>
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        End Date & Time
+                                        {t('endDateTime')}
                                     </label>
                                     <input
                                         type="datetime-local"
@@ -638,13 +640,13 @@ const CreateEventPage = () => {
                                     />
                                     {formErrors.endDate && <p className="text-red-500 text-sm mt-1">{formErrors.endDate}</p>}
                                     <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
-                                        Leave empty for single-session events
+                                        {t('leaveEmptySingleSession')}
                                     </p>
                                 </div>
 
                                 <div className="md:col-span-2">
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        Registration Deadline
+                                        {t('registrationDeadline')}
                                     </label>
                                     <input
                                         type="datetime-local"
@@ -655,7 +657,7 @@ const CreateEventPage = () => {
                                     />
                                     {formErrors.registrationDeadline && <p className="text-red-500 text-sm mt-1">{formErrors.registrationDeadline}</p>}
                                     <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
-                                        When should registration close? (optional)
+                                        {t('whenRegistrationClose')}
                                     </p>
                                 </div>
                             </div>
@@ -663,7 +665,7 @@ const CreateEventPage = () => {
 
                         {/* Location */}
                         <div>
-                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Location</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>{t('location')}</h2>
                             <div className="space-y-4">
                                 <div className="flex items-center">
                                     <input
@@ -674,14 +676,14 @@ const CreateEventPage = () => {
                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                     />
                                     <label className={`ml-2 text-sm ${themeClasses.text}`}>
-                                        This is an online event
+                                        {t('onlineEvent')}
                                     </label>
                                 </div>
 
                                 {!formData.isOnline && (
                                     <div>
                                         <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                            Venue *
+                                            {t('venue')} *
                                         </label>
                                         <select
                                             name="venueId"
@@ -689,10 +691,10 @@ const CreateEventPage = () => {
                                             onChange={handleInputChange}
                                             className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text} ${formErrors.venueId ? 'border-red-500' : ''}`}
                                         >
-                                            <option value="" className={themeClasses.textMuted}>Select venue</option>
+                                            <option value="" className={themeClasses.textMuted}>{t('selectVenue')}</option>
                                             {venues.map(venue => (
                                                 <option key={venue.venueId} value={venue.venueId} className={themeClasses.text}>
-                                                    {venue.name} - {venue.city} (Capacity: {venue.capacity})
+                                                    {t('venueWithCapacity', { name: venue.name, city: venue.city, capacity: venue.capacity })}
                                                 </option>
                                             ))}
                                         </select>
@@ -702,7 +704,7 @@ const CreateEventPage = () => {
 
                                 <div>
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        Location Details
+                                        {t('locationDetails')}
                                     </label>
                                     <input
                                         type="text"
@@ -710,7 +712,7 @@ const CreateEventPage = () => {
                                         value={formData.location}
                                         onChange={handleInputChange}
                                         className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
-                                        placeholder={formData.isOnline ? "Meeting link or platform details" : "Additional location information"}
+                                        placeholder={formData.isOnline ? t('meetingLinkPlatform') : t('additionalLocationInfo')}
                                     />
                                 </div>
                             </div>
@@ -719,14 +721,14 @@ const CreateEventPage = () => {
                         {/* Ticket Types */}
                         <div>
                             <div className="flex justify-between items-center mb-4">
-                                <h2 className={`text-lg font-semibold ${themeClasses.text}`}>Ticket Types</h2>
+                                <h2 className={`text-lg font-semibold ${themeClasses.text}`}>{t('ticketTypes')}</h2>
                                 <button
                                     type="button"
                                     onClick={addTicketType}
                                     className="flex items-center px-3 py-2 text-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50"
                                 >
                                     <Plus className="h-4 w-4 mr-1" />
-                                    Add Ticket Type
+                                    {t('addTicketType')}
                                 </button>
                             </div>
 
@@ -735,7 +737,7 @@ const CreateEventPage = () => {
                                     <div key={index} className={`p-4 ${themeClasses.border} border rounded-lg`}>
                                         <div className="flex justify-between items-start mb-4">
                                             <h3 className={`text-md font-medium ${themeClasses.text}`}>
-                                                Ticket Type {index + 1}
+                                                {t('ticketTypeName')} {index + 1}
                                             </h3>
                                             {ticketTypes.length > 1 && (
                                                 <button
@@ -751,7 +753,7 @@ const CreateEventPage = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <div>
                                                 <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                    Ticket Name *
+                                                    {t('ticketTypeName')} *
                                                 </label>
                                                 <input
                                                     type="text"
@@ -767,7 +769,7 @@ const CreateEventPage = () => {
 
                                             <div>
                                                 <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                    Price (RM)
+                                                    {t('price')}
                                                 </label>
                                                 <input
                                                     type="number"
@@ -782,7 +784,7 @@ const CreateEventPage = () => {
 
                                             <div>
                                                 <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                    Quantity *
+                                                    {t('quantity')} *
                                                 </label>
                                                 <input
                                                     type="number"
@@ -799,14 +801,14 @@ const CreateEventPage = () => {
 
                                             <div className="md:col-span-3">
                                                 <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                    Description
+                                                    {t('ticketDescription')}
                                                 </label>
                                                 <textarea
                                                     value={ticket.description}
                                                     onChange={(e) => handleTicketTypeChange(index, 'description', e.target.value)}
                                                     rows={2}
                                                     className={`w-full px-3 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
-                                                    placeholder="Optional description for this ticket type"
+                                                    placeholder={t('optionalTicketDescription')}
                                                 />
                                             </div>
 
@@ -819,7 +821,7 @@ const CreateEventPage = () => {
                                                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                     />
                                                     <label className={`ml-2 text-sm ${themeClasses.text}`}>
-                                                        Active (available for purchase)
+                                                        {t('ticketActive')}
                                                     </label>
                                                 </div>
                                             </div>
@@ -831,7 +833,7 @@ const CreateEventPage = () => {
 
                         {/* Publishing Options */}
                         <div>
-                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>Publishing Options</h2>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>{t('publishingOptions')}</h2>
                             <div className="flex items-center">
                                 <input
                                     type="checkbox"
@@ -841,11 +843,11 @@ const CreateEventPage = () => {
                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                 />
                                 <label className={`ml-2 text-sm ${themeClasses.text}`}>
-                                    Publish event immediately (make it visible to the public)
+                                    {t('publishEventImmediately')}
                                 </label>
                             </div>
                             <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
-                                You can always publish or unpublish your event later from the dashboard
+                                {t('publishUnpublishLater')}
                             </p>
                         </div>
 
@@ -857,7 +859,7 @@ const CreateEventPage = () => {
                                 className={`px-6 py-2 ${themeClasses.border} border ${themeClasses.text} rounded-lg ${themeClasses.hover} transition-colors`}
                                 disabled={loading}
                             >
-                                Cancel
+                                {t('cancel')}
                             </button>
                             <button
                                 type="submit"
@@ -867,12 +869,12 @@ const CreateEventPage = () => {
                                 {loading ? (
                                     <>
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Creating Event...
+                                        {t('creatingEvent')}
                                     </>
                                 ) : (
                                     <>
                                         <Save className="h-4 w-4 mr-2" />
-                                        Create Event
+                                        {t('createEvent')}
                                     </>
                                 )}
                             </button>
