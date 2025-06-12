@@ -439,7 +439,973 @@ export interface TranslationKeys {
     loadingDashboard: string;
     dashboardError: string;
     publishedCount: string;
+
+    // Analytics Dashboard
+    analytics: string;
+    analyticsSubtitle: string;
+    comprehensiveInsights: string;
+    refreshData: string;
+    someDataCouldntBeLoaded: string;
+
+    // Key Metrics
+    totalAttendees: string;
+    activeEvents: string;
+    venuesUsed: string;
+    fromLastMonth: string;
+    noRevenueYet: string;
+    noAttendeesYet: string;
+    eventsRunning: string;
+    noActiveEvents: string;
+    venuePartnerships: string;
+    noVenuesYet: string;
+
+    // Charts and Analytics
+    topRevenueEvents: string;
+    noEventsWithRevenueData: string;
+    createAndPublishEvents: string;
+    seeRevenueAnalytics: string;
+    paymentMethodDistribution: string;
+    noPaymentDataAvailable: string;
+    eventCapacityUtilization: string;
+    utilizationPercentage: string;
+    noEventsFoundForPeriod: string;
+    monthlyTrends: string;
+
+    // Demographics
+    genderDistribution: string;
+    noDemographicDataAvailable: string;
+    venuePerformance: string;
+    avgAttendance: string;
+    noVenueDataAvailable: string;
+
+    // Events Needing Attention
+    eventsNeedingAttention: string;
+    utilization: string;
+    daysUntilEvent: string;
+    potentialIssues: string;
+    recommendations: string;
+    allEventsPerformingWell: string;
+    noEventsWithLowAttendance: string;
+
+    // Time periods
+    last7Days: string;
+    last30Days: string;
+    last3Months: string;
+    last6Months: string;
+    lastYear: string;
+
+    // Status messages
+    checkingAuthentication: string;
+    authenticationRequired: string;
+    pleaseLogInToView: string;
+    goToLogin: string;
+
+    // Orders and remaining
+    orders: string;
+
+    organizationInformation: string;
+    businessLicense: string;
+
+    // Notification Settings
+    emailNotifications: string;
+    smsNotifications: string;
+    newBookings: string;
+    getNotifiedNewBooking: string;
+    cancellations: string;
+    getNotifiedCancellations: string;
+    lowInventoryNotifications: string;
+    dailyReports: string;
+    receiveDailySummary: string;
+    weeklyReports: string;
+    receiveWeeklyAnalytics: string;
+    monthlyReports: string;
+
+    // Security Settings
+    securitySettings: string;
+    twoFactorAuthentication: string;
+    addExtraLayerSecurity: string;
+    loginNotifications: string;
+    getNotifiedNewLogins: string;
+    sessionTimeout: string;
+    sessionTimeoutMinutes: string;
+
+    // Password Settings
+    changePassword: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+    minimumCharacters: string;
+    passwordsDoNotMatch: string;
+    passwordTooShort: string;
+    changingPassword: string;
+    passwordChanged: string;
+
+    // Event Default Settings
+    eventDefaults: string;
+    defaultEventDuration: string;
+    defaultEventDurationMinutes: string;
+    ticketSaleStart: string;
+    ticketSaleStartDays: string;
+    defaultRefundPolicy: string;
+    requireApproval: string;
+    requireApprovalBeforeLive: string;
+    autoPublish: string;
+    autoPublishWhenCreated: string;
+
+    // Language & Region Settings
+    languageRegion: string;
+    languagePreferences: string;
+    regionalFormats: string;
+    interfaceLanguage: string;
+    timeDateFormats: string;
+    currencySettings: string;
+    livePreview: string;
+
+    // Time Format Settings
+    hour12Format: string;
+    hour24Format: string;
+
+    // Date Format Settings
+    dateFormatExample: string;
+
+    // Display Settings
+    displaySettings: string;
+    fontSizeSmall: string;
+    fontSizeMedium: string;
+    fontSizeLarge: string;
+    reduceSpacing: string;
+
+    // Theme Settings
+    themeSettings: string;
+    choosePreferredTheme: string;
+    cleanBrightInterface: string;
+    easyOnEyes: string;
+    followsSystemPreference: string;
+    accentColorSettings: string;
+    chooseAccentColor: string;
+
+    // Success Messages
+    settingsSavedSuccessfully: string;
+    profileUpdatedSuccessfully: string;
+    organizationUpdatedSuccessfully: string;
+    preferencesUpdatedSuccessfully: string;
+
+    // Error Messages
+    failedToUpdateProfile: string;
+    failedToUpdateOrganization: string;
+    failedToUpdatePreferences: string;
+    failedToChangePassword: string;
+
+    // Loading States
+    loadingProfile: string;
+    savingChanges: string;
+
+    // Authentication
+    pleaseLoginToAccess: string;
+
+    // General Settings
+    manageAccount: string;
+    eventPreferences: string;
+    saved: string;
+    saveChanges: string;
+
+    // Verification Status
+    emailNotVerified: string;
+    phoneNotVerified: string;
+    verified: string;
+
+    // Color Names
+    blue: string;
+    purple: string;
+    green: string;
+    red: string;
+    orange: string;
+    pink: string;
+
+    // Size Names
+    small: string;
+    medium: string;
+    large: string;
+
 }
+
+interface SettingsTranslationKeys {
+    // Organization Settings
+    organizationInformation: string;
+    businessLicense: string;
+
+    // Notification Settings
+    emailNotifications: string;
+    smsNotifications: string;
+    newBookings: string;
+    getNotifiedNewBooking: string;
+    cancellations: string;
+    getNotifiedCancellations: string;
+    lowInventoryNotifications: string;
+    dailyReports: string;
+    receiveDailySummary: string;
+    weeklyReports: string;
+    receiveWeeklyAnalytics: string;
+    monthlyReports: string;
+
+    // Security Settings
+    securitySettings: string;
+    twoFactorAuthentication: string;
+    addExtraLayerSecurity: string;
+    loginNotifications: string;
+    getNotifiedNewLogins: string;
+    sessionTimeout: string;
+    sessionTimeoutMinutes: string;
+
+    // Password Settings
+    changePassword: string;
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+    minimumCharacters: string;
+    passwordsDoNotMatch: string;
+    passwordTooShort: string;
+    changingPassword: string;
+    passwordChanged: string;
+
+    // Event Default Settings
+    eventDefaults: string;
+    defaultEventDuration: string;
+    defaultEventDurationMinutes: string;
+    ticketSaleStart: string;
+    ticketSaleStartDays: string;
+    defaultRefundPolicy: string;
+    requireApproval: string;
+    requireApprovalBeforeLive: string;
+    autoPublish: string;
+    autoPublishWhenCreated: string;
+
+    // Language & Region Settings
+    languageRegion: string;
+    languagePreferences: string;
+    regionalFormats: string;
+    interfaceLanguage: string;
+    timeDateFormats: string;
+    currencySettings: string;
+    livePreview: string;
+
+    // Time Format Settings
+    hour12Format: string;
+    hour24Format: string;
+
+    // Date Format Settings
+    dateFormatExample: string;
+
+    // Display Settings
+    displaySettings: string;
+    fontSizeSmall: string;
+    fontSizeMedium: string;
+    fontSizeLarge: string;
+    reduceSpacing: string;
+
+    // Theme Settings
+    themeSettings: string;
+    choosePreferredTheme: string;
+    cleanBrightInterface: string;
+    easyOnEyes: string;
+    followsSystemPreference: string;
+    accentColorSettings: string;
+    chooseAccentColor: string;
+
+    // Success Messages
+    settingsSavedSuccessfully: string;
+    profileUpdatedSuccessfully: string;
+    organizationUpdatedSuccessfully: string;
+    preferencesUpdatedSuccessfully: string;
+
+    // Error Messages
+    failedToUpdateProfile: string;
+    failedToUpdateOrganization: string;
+    failedToUpdatePreferences: string;
+    failedToChangePassword: string;
+
+    // Loading States
+    loadingProfile: string;
+    savingChanges: string;
+
+    // Authentication
+    authenticationRequired: string;
+    pleaseLoginToAccess: string;
+    goToLogin: string;
+
+    // General Settings
+    manageAccount: string;
+    eventPreferences: string;
+    saved: string;
+    saveChanges: string;
+
+    // Verification Status
+    emailNotVerified: string;
+    phoneNotVerified: string;
+    verified: string;
+
+    // Color Names
+    blue: string;
+    purple: string;
+    green: string;
+    red: string;
+    orange: string;
+    pink: string;
+
+    // Size Names
+    small: string;
+    medium: string;
+    large: string;
+}
+
+const settingsTranslationsEn: SettingsTranslationKeys = {
+    // Organization Settings
+    organizationInformation: 'Organization Information',
+    businessLicense: 'Business License',
+
+    // Notification Settings
+    emailNotifications: 'Email Notifications',
+    smsNotifications: 'SMS Notifications',
+    newBookings: 'New Bookings',
+    getNotifiedNewBooking: 'Get notified when someone books your event',
+    cancellations: 'Cancellations',
+    getNotifiedCancellations: 'Get notified when bookings are cancelled',
+    lowInventoryNotifications: 'Low Inventory Notifications',
+    dailyReports: 'Daily Reports',
+    receiveDailySummary: 'Receive daily summary of bookings and revenue',
+    weeklyReports: 'Weekly Reports',
+    receiveWeeklyAnalytics: 'Receive weekly analytics and insights',
+    monthlyReports: 'Monthly Reports',
+
+    // Security Settings
+    securitySettings: 'Security Settings',
+    twoFactorAuthentication: 'Two-Factor Authentication',
+    addExtraLayerSecurity: 'Add an extra layer of security to your account',
+    loginNotifications: 'Login Notifications',
+    getNotifiedNewLogins: 'Get notified of new login attempts',
+    sessionTimeout: 'Session Timeout',
+    sessionTimeoutMinutes: 'Session Timeout (minutes)',
+
+    // Password Settings
+    changePassword: 'Change Password',
+    currentPassword: 'Current Password',
+    newPassword: 'New Password',
+    confirmNewPassword: 'Confirm New Password',
+    minimumCharacters: 'Minimum 6 characters',
+    passwordsDoNotMatch: 'New passwords do not match',
+    passwordTooShort: 'New password must be at least 6 characters long',
+    changingPassword: 'Changing Password...',
+    passwordChanged: 'Password Changed Successfully',
+
+    // Event Default Settings
+    eventDefaults: 'Event Defaults',
+    defaultEventDuration: 'Default Event Duration',
+    defaultEventDurationMinutes: 'Default Event Duration (minutes)',
+    ticketSaleStart: 'Ticket Sale Start',
+    ticketSaleStartDays: 'Ticket Sale Start (days before event)',
+    defaultRefundPolicy: 'Default Refund Policy',
+    requireApproval: 'Require Approval',
+    requireApprovalBeforeLive: 'Require approval before events go live',
+    autoPublish: 'Auto Publish',
+    autoPublishWhenCreated: 'Automatically publish events when created',
+
+    // Language & Region Settings
+    languageRegion: 'Language & Region',
+    languagePreferences: 'Language preferences and regional formats',
+    regionalFormats: 'Regional formats',
+    interfaceLanguage: 'Interface Language',
+    timeDateFormats: 'Time & Date Formats',
+    currencySettings: 'Currency Settings',
+    livePreview: 'Live Preview',
+
+    // Time Format Settings
+    hour12Format: '12-hour format',
+    hour24Format: '24-hour format',
+
+    // Date Format Settings
+    dateFormatExample: 'Example: {example}',
+
+    // Display Settings
+    displaySettings: 'Display Settings',
+    fontSizeSmall: 'Small',
+    fontSizeMedium: 'Medium',
+    fontSizeLarge: 'Large',
+    reduceSpacing: 'Reduce spacing between elements',
+
+    // Theme Settings
+    themeSettings: 'Theme Settings',
+    choosePreferredTheme: 'Choose your preferred interface theme',
+    cleanBrightInterface: 'Clean and bright interface',
+    easyOnEyes: 'Easy on the eyes',
+    followsSystemPreference: 'Follows system preference',
+    accentColorSettings: 'Accent Color',
+    chooseAccentColor: 'Choose your preferred accent color',
+
+    // Success Messages
+    settingsSavedSuccessfully: 'Settings saved successfully!',
+    profileUpdatedSuccessfully: 'Profile updated successfully!',
+    organizationUpdatedSuccessfully: 'Organization updated successfully!',
+    preferencesUpdatedSuccessfully: 'Preferences updated successfully!',
+
+    // Error Messages
+    failedToUpdateProfile: 'Failed to update profile',
+    failedToUpdateOrganization: 'Failed to update organization',
+    failedToUpdatePreferences: 'Failed to update preferences',
+    failedToChangePassword: 'Failed to change password',
+
+    // Loading States
+    loadingProfile: 'Loading profile...',
+    savingChanges: 'Saving changes...',
+
+    // Authentication
+    authenticationRequired: 'Authentication Required',
+    pleaseLoginToAccess: 'Please log in to access your settings.',
+    goToLogin: 'Go to Login',
+
+    // General Settings
+    manageAccount: 'Manage your account and event preferences',
+    eventPreferences: 'Event preferences',
+    saved: 'Saved!',
+    saveChanges: 'Save Changes',
+
+    // Verification Status
+    emailNotVerified: 'Email address not verified',
+    phoneNotVerified: 'Phone number not verified',
+    verified: 'Verified',
+
+    // Color Names
+    blue: 'Blue',
+    purple: 'Purple',
+    green: 'Green',
+    red: 'Red',
+    orange: 'Orange',
+    pink: 'Pink',
+
+    // Size Names
+    small: 'Small',
+    medium: 'Medium',
+    large: 'Large'
+};
+
+// Spanish translations for settings
+const settingsTranslationsEs: SettingsTranslationKeys = {
+    // Organization Settings
+    organizationInformation: 'Información de la Organización',
+    businessLicense: 'Licencia Comercial',
+
+    // Notification Settings
+    emailNotifications: 'Notificaciones por Email',
+    smsNotifications: 'Notificaciones SMS',
+    newBookings: 'Nuevas Reservas',
+    getNotifiedNewBooking: 'Recibe notificaciones cuando alguien reserve tu evento',
+    cancellations: 'Cancelaciones',
+    getNotifiedCancellations: 'Recibe notificaciones cuando se cancelen reservas',
+    lowInventoryNotifications: 'Notificaciones de Inventario Bajo',
+    dailyReports: 'Reportes Diarios',
+    receiveDailySummary: 'Recibe resumen diario de reservas e ingresos',
+    weeklyReports: 'Reportes Semanales',
+    receiveWeeklyAnalytics: 'Recibe análisis e insights semanales',
+    monthlyReports: 'Reportes Mensuales',
+
+    // Security Settings
+    securitySettings: 'Configuración de Seguridad',
+    twoFactorAuthentication: 'Autenticación de Dos Factores',
+    addExtraLayerSecurity: 'Agrega una capa adicional de seguridad a tu cuenta',
+    loginNotifications: 'Notificaciones de Inicio de Sesión',
+    getNotifiedNewLogins: 'Recibe notificaciones de nuevos intentos de inicio de sesión',
+    sessionTimeout: 'Tiempo de Espera de Sesión',
+    sessionTimeoutMinutes: 'Tiempo de Espera de Sesión (minutos)',
+
+    // Password Settings
+    changePassword: 'Cambiar Contraseña',
+    currentPassword: 'Contraseña Actual',
+    newPassword: 'Nueva Contraseña',
+    confirmNewPassword: 'Confirmar Nueva Contraseña',
+    minimumCharacters: 'Mínimo 6 caracteres',
+    passwordsDoNotMatch: 'Las nuevas contraseñas no coinciden',
+    passwordTooShort: 'La nueva contraseña debe tener al menos 6 caracteres',
+    changingPassword: 'Cambiando Contraseña...',
+    passwordChanged: 'Contraseña Cambiada Exitosamente',
+
+    // Event Default Settings
+    eventDefaults: 'Valores Predeterminados de Eventos',
+    defaultEventDuration: 'Duración Predeterminada del Evento',
+    defaultEventDurationMinutes: 'Duración Predeterminada del Evento (minutos)',
+    ticketSaleStart: 'Inicio de Venta de Boletos',
+    ticketSaleStartDays: 'Inicio de Venta de Boletos (días antes del evento)',
+    defaultRefundPolicy: 'Política de Reembolso Predeterminada',
+    requireApproval: 'Requerir Aprobación',
+    requireApprovalBeforeLive: 'Requerir aprobación antes de que los eventos salgan en vivo',
+    autoPublish: 'Publicación Automática',
+    autoPublishWhenCreated: 'Publicar automáticamente los eventos cuando se crean',
+
+    // Language & Region Settings
+    languageRegion: 'Idioma y Región',
+    languagePreferences: 'Preferencias de idioma y formatos regionales',
+    regionalFormats: 'Formatos regionales',
+    interfaceLanguage: 'Idioma de la Interfaz',
+    timeDateFormats: 'Formatos de Hora y Fecha',
+    currencySettings: 'Configuración de Moneda',
+    livePreview: 'Vista Previa en Vivo',
+
+    // Time Format Settings
+    hour12Format: 'Formato de 12 horas',
+    hour24Format: 'Formato de 24 horas',
+
+    // Date Format Settings
+    dateFormatExample: 'Ejemplo: {example}',
+
+    // Display Settings
+    displaySettings: 'Configuración de Pantalla',
+    fontSizeSmall: 'Pequeño',
+    fontSizeMedium: 'Mediano',
+    fontSizeLarge: 'Grande',
+    reduceSpacing: 'Reducir espaciado entre elementos',
+
+    // Theme Settings
+    themeSettings: 'Configuración del Tema',
+    choosePreferredTheme: 'Elige tu tema de interfaz preferido',
+    cleanBrightInterface: 'Interfaz limpia y brillante',
+    easyOnEyes: 'Suave para los ojos',
+    followsSystemPreference: 'Sigue la preferencia del sistema',
+    accentColorSettings: 'Color de Acento',
+    chooseAccentColor: 'Elige tu color de acento preferido',
+
+    // Success Messages
+    settingsSavedSuccessfully: '¡Configuración guardada exitosamente!',
+    profileUpdatedSuccessfully: '¡Perfil actualizado exitosamente!',
+    organizationUpdatedSuccessfully: '¡Organización actualizada exitosamente!',
+    preferencesUpdatedSuccessfully: '¡Preferencias actualizadas exitosamente!',
+
+    // Error Messages
+    failedToUpdateProfile: 'Error al actualizar perfil',
+    failedToUpdateOrganization: 'Error al actualizar organización',
+    failedToUpdatePreferences: 'Error al actualizar preferencias',
+    failedToChangePassword: 'Error al cambiar contraseña',
+
+    // Loading States
+    loadingProfile: 'Cargando perfil...',
+    savingChanges: 'Guardando cambios...',
+
+    // Authentication
+    authenticationRequired: 'Autenticación Requerida',
+    pleaseLoginToAccess: 'Por favor inicia sesión para acceder a tu configuración.',
+    goToLogin: 'Ir al Login',
+
+    // General Settings
+    manageAccount: 'Gestiona tu cuenta y preferencias de eventos',
+    eventPreferences: 'Preferencias de eventos',
+    saved: '¡Guardado!',
+    saveChanges: 'Guardar Cambios',
+
+    // Verification Status
+    emailNotVerified: 'Dirección de email no verificada',
+    phoneNotVerified: 'Número de teléfono no verificado',
+    verified: 'Verificado',
+
+    // Color Names
+    blue: 'Azul',
+    purple: 'Morado',
+    green: 'Verde',
+    red: 'Rojo',
+    orange: 'Naranja',
+    pink: 'Rosa',
+
+    // Size Names
+    small: 'Pequeño',
+    medium: 'Mediano',
+    large: 'Grande'
+};
+
+// French translations for settings
+const settingsTranslationsFr: SettingsTranslationKeys = {
+    // Organization Settings
+    organizationInformation: 'Informations de l\'Organisation',
+    businessLicense: 'Licence Commerciale',
+
+    // Notification Settings
+    emailNotifications: 'Notifications Email',
+    smsNotifications: 'Notifications SMS',
+    newBookings: 'Nouvelles Réservations',
+    getNotifiedNewBooking: 'Soyez notifié quand quelqu\'un réserve votre événement',
+    cancellations: 'Annulations',
+    getNotifiedCancellations: 'Soyez notifié quand des réservations sont annulées',
+    lowInventoryNotifications: 'Notifications de Stock Faible',
+    dailyReports: 'Rapports Quotidiens',
+    receiveDailySummary: 'Recevez un résumé quotidien des réservations et revenus',
+    weeklyReports: 'Rapports Hebdomadaires',
+    receiveWeeklyAnalytics: 'Recevez des analyses et insights hebdomadaires',
+    monthlyReports: 'Rapports Mensuels',
+
+    // Security Settings
+    securitySettings: 'Paramètres de Sécurité',
+    twoFactorAuthentication: 'Authentification à Deux Facteurs',
+    addExtraLayerSecurity: 'Ajoutez une couche de sécurité supplémentaire à votre compte',
+    loginNotifications: 'Notifications de Connexion',
+    getNotifiedNewLogins: 'Soyez notifié des nouvelles tentatives de connexion',
+    sessionTimeout: 'Délai d\'Expiration de Session',
+    sessionTimeoutMinutes: 'Délai d\'Expiration de Session (minutes)',
+
+    // Password Settings
+    changePassword: 'Changer le Mot de Passe',
+    currentPassword: 'Mot de Passe Actuel',
+    newPassword: 'Nouveau Mot de Passe',
+    confirmNewPassword: 'Confirmer le Nouveau Mot de Passe',
+    minimumCharacters: 'Minimum 6 caractères',
+    passwordsDoNotMatch: 'Les nouveaux mots de passe ne correspondent pas',
+    passwordTooShort: 'Le nouveau mot de passe doit contenir au moins 6 caractères',
+    changingPassword: 'Changement du Mot de Passe...',
+    passwordChanged: 'Mot de Passe Changé avec Succès',
+
+    // Event Default Settings
+    eventDefaults: 'Paramètres par Défaut des Événements',
+    defaultEventDuration: 'Durée par Défaut de l\'Événement',
+    defaultEventDurationMinutes: 'Durée par Défaut de l\'Événement (minutes)',
+    ticketSaleStart: 'Début des Ventes de Billets',
+    ticketSaleStartDays: 'Début des Ventes de Billets (jours avant l\'événement)',
+    defaultRefundPolicy: 'Politique de Remboursement par Défaut',
+    requireApproval: 'Exiger une Approbation',
+    requireApprovalBeforeLive: 'Exiger une approbation avant que les événements soient en direct',
+    autoPublish: 'Publication Automatique',
+    autoPublishWhenCreated: 'Publier automatiquement les événements lors de leur création',
+
+    // Language & Region Settings
+    languageRegion: 'Langue et Région',
+    languagePreferences: 'Préférences linguistiques et formats régionaux',
+    regionalFormats: 'Formats régionaux',
+    interfaceLanguage: 'Langue de l\'Interface',
+    timeDateFormats: 'Formats d\'Heure et de Date',
+    currencySettings: 'Paramètres de Devise',
+    livePreview: 'Aperçu en Direct',
+
+    // Time Format Settings
+    hour12Format: 'Format 12 heures',
+    hour24Format: 'Format 24 heures',
+
+    // Date Format Settings
+    dateFormatExample: 'Exemple: {example}',
+
+    // Display Settings
+    displaySettings: 'Paramètres d\'Affichage',
+    fontSizeSmall: 'Petit',
+    fontSizeMedium: 'Moyen',
+    fontSizeLarge: 'Grand',
+    reduceSpacing: 'Réduire l\'espacement entre les éléments',
+
+    // Theme Settings
+    themeSettings: 'Paramètres du Thème',
+    choosePreferredTheme: 'Choisissez votre thème d\'interface préféré',
+    cleanBrightInterface: 'Interface propre et lumineuse',
+    easyOnEyes: 'Reposant pour les yeux',
+    followsSystemPreference: 'Suit la préférence du système',
+    accentColorSettings: 'Couleur d\'Accent',
+    chooseAccentColor: 'Choisissez votre couleur d\'accent préférée',
+
+    // Success Messages
+    settingsSavedSuccessfully: 'Paramètres sauvegardés avec succès !',
+    profileUpdatedSuccessfully: 'Profil mis à jour avec succès !',
+    organizationUpdatedSuccessfully: 'Organisation mise à jour avec succès !',
+    preferencesUpdatedSuccessfully: 'Préférences mises à jour avec succès !',
+
+    // Error Messages
+    failedToUpdateProfile: 'Échec de la mise à jour du profil',
+    failedToUpdateOrganization: 'Échec de la mise à jour de l\'organisation',
+    failedToUpdatePreferences: 'Échec de la mise à jour des préférences',
+    failedToChangePassword: 'Échec du changement de mot de passe',
+
+    // Loading States
+    loadingProfile: 'Chargement du profil...',
+    savingChanges: 'Sauvegarde des modifications...',
+
+    // Authentication
+    authenticationRequired: 'Authentification Requise',
+    pleaseLoginToAccess: 'Veuillez vous connecter pour accéder à vos paramètres.',
+    goToLogin: 'Aller à la Connexion',
+
+    // General Settings
+    manageAccount: 'Gérez votre compte et les préférences d\'événements',
+    eventPreferences: 'Préférences d\'événements',
+    saved: 'Sauvegardé !',
+    saveChanges: 'Sauvegarder les Modifications',
+
+    // Verification Status
+    emailNotVerified: 'Adresse email non vérifiée',
+    phoneNotVerified: 'Numéro de téléphone non vérifié',
+    verified: 'Vérifié',
+
+    // Color Names
+    blue: 'Bleu',
+    purple: 'Violet',
+    green: 'Vert',
+    red: 'Rouge',
+    orange: 'Orange',
+    pink: 'Rose',
+
+    // Size Names
+    small: 'Petit',
+    medium: 'Moyen',
+    large: 'Grand'
+};
+
+// German translations for settings
+const settingsTranslationsDe: SettingsTranslationKeys = {
+    // Organization Settings
+    organizationInformation: 'Organisationsinformationen',
+    businessLicense: 'Gewerbeschein',
+
+    // Notification Settings
+    emailNotifications: 'E-Mail-Benachrichtigungen',
+    smsNotifications: 'SMS-Benachrichtigungen',
+    newBookings: 'Neue Buchungen',
+    getNotifiedNewBooking: 'Benachrichtigung erhalten, wenn jemand Ihr Event bucht',
+    cancellations: 'Stornierungen',
+    getNotifiedCancellations: 'Benachrichtigung erhalten, wenn Buchungen storniert werden',
+    lowInventoryNotifications: 'Benachrichtigungen bei niedrigem Bestand',
+    dailyReports: 'Tägliche Berichte',
+    receiveDailySummary: 'Tägliche Zusammenfassung von Buchungen und Einnahmen erhalten',
+    weeklyReports: 'Wöchentliche Berichte',
+    receiveWeeklyAnalytics: 'Wöchentliche Analysen und Einblicke erhalten',
+    monthlyReports: 'Monatliche Berichte',
+
+    // Security Settings
+    securitySettings: 'Sicherheitseinstellungen',
+    twoFactorAuthentication: 'Zwei-Faktor-Authentifizierung',
+    addExtraLayerSecurity: 'Fügen Sie Ihrem Konto eine zusätzliche Sicherheitsebene hinzu',
+    loginNotifications: 'Anmelde-Benachrichtigungen',
+    getNotifiedNewLogins: 'Benachrichtigung über neue Anmeldeversuche erhalten',
+    sessionTimeout: 'Sitzungs-Timeout',
+    sessionTimeoutMinutes: 'Sitzungs-Timeout (Minuten)',
+
+    // Password Settings
+    changePassword: 'Passwort Ändern',
+    currentPassword: 'Aktuelles Passwort',
+    newPassword: 'Neues Passwort',
+    confirmNewPassword: 'Neues Passwort Bestätigen',
+    minimumCharacters: 'Mindestens 6 Zeichen',
+    passwordsDoNotMatch: 'Die neuen Passwörter stimmen nicht überein',
+    passwordTooShort: 'Das neue Passwort muss mindestens 6 Zeichen lang sein',
+    changingPassword: 'Passwort wird geändert...',
+    passwordChanged: 'Passwort erfolgreich geändert',
+
+    // Event Default Settings
+    eventDefaults: 'Event-Standardeinstellungen',
+    defaultEventDuration: 'Standard-Event-Dauer',
+    defaultEventDurationMinutes: 'Standard-Event-Dauer (Minuten)',
+    ticketSaleStart: 'Ticketverkauf-Beginn',
+    ticketSaleStartDays: 'Ticketverkauf-Beginn (Tage vor dem Event)',
+    defaultRefundPolicy: 'Standard-Rückerstattungsrichtlinie',
+    requireApproval: 'Genehmigung Erforderlich',
+    requireApprovalBeforeLive: 'Genehmigung erforderlich, bevor Events live gehen',
+    autoPublish: 'Auto-Veröffentlichung',
+    autoPublishWhenCreated: 'Events automatisch veröffentlichen, wenn sie erstellt werden',
+
+    // Language & Region Settings
+    languageRegion: 'Sprache & Region',
+    languagePreferences: 'Spracheinstellungen und regionale Formate',
+    regionalFormats: 'Regionale Formate',
+    interfaceLanguage: 'Interface-Sprache',
+    timeDateFormats: 'Zeit- und Datumsformate',
+    currencySettings: 'Währungseinstellungen',
+    livePreview: 'Live-Vorschau',
+
+    // Time Format Settings
+    hour12Format: '12-Stunden-Format',
+    hour24Format: '24-Stunden-Format',
+
+    // Date Format Settings
+    dateFormatExample: 'Beispiel: {example}',
+
+    // Display Settings
+    displaySettings: 'Anzeigeeinstellungen',
+    fontSizeSmall: 'Klein',
+    fontSizeMedium: 'Mittel',
+    fontSizeLarge: 'Groß',
+    reduceSpacing: 'Abstände zwischen Elementen reduzieren',
+
+    // Theme Settings
+    themeSettings: 'Theme-Einstellungen',
+    choosePreferredTheme: 'Wählen Sie Ihr bevorzugtes Interface-Theme',
+    cleanBrightInterface: 'Saubere und helle Benutzeroberfläche',
+    easyOnEyes: 'Augenschonend',
+    followsSystemPreference: 'Folgt der Systemeinstellung',
+    accentColorSettings: 'Akzentfarbe',
+    chooseAccentColor: 'Wählen Sie Ihre bevorzugte Akzentfarbe',
+
+    // Success Messages
+    settingsSavedSuccessfully: 'Einstellungen erfolgreich gespeichert!',
+    profileUpdatedSuccessfully: 'Profil erfolgreich aktualisiert!',
+    organizationUpdatedSuccessfully: 'Organisation erfolgreich aktualisiert!',
+    preferencesUpdatedSuccessfully: 'Einstellungen erfolgreich aktualisiert!',
+
+    // Error Messages
+    failedToUpdateProfile: 'Fehler beim Aktualisieren des Profils',
+    failedToUpdateOrganization: 'Fehler beim Aktualisieren der Organisation',
+    failedToUpdatePreferences: 'Fehler beim Aktualisieren der Einstellungen',
+    failedToChangePassword: 'Fehler beim Ändern des Passworts',
+
+    // Loading States
+    loadingProfile: 'Profil wird geladen...',
+    savingChanges: 'Änderungen werden gespeichert...',
+
+    // Authentication
+    authenticationRequired: 'Authentifizierung Erforderlich',
+    pleaseLoginToAccess: 'Bitte melden Sie sich an, um auf Ihre Einstellungen zuzugreifen.',
+    goToLogin: 'Zur Anmeldung',
+
+    // General Settings
+    manageAccount: 'Verwalten Sie Ihr Konto und Event-Einstellungen',
+    eventPreferences: 'Event-Einstellungen',
+    saved: 'Gespeichert!',
+    saveChanges: 'Änderungen Speichern',
+
+    // Verification Status
+    emailNotVerified: 'E-Mail-Adresse nicht verifiziert',
+    phoneNotVerified: 'Telefonnummer nicht verifiziert',
+    verified: 'Verifiziert',
+
+    // Color Names
+    blue: 'Blau',
+    purple: 'Lila',
+    green: 'Grün',
+    red: 'Rot',
+    orange: 'Orange',
+    pink: 'Rosa',
+
+    // Size Names
+    small: 'Klein',
+    medium: 'Mittel',
+    large: 'Groß'
+};
+
+// Italian translations for settings
+const settingsTranslationsIt: SettingsTranslationKeys = {
+    // Organization Settings
+    organizationInformation: 'Informazioni Organizzazione',
+    businessLicense: 'Licenza Commerciale',
+
+    // Notification Settings
+    emailNotifications: 'Notifiche Email',
+    smsNotifications: 'Notifiche SMS',
+    newBookings: 'Nuove Prenotazioni',
+    getNotifiedNewBooking: 'Ricevi notifiche quando qualcuno prenota il tuo evento',
+    cancellations: 'Cancellazioni',
+    getNotifiedCancellations: 'Ricevi notifiche quando le prenotazioni vengono cancellate',
+    lowInventoryNotifications: 'Notifiche Scorte Basse',
+    dailyReports: 'Report Giornalieri',
+    receiveDailySummary: 'Ricevi riassunto giornaliero di prenotazioni e ricavi',
+    weeklyReports: 'Report Settimanali',
+    receiveWeeklyAnalytics: 'Ricevi analisi e approfondimenti settimanali',
+    monthlyReports: 'Report Mensili',
+
+    // Security Settings
+    securitySettings: 'Impostazioni di Sicurezza',
+    twoFactorAuthentication: 'Autenticazione a Due Fattori',
+    addExtraLayerSecurity: 'Aggiungi un livello extra di sicurezza al tuo account',
+    loginNotifications: 'Notifiche di Accesso',
+    getNotifiedNewLogins: 'Ricevi notifiche di nuovi tentativi di accesso',
+    sessionTimeout: 'Timeout Sessione',
+    sessionTimeoutMinutes: 'Timeout Sessione (minuti)',
+
+    // Password Settings
+    changePassword: 'Cambia Password',
+    currentPassword: 'Password Attuale',
+    newPassword: 'Nuova Password',
+    confirmNewPassword: 'Conferma Nuova Password',
+    minimumCharacters: 'Minimo 6 caratteri',
+    passwordsDoNotMatch: 'Le nuove password non corrispondono',
+    passwordTooShort: 'La nuova password deve essere di almeno 6 caratteri',
+    changingPassword: 'Cambio Password...',
+    passwordChanged: 'Password Cambiata con Successo',
+
+    // Event Default Settings
+    eventDefaults: 'Impostazioni Predefinite Eventi',
+    defaultEventDuration: 'Durata Predefinita Evento',
+    defaultEventDurationMinutes: 'Durata Predefinita Evento (minuti)',
+    ticketSaleStart: 'Inizio Vendita Biglietti',
+    ticketSaleStartDays: 'Inizio Vendita Biglietti (giorni prima dell\'evento)',
+    defaultRefundPolicy: 'Politica di Rimborso Predefinita',
+    requireApproval: 'Richiedi Approvazione',
+    requireApprovalBeforeLive: 'Richiedi approvazione prima che gli eventi vadano in diretta',
+    autoPublish: 'Pubblicazione Automatica',
+    autoPublishWhenCreated: 'Pubblica automaticamente gli eventi quando vengono creati',
+
+    // Language & Region Settings
+    languageRegion: 'Lingua e Regione',
+    languagePreferences: 'Preferenze linguistiche e formati regionali',
+    regionalFormats: 'Formati regionali',
+    interfaceLanguage: 'Lingua dell\'Interfaccia',
+    timeDateFormats: 'Formati Ora e Data',
+    currencySettings: 'Impostazioni Valuta',
+    livePreview: 'Anteprima dal Vivo',
+
+    // Time Format Settings
+    hour12Format: 'Formato 12 ore',
+    hour24Format: 'Formato 24 ore',
+
+    // Date Format Settings
+    dateFormatExample: 'Esempio: {example}',
+
+    // Display Settings
+    displaySettings: 'Impostazioni Display',
+    fontSizeSmall: 'Piccolo',
+    fontSizeMedium: 'Medio',
+    fontSizeLarge: 'Grande',
+    reduceSpacing: 'Riduci spaziatura tra elementi',
+
+    // Theme Settings
+    themeSettings: 'Impostazioni Tema',
+    choosePreferredTheme: 'Scegli il tuo tema di interfaccia preferito',
+    cleanBrightInterface: 'Interfaccia pulita e luminosa',
+    easyOnEyes: 'Facile per gli occhi',
+    followsSystemPreference: 'Segue la preferenza del sistema',
+    accentColorSettings: 'Colore di Accento',
+    chooseAccentColor: 'Scegli il tuo colore di accento preferito',
+
+    // Success Messages
+    settingsSavedSuccessfully: 'Impostazioni salvate con successo!',
+    profileUpdatedSuccessfully: 'Profilo aggiornato con successo!',
+    organizationUpdatedSuccessfully: 'Organizzazione aggiornata con successo!',
+    preferencesUpdatedSuccessfully: 'Preferenze aggiornate con successo!',
+
+    // Error Messages
+    failedToUpdateProfile: 'Impossibile aggiornare il profilo',
+    failedToUpdateOrganization: 'Impossibile aggiornare l\'organizzazione',
+    failedToUpdatePreferences: 'Impossibile aggiornare le preferenze',
+    failedToChangePassword: 'Impossibile cambiare la password',
+
+    // Loading States
+    loadingProfile: 'Caricamento profilo...',
+    savingChanges: 'Salvataggio modifiche...',
+
+    // Authentication
+    authenticationRequired: 'Autenticazione Richiesta',
+    pleaseLoginToAccess: 'Accedi per accedere alle tue impostazioni.',
+    goToLogin: 'Vai al Login',
+
+    // General Settings
+    manageAccount: 'Gestisci il tuo account e le preferenze degli eventi',
+    eventPreferences: 'Preferenze eventi',
+    saved: 'Salvato!',
+    saveChanges: 'Salva Modifiche',
+
+    // Verification Status
+    emailNotVerified: 'Indirizzo email non verificato',
+    phoneNotVerified: 'Numero di telefono non verificato',
+    verified: 'Verificato',
+
+    // Color Names
+    blue: 'Blu',
+    purple: 'Viola',
+    green: 'Verde',
+    red: 'Rosso',
+    orange: 'Arancione',
+    pink: 'Rosa',
+
+    // Size Names
+    small: 'Piccolo',
+    medium: 'Medio',
+    large: 'Grande'
+};
 
 // Helper function for string interpolation
 const interpolate = (str: string, params: Record<string, any> = {}): string => {
@@ -825,9 +1791,194 @@ const translations: Record<string, TranslationKeys> = {
         maxCapacity: 'Max Capacity',
         loadingDashboard: 'Loading your dashboard...',
         dashboardError: 'Failed to load dashboard data',
-        publishedCount: '{count} published'
-    },
+        publishedCount: '{count} published',
 
+        // Analytics Dashboard
+        analytics: 'Analytics',
+        analyticsSubtitle: 'Comprehensive insights for your events',
+        comprehensiveInsights: 'Comprehensive insights for your events',
+        refreshData: 'Refresh',
+        someDataCouldntBeLoaded: 'Some data couldn\'t be loaded:',
+
+        // Key Metrics
+        totalAttendees: 'Total Attendees',
+        activeEvents: 'Active Events',
+        venuesUsed: 'Venues Used',
+        fromLastMonth: 'from last month',
+        noRevenueYet: 'No revenue yet',
+        noAttendeesYet: 'No attendees yet',
+        eventsRunning: 'Events running',
+        noActiveEvents: 'No active events',
+        venuePartnerships: 'Venue partnerships',
+        noVenuesYet: 'No venues yet',
+
+        // Charts and Analytics
+        topRevenueEvents: 'Top Revenue Events',
+        noEventsWithRevenueData: 'No events with revenue data yet',
+        createAndPublishEvents: 'Create and publish events',
+        seeRevenueAnalytics: 'to see revenue analytics',
+        paymentMethodDistribution: 'Payment Method Distribution',
+        noPaymentDataAvailable: 'No payment data available',
+        eventCapacityUtilization: 'Event Capacity Utilization',
+        utilizationPercentage: 'utilization',
+        noEventsFoundForPeriod: 'No events found for the selected period',
+        monthlyTrends: 'Monthly Trends',
+
+        // Demographics
+        genderDistribution: 'Gender Distribution',
+        noDemographicDataAvailable: 'No demographic data available',
+        venuePerformance: 'Venue Performance',
+        avgAttendance: 'Avg Attendance',
+        noVenueDataAvailable: 'No venue data available',
+
+        // Events Needing Attention
+        eventsNeedingAttention: 'Events Needing Attention',
+        utilization: 'utilization',
+        daysUntilEvent: 'days until event',
+        potentialIssues: 'Potential Issues:',
+        recommendations: 'Recommendations:',
+        allEventsPerformingWell: 'All events are performing well!',
+        noEventsWithLowAttendance: 'No events with low attendance found',
+
+        // Time periods
+        last7Days: 'Last 7 Days',
+        last30Days: 'Last 30 Days',
+        last3Months: 'Last 3 Months',
+        last6Months: 'Last 6 Months',
+        lastYear: 'Last Year',
+
+        // Status messages
+        checkingAuthentication: 'Checking authentication...',
+        authenticationRequired: 'Authentication Required',
+        pleaseLogInToView: 'Please log in to view the analytics dashboard.',
+        goToLogin: 'Go to Login',
+
+        // Orders and remaining
+        orders: 'orders',
+        organizationInformation: 'Organization Information',
+        businessLicense: 'Business License',
+
+        // Notification Settings (update existing ones)
+        emailNotifications: 'Email Notifications',
+        smsNotifications: 'SMS Notifications',
+        newBookings: 'New Bookings',
+        getNotifiedNewBooking: 'Get notified when someone books your event',
+        cancellations: 'Cancellations',
+        getNotifiedCancellations: 'Get notified when bookings are cancelled',
+        lowInventoryNotifications: 'Low Inventory Notifications',
+        dailyReports: 'Daily Reports',
+        receiveDailySummary: 'Receive daily summary of bookings and revenue',
+        weeklyReports: 'Weekly Reports',
+        receiveWeeklyAnalytics: 'Receive weekly analytics and insights',
+        monthlyReports: 'Monthly Reports',
+
+        // Security Settings (update existing ones)
+        securitySettings: 'Security Settings',
+        twoFactorAuthentication: 'Two-Factor Authentication',
+        addExtraLayerSecurity: 'Add an extra layer of security to your account',
+        loginNotifications: 'Login Notifications',
+        getNotifiedNewLogins: 'Get notified of new login attempts',
+        sessionTimeout: 'Session Timeout',
+        sessionTimeoutMinutes: 'Session Timeout (minutes)',
+
+        // Password Settings
+        changePassword: 'Change Password',
+        currentPassword: 'Current Password',
+        newPassword: 'New Password',
+        confirmNewPassword: 'Confirm New Password',
+        minimumCharacters: 'Minimum 6 characters',
+        passwordsDoNotMatch: 'New passwords do not match',
+        passwordTooShort: 'New password must be at least 6 characters long',
+        changingPassword: 'Changing Password...',
+        passwordChanged: 'Password Changed Successfully',
+
+        // Event Default Settings
+        eventDefaults: 'Event Defaults',
+        defaultEventDuration: 'Default Event Duration',
+        defaultEventDurationMinutes: 'Default Event Duration (minutes)',
+        ticketSaleStart: 'Ticket Sale Start',
+        ticketSaleStartDays: 'Ticket Sale Start (days before event)',
+        defaultRefundPolicy: 'Default Refund Policy',
+        requireApproval: 'Require Approval',
+        requireApprovalBeforeLive: 'Require approval before events go live',
+        autoPublish: 'Auto Publish',
+        autoPublishWhenCreated: 'Automatically publish events when created',
+
+        // Language & Region Settings
+        languageRegion: 'Language & Region',
+        languagePreferences: 'Language preferences and regional formats',
+        regionalFormats: 'Regional formats',
+        interfaceLanguage: 'Interface Language',
+        timeDateFormats: 'Time & Date Formats',
+        currencySettings: 'Currency Settings',
+        livePreview: 'Live Preview',
+
+        // Time Format Settings
+        hour12Format: '12-hour format',
+        hour24Format: '24-hour format',
+
+        // Date Format Settings
+        dateFormatExample: 'Example: {example}',
+
+        // Display Settings
+        displaySettings: 'Display Settings',
+        fontSizeSmall: 'Small',
+        fontSizeMedium: 'Medium',
+        fontSizeLarge: 'Large',
+        reduceSpacing: 'Reduce spacing between elements',
+
+        // Theme Settings
+        themeSettings: 'Theme Settings',
+        choosePreferredTheme: 'Choose your preferred interface theme',
+        cleanBrightInterface: 'Clean and bright interface',
+        easyOnEyes: 'Easy on the eyes',
+        followsSystemPreference: 'Follows system preference',
+        accentColorSettings: 'Accent Color',
+        chooseAccentColor: 'Choose your preferred accent color',
+
+        // Success Messages
+        settingsSavedSuccessfully: 'Settings saved successfully!',
+        profileUpdatedSuccessfully: 'Profile updated successfully!',
+        organizationUpdatedSuccessfully: 'Organization updated successfully!',
+        preferencesUpdatedSuccessfully: 'Preferences updated successfully!',
+
+        // Error Messages
+        failedToUpdateProfile: 'Failed to update profile',
+        failedToUpdateOrganization: 'Failed to update organization',
+        failedToUpdatePreferences: 'Failed to update preferences',
+        failedToChangePassword: 'Failed to change password',
+
+        // Loading States
+        loadingProfile: 'Loading profile...',
+        savingChanges: 'Saving changes...',
+
+        // Authentication (update existing)
+        pleaseLoginToAccess: 'Please log in to access your settings.',
+
+        // General Settings
+        manageAccount: 'Manage your account and event preferences',
+        eventPreferences: 'Event preferences',
+        saved: 'Saved!',
+        saveChanges: 'Save Changes',
+
+        // Verification Status
+        emailNotVerified: 'Email address not verified',
+        phoneNotVerified: 'Phone number not verified',
+        verified: 'Verified',
+
+        // Color Names (for dynamic translation)
+        blue: 'Blue',
+        purple: 'Purple',
+        green: 'Green',
+        red: 'Red',
+        orange: 'Orange',
+        pink: 'Pink',
+
+        // Size Names (for dynamic translation)
+        small: 'Small',
+        medium: 'Medium',
+        large: 'Large'
+    },
     // Spanish translations
     es: {
         // Common
@@ -1202,9 +2353,194 @@ const translations: Record<string, TranslationKeys> = {
         maxCapacity: 'Capacidad Máxima',
         loadingDashboard: 'Cargando tu panel...',
         dashboardError: 'Error al cargar los datos del panel',
-        publishedCount: '{count} publicados'
-    },
+        publishedCount: '{count} publicados',
 
+        // Analytics Dashboard
+        analytics: 'Analíticas',
+        analyticsSubtitle: 'Insights integrales para tus eventos',
+        comprehensiveInsights: 'Insights integrales para tus eventos',
+        refreshData: 'Actualizar',
+        someDataCouldntBeLoaded: 'Algunos datos no se pudieron cargar:',
+
+        // Key Metrics
+        totalAttendees: 'Total de Asistentes',
+        activeEvents: 'Eventos Activos',
+        venuesUsed: 'Lugares Utilizados',
+        fromLastMonth: 'del mes pasado',
+        noRevenueYet: 'Sin ingresos aún',
+        noAttendeesYet: 'Sin asistentes aún',
+        eventsRunning: 'Eventos en curso',
+        noActiveEvents: 'Sin eventos activos',
+        venuePartnerships: 'Alianzas de lugares',
+        noVenuesYet: 'Sin lugares aún',
+
+        // Charts and Analytics
+        topRevenueEvents: 'Eventos con Mayores Ingresos',
+        noEventsWithRevenueData: 'Aún no hay eventos con datos de ingresos',
+        createAndPublishEvents: 'Crea y publica eventos',
+        seeRevenueAnalytics: 'para ver analíticas de ingresos',
+        paymentMethodDistribution: 'Distribución de Métodos de Pago',
+        noPaymentDataAvailable: 'No hay datos de pago disponibles',
+        eventCapacityUtilization: 'Utilización de Capacidad de Eventos',
+        utilizationPercentage: 'utilización',
+        noEventsFoundForPeriod: 'No se encontraron eventos para el período seleccionado',
+        monthlyTrends: 'Tendencias Mensuales',
+
+        // Demographics
+        genderDistribution: 'Distribución por Género',
+        noDemographicDataAvailable: 'No hay datos demográficos disponibles',
+        venuePerformance: 'Rendimiento de Lugares',
+        avgAttendance: 'Asistencia Promedio',
+        noVenueDataAvailable: 'No hay datos de lugares disponibles',
+
+        // Events Needing Attention
+        eventsNeedingAttention: 'Eventos que Necesitan Atención',
+        utilization: 'utilización',
+        daysUntilEvent: 'días hasta el evento',
+        potentialIssues: 'Problemas Potenciales:',
+        recommendations: 'Recomendaciones:',
+        allEventsPerformingWell: '¡Todos los eventos están funcionando bien!',
+        noEventsWithLowAttendance: 'No se encontraron eventos con baja asistencia',
+
+        // Time periods
+        last7Days: 'Últimos 7 Días',
+        last30Days: 'Últimos 30 Días',
+        last3Months: 'Últimos 3 Meses',
+        last6Months: 'Últimos 6 Meses',
+        lastYear: 'Último Año',
+
+        // Status messages
+        checkingAuthentication: 'Verificando autenticación...',
+        authenticationRequired: 'Autenticación Requerida',
+        pleaseLogInToView: 'Por favor inicia sesión para ver el panel de analíticas.',
+        goToLogin: 'Ir al Login',
+
+        // Orders and remaining
+        orders: 'órdenes',
+        organizationInformation: 'Información de la Organización',
+        businessLicense: 'Licencia Comercial',
+
+        // Notification Settings (update existing ones)
+        emailNotifications: 'Notificaciones por Email',
+        smsNotifications: 'Notificaciones por SMS',
+        newBookings: 'Nuevas Reservas',
+        getNotifiedNewBooking: 'Recibir notificaciones cuando alguien reserve tu evento',
+        cancellations: 'Cancelaciones',
+        getNotifiedCancellations: 'Recibir notificaciones cuando se cancelen reservas',
+        lowInventoryNotifications: 'Notificaciones de Inventario Bajo',
+        dailyReports: 'Informes Diarios',
+        receiveDailySummary: 'Recibir resumen diario de reservas e ingresos',
+        weeklyReports: 'Informes Semanales',
+        receiveWeeklyAnalytics: 'Recibir analíticas y insights semanales',
+        monthlyReports: 'Informes Mensuales',
+
+        // Security Settings (update existing ones)
+        securitySettings: 'Configuración de Seguridad',
+        twoFactorAuthentication: 'Autenticación de Dos Factores',
+        addExtraLayerSecurity: 'Añade una capa extra de seguridad a tu cuenta',
+        loginNotifications: 'Notificaciones de Inicio de Sesión',
+        getNotifiedNewLogins: 'Recibir notificaciones de nuevos intentos de inicio de sesión',
+        sessionTimeout: 'Tiempo de Espera de Sesión',
+        sessionTimeoutMinutes: 'Tiempo de Espera de Sesión (minutos)',
+
+        // Password Settings
+        changePassword: 'Cambiar Contraseña',
+        currentPassword: 'Contraseña Actual',
+        newPassword: 'Nueva Contraseña',
+        confirmNewPassword: 'Confirmar Nueva Contraseña',
+        minimumCharacters: 'Mínimo 6 caracteres',
+        passwordsDoNotMatch: 'Las nuevas contraseñas no coinciden',
+        passwordTooShort: 'La nueva contraseña debe tener al menos 6 caracteres',
+        changingPassword: 'Cambiando Contraseña...',
+        passwordChanged: 'Contraseña Cambiada Exitosamente',
+
+        // Event Default Settings
+        eventDefaults: 'Configuraciones Predeterminadas del Evento',
+        defaultEventDuration: 'Duración Predeterminada del Evento',
+        defaultEventDurationMinutes: 'Duración Predeterminada del Evento (minutos)',
+        ticketSaleStart: 'Inicio de Venta de Entradas',
+        ticketSaleStartDays: 'Inicio de Venta de Entradas (días antes del evento)',
+        defaultRefundPolicy: 'Política de Reembolso Predeterminada',
+        requireApproval: 'Requerir Aprobación',
+        requireApprovalBeforeLive: 'Requiere aprobación antes de publicar eventos',
+        autoPublish: 'Publicación Automática',
+        autoPublishWhenCreated: 'Publicar automáticamente eventos al crearlos',
+
+        // Language & Region Settings
+        languageRegion: 'Idioma y Región',
+        languagePreferences: 'Preferencias de idioma y formatos regionales',
+        regionalFormats: 'Formatos regionales',
+        interfaceLanguage: 'Idioma de la Interfaz',
+        timeDateFormats: 'Formatos de Hora y Fecha',
+        currencySettings: 'Configuración de Moneda',
+        livePreview: 'Vista Previa en Vivo',
+
+        // Time Format Settings
+        hour12Format: 'Formato de 12 horas',
+        hour24Format: 'Formato de 24 horas',
+
+        // Date Format Settings
+        dateFormatExample: 'Ejemplo: {example}',
+
+        // Display Settings
+        displaySettings: 'Configuración de Pantalla',
+        fontSizeSmall: 'Pequeño',
+        fontSizeMedium: 'Mediano',
+        fontSizeLarge: 'Grande',
+        reduceSpacing: 'Reducir espaciado entre elementos',
+
+        // Theme Settings
+        themeSettings: 'Configuración de Tema',
+        choosePreferredTheme: 'Elige tu tema de interfaz preferido',
+        cleanBrightInterface: 'Interfaz limpia y brillante',
+        easyOnEyes: 'Más cómodo para la vista',
+        followsSystemPreference: 'Sigue la preferencia del sistema',
+        accentColorSettings: 'Color de Acento',
+        chooseAccentColor: 'Elige tu color de acento preferido',
+
+        // Success Messages
+        settingsSavedSuccessfully: '¡Configuración guardada exitosamente!',
+        profileUpdatedSuccessfully: '¡Perfil actualizado exitosamente!',
+        organizationUpdatedSuccessfully: '¡Organización actualizada exitosamente!',
+        preferencesUpdatedSuccessfully: '¡Preferencias actualizadas exitosamente!',
+
+        // Error Messages
+        failedToUpdateProfile: 'Error al actualizar el perfil',
+        failedToUpdateOrganization: 'Error al actualizar la organización',
+        failedToUpdatePreferences: 'Error al actualizar las preferencias',
+        failedToChangePassword: 'Error al cambiar la contraseña',
+
+        // Loading States
+        loadingProfile: 'Cargando perfil...',
+        savingChanges: 'Guardando cambios...',
+
+        // Authentication
+        pleaseLoginToAccess: 'Por favor, inicia sesión para acceder a tu configuración.',
+
+        // General Settings
+        manageAccount: 'Administra tu cuenta y preferencias de eventos',
+        eventPreferences: 'Preferencias de eventos',
+        saved: '¡Guardado!',
+        saveChanges: 'Guardar Cambios',
+
+        // Verification Status
+        emailNotVerified: 'Correo electrónico no verificado',
+        phoneNotVerified: 'Número de teléfono no verificado',
+        verified: 'Verificado',
+
+        // Color Names
+        blue: 'Azul',
+        purple: 'Morado',
+        green: 'Verde',
+        red: 'Rojo',
+        orange: 'Naranja',
+        pink: 'Rosa',
+
+        // Size Names
+        small: 'Pequeño',
+        medium: 'Mediano',
+        large: 'Grande'
+    },
     // French translations
     fr: {
         // Common
@@ -1579,763 +2915,1345 @@ const translations: Record<string, TranslationKeys> = {
         maxCapacity: 'Capacité maximale',
         loadingDashboard: 'Chargement de votre tableau de bord...',
         dashboardError: 'Échec du chargement des données du tableau de bord',
-        publishedCount: '{count} publiés'
-    },
+        publishedCount: '{count} publiés',
 
+        // Analytics Dashboard
+        analytics: 'Analytiques',
+        analyticsSubtitle: 'Aperçus complets pour vos événements',
+        comprehensiveInsights: 'Aperçus complets pour vos événements',
+        refreshData: 'Actualiser',
+        someDataCouldntBeLoaded: 'Certaines données n\'ont pas pu être chargées :',
+
+        // Key Metrics
+        totalAttendees: 'Total des participants',
+        activeEvents: 'Événements actifs',
+        venuesUsed: 'Lieux utilisés',
+        fromLastMonth: 'du mois dernier',
+        noRevenueYet: 'Aucun revenu encore',
+        noAttendeesYet: 'Aucun participant encore',
+        eventsRunning: 'Événements en cours',
+        noActiveEvents: 'Aucun événement actif',
+        venuePartnerships: 'Partenariats de lieux',
+        noVenuesYet: 'Aucun lieu encore',
+
+        // Charts and Analytics
+        topRevenueEvents: 'Événements les plus rentables',
+        noEventsWithRevenueData: 'Aucun événement avec des données de revenus encore',
+        createAndPublishEvents: 'Créez et publiez des événements',
+        seeRevenueAnalytics: 'pour voir les analyses de revenus',
+        paymentMethodDistribution: 'Répartition des méthodes de paiement',
+        noPaymentDataAvailable: 'Aucune donnée de paiement disponible',
+        eventCapacityUtilization: 'Utilisation de la capacité des événements',
+        utilizationPercentage: 'utilisation',
+        noEventsFoundForPeriod: 'Aucun événement trouvé pour la période sélectionnée',
+        monthlyTrends: 'Tendances mensuelles',
+
+        // Demographics
+        genderDistribution: 'Répartition par sexe',
+        noDemographicDataAvailable: 'Aucune donnée démographique disponible',
+        venuePerformance: 'Performance des lieux',
+        avgAttendance: 'Fréquentation moyenne',
+        noVenueDataAvailable: 'Aucune donnée de lieu disponible',
+
+        // Events Needing Attention
+        eventsNeedingAttention: 'Événements nécessitant une attention',
+        utilization: 'utilisation',
+        daysUntilEvent: 'jours jusqu\'à l\'événement',
+        potentialIssues: 'Problèmes potentiels :',
+        recommendations: 'Recommandations :',
+        allEventsPerformingWell: 'Tous les événements se portent bien !',
+        noEventsWithLowAttendance: 'Aucun événement avec une faible fréquentation trouvé',
+
+        // Time periods
+        last7Days: '7 derniers jours',
+        last30Days: '30 derniers jours',
+        last3Months: '3 derniers mois',
+        last6Months: '6 derniers mois',
+        lastYear: 'Dernière année',
+
+        // Status messages
+        checkingAuthentication: 'Vérification de l\'authentification...',
+        authenticationRequired: 'Authentification requise',
+        pleaseLogInToView: 'Veuillez vous connecter pour voir le tableau de bord analytique.',
+        goToLogin: 'Aller à la connexion',
+
+        // Orders and remaining
+        orders: 'commandes',
+        // Organization Settings
+        organizationInformation: 'Informations de l\'Organisation',
+        businessLicense: 'Licence Commerciale',
+
+        // Notification Settings
+        emailNotifications: 'Notifications par Email',
+        smsNotifications: 'Notifications par SMS',
+        newBookings: 'Nouvelles Réservations',
+        getNotifiedNewBooking: 'Recevez une notification lorsque quelqu\'un réserve votre événement',
+        cancellations: 'Annulations',
+        getNotifiedCancellations: 'Recevez une notification lorsque des réservations sont annulées',
+        lowInventoryNotifications: 'Notifications de Stock Faible',
+        dailyReports: 'Rapports Quotidiens',
+        receiveDailySummary: 'Recevez un résumé quotidien des réservations et des revenus',
+        weeklyReports: 'Rapports Hebdomadaires',
+        receiveWeeklyAnalytics: 'Recevez des analyses et statistiques hebdomadaires',
+        monthlyReports: 'Rapports Mensuels',
+
+        // Security Settings
+        securitySettings: 'Paramètres de Sécurité',
+        twoFactorAuthentication: 'Authentification à Deux Facteurs',
+        addExtraLayerSecurity: 'Ajoutez une couche de sécurité supplémentaire à votre compte',
+        loginNotifications: 'Notifications de Connexion',
+        getNotifiedNewLogins: 'Recevez une notification des nouvelles tentatives de connexion',
+        sessionTimeout: 'Délai d\'Expiration de Session',
+        sessionTimeoutMinutes: 'Délai d\'expiration de session (minutes)',
+
+        // Password Settings
+        changePassword: 'Changer le Mot de Passe',
+        currentPassword: 'Mot de Passe Actuel',
+        newPassword: 'Nouveau Mot de Passe',
+        confirmNewPassword: 'Confirmer le Nouveau Mot de Passe',
+        minimumCharacters: 'Minimum 6 caractères',
+        passwordsDoNotMatch: 'Les nouveaux mots de passe ne correspondent pas',
+        passwordTooShort: 'Le nouveau mot de passe doit contenir au moins 6 caractères',
+        changingPassword: 'Changement du Mot de Passe...',
+        passwordChanged: 'Mot de Passe Modifié avec Succès',
+
+        // Event Default Settings
+        eventDefaults: 'Paramètres par Défaut des Événements',
+        defaultEventDuration: 'Durée par Défaut de l\'Événement',
+        defaultEventDurationMinutes: 'Durée par défaut de l\'événement (minutes)',
+        ticketSaleStart: 'Début de la Vente de Billets',
+        ticketSaleStartDays: 'Début de la vente de billets (jours avant l\'événement)',
+        defaultRefundPolicy: 'Politique de Remboursement par Défaut',
+        requireApproval: 'Approbation Requise',
+        requireApprovalBeforeLive: 'Approbation requise avant la publication des événements',
+        autoPublish: 'Publication Automatique',
+        autoPublishWhenCreated: 'Publier automatiquement les événements lors de leur création',
+
+        // Language & Region Settings
+        languageRegion: 'Langue et Région',
+        languagePreferences: 'Préférences de langue et formats régionaux',
+        regionalFormats: 'Formats régionaux',
+        interfaceLanguage: 'Langue de l\'Interface',
+        timeDateFormats: 'Formats d\'Heure et de Date',
+        currencySettings: 'Paramètres de Devise',
+        livePreview: 'Aperçu en Direct',
+
+        // Time Format Settings
+        hour12Format: 'Format 12 heures',
+        hour24Format: 'Format 24 heures',
+
+        // Date Format Settings
+        dateFormatExample: 'Exemple : {example}',
+
+        // Display Settings
+        displaySettings: 'Paramètres d\'Affichage',
+        fontSizeSmall: 'Petit',
+        fontSizeMedium: 'Moyen',
+        fontSizeLarge: 'Grand',
+        reduceSpacing: 'Réduire l\'espacement entre les éléments',
+
+        // Theme Settings
+        themeSettings: 'Paramètres du Thème',
+        choosePreferredTheme: 'Choisissez votre thème d\'interface préféré',
+        cleanBrightInterface: 'Interface claire et lumineuse',
+        easyOnEyes: 'Reposant pour les yeux',
+        followsSystemPreference: 'Suit les préférences du système',
+        accentColorSettings: 'Couleur d\'Accentuation',
+        chooseAccentColor: 'Choisissez votre couleur d\'accentuation préférée',
+
+        // Success Messages
+        settingsSavedSuccessfully: 'Paramètres enregistrés avec succès !',
+        profileUpdatedSuccessfully: 'Profil mis à jour avec succès !',
+        organizationUpdatedSuccessfully: 'Organisation mise à jour avec succès !',
+        preferencesUpdatedSuccessfully: 'Préférences mises à jour avec succès !',
+
+        // Error Messages
+        failedToUpdateProfile: 'Échec de la mise à jour du profil',
+        failedToUpdateOrganization: 'Échec de la mise à jour de l\'organisation',
+        failedToUpdatePreferences: 'Échec de la mise à jour des préférences',
+        failedToChangePassword: 'Échec du changement de mot de passe',
+
+        // Loading States
+        loadingProfile: 'Chargement du profil...',
+        savingChanges: 'Enregistrement des modifications...',
+        pleaseLoginToAccess: 'Veuillez vous connecter pour accéder à vos paramètres.',
+
+        // General Settings
+        manageAccount: 'Gérez votre compte et vos préférences d\'événements',
+        eventPreferences: 'Préférences d\'événements',
+        saved: 'Enregistré !',
+        saveChanges: 'Enregistrer les Modifications',
+
+        // Verification Status
+        emailNotVerified: 'Adresse email non vérifiée',
+        phoneNotVerified: 'Numéro de téléphone non vérifié',
+        verified: 'Vérifié',
+
+        // Color Names
+        blue: 'Bleu',
+        purple: 'Violet',
+        green: 'Vert',
+        red: 'Rouge',
+        orange: 'Orange',
+        pink: 'Rose',
+
+        // Size Names
+        small: 'Petit',
+        medium: 'Moyen',
+        large: 'Grand'
+    },
     // German translations
     de: {
-        // Common
-        save: 'Speichern',
-        cancel: 'Abbrechen',
-        delete: 'Löschen',
-        edit: 'Bearbeiten',
-        view: 'Anzeigen',
-        loading: 'Laden...',
-        error: 'Fehler',
-        success: 'Erfolg',
-        confirm: 'Bestätigen',
-        back: 'Zurück',
-        create: 'Erstellen',
-        update: 'Aktualisieren',
+            // Common
+            save: 'Speichern',
+            cancel: 'Abbrechen',
+            delete: 'Löschen',
+            edit: 'Bearbeiten',
+            view: 'Anzeigen',
+            loading: 'Laden...',
+            error: 'Fehler',
+            success: 'Erfolg',
+            confirm: 'Bestätigen',
+            back: 'Zurück',
+            create: 'Erstellen',
+            update: 'Aktualisieren',
 
-        // Navigation
-        dashboard: 'Dashboard',
-        events: 'Veranstaltungen',
-        settings: 'Einstellungen',
-        profile: 'Profil',
-        logout: 'Abmelden',
+            // Navigation
+            dashboard: 'Dashboard',
+            events: 'Veranstaltungen',
+            settings: 'Einstellungen',
+            profile: 'Profil',
+            logout: 'Abmelden',
 
-        // Settings
-        personalInformation: 'Persönliche Informationen',
-        organization: 'Organisation',
-        notifications: 'Benachrichtigungen',
-        security: 'Sicherheit',
-        appearance: 'Erscheinungsbild',
-        language: 'Sprache',
-        preferences: 'Einstellungen',
+            // Settings
+            personalInformation: 'Persönliche Informationen',
+            organization: 'Organisation',
+            notifications: 'Benachrichtigungen',
+            security: 'Sicherheit',
+            appearance: 'Erscheinungsbild',
+            language: 'Sprache',
+            preferences: 'Einstellungen',
 
-        // Profile
-        firstName: 'Vorname',
-        lastName: 'Nachname',
-        email: 'E-Mail',
-        phoneNumber: 'Telefonnummer',
-        companyName: 'Firmenname',
-        address: 'Adresse',
-        city: 'Stadt',
-        state: 'Bundesland',
-        zipCode: 'Postleitzahl',
-        country: 'Land',
+            // Profile
+            firstName: 'Vorname',
+            lastName: 'Nachname',
+            email: 'E-Mail',
+            phoneNumber: 'Telefonnummer',
+            companyName: 'Firmenname',
+            address: 'Adresse',
+            city: 'Stadt',
+            state: 'Bundesland',
+            zipCode: 'Postleitzahl',
+            country: 'Land',
 
-        // Events
-        createEvent: 'Veranstaltung erstellen',
-        editEvent: 'Veranstaltung bearbeiten',
-        eventTitle: 'Veranstaltungstitel',
-        eventDescription: 'Veranstaltungsbeschreibung',
-        eventDate: 'Veranstaltungsdatum',
-        eventTime: 'Veranstaltungszeit',
-        eventLocation: 'Veranstaltungsort',
-        ticketPrice: 'Ticketpreis',
-        yourEvents: 'Ihre Veranstaltungen',
-        createYourFirstEvent: 'Erstellen Sie Ihre erste Veranstaltung',
-        createFirstEventPrompt: 'Erstellen Sie Ihre erste Veranstaltung, um mit EventPro zu beginnen.',
-        eventsSubtitle: 'Verwalten Sie Ihre Veranstaltungen und verfolgen Sie ihre Leistung',
-        allEvents: 'Alle Veranstaltungen',
-        unpublished: 'Unveröffentlicht',
-        searchEvents: 'Veranstaltungen suchen...',
-        noDescriptionAvailable: 'Keine Beschreibung verfügbar',
-        dateNotSet: 'Datum nicht festgelegt',
-        invalidDate: 'Ungültiges Datum',
-        timeNotSet: 'Zeit nicht festgelegt',
-        invalidTime: 'Ungültige Zeit',
-        confirmDeleteEvent: 'Sind Sie sicher, dass Sie "{title}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
-        failedToDeleteEvent: 'Fehler beim Löschen der Veranstaltung',
-        failedToTogglePublish: 'Fehler beim {action} der Veranstaltung',
-        noEventsMatchSearch: 'Keine Veranstaltungen entsprechen Ihrer Suche',
-        adjustSearchCriteria: 'Versuchen Sie, Ihre Such- oder Filterkriterien anzupassen',
+            // Events
+            createEvent: 'Veranstaltung erstellen',
+            editEvent: 'Veranstaltung bearbeiten',
+            eventTitle: 'Veranstaltungstitel',
+            eventDescription: 'Veranstaltungsbeschreibung',
+            eventDate: 'Veranstaltungsdatum',
+            eventTime: 'Veranstaltungszeit',
+            eventLocation: 'Veranstaltungsort',
+            ticketPrice: 'Ticketpreis',
+            yourEvents: 'Ihre Veranstaltungen',
+            createYourFirstEvent: 'Erstellen Sie Ihre erste Veranstaltung',
+            createFirstEventPrompt: 'Erstellen Sie Ihre erste Veranstaltung, um mit EventPro zu beginnen.',
+            eventsSubtitle: 'Verwalten Sie Ihre Veranstaltungen und verfolgen Sie ihre Leistung',
+            allEvents: 'Alle Veranstaltungen',
+            unpublished: 'Unveröffentlicht',
+            searchEvents: 'Veranstaltungen suchen...',
+            noDescriptionAvailable: 'Keine Beschreibung verfügbar',
+            dateNotSet: 'Datum nicht festgelegt',
+            invalidDate: 'Ungültiges Datum',
+            timeNotSet: 'Zeit nicht festgelegt',
+            invalidTime: 'Ungültige Zeit',
+            confirmDeleteEvent: 'Sind Sie sicher, dass Sie "{title}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+            failedToDeleteEvent: 'Fehler beim Löschen der Veranstaltung',
+            failedToTogglePublish: 'Fehler beim {action} der Veranstaltung',
+            noEventsMatchSearch: 'Keine Veranstaltungen entsprechen Ihrer Suche',
+            adjustSearchCriteria: 'Versuchen Sie, Ihre Such- oder Filterkriterien anzupassen',
 
-        // Event Form
-        createNewEvent: 'Neue Veranstaltung erstellen',
-        editEventDetails: 'Veranstaltung bearbeiten',
-        fillEventDetails: 'Füllen Sie die Details aus, um Ihre Veranstaltung zu erstellen',
-        updateEventDetails: 'Aktualisieren Sie die Details Ihrer Veranstaltung',
-        basicInformation: 'Grundinformationen',
-        eventTitleRequired: 'Veranstaltungstitel ist erforderlich',
-        enterEventTitle: 'Veranstaltungstitel eingeben',
-        descriptionRequired: 'Veranstaltungsbeschreibung ist erforderlich',
-        describeEventDetail: 'Beschreiben Sie Ihre Veranstaltung im Detail...',
-        categoryRequired: 'Kategorie ist erforderlich',
-        selectCategory: 'Kategorie auswählen',
-        maxCapacityRequired: 'Maximale Kapazität muss größer als 0 sein',
-        maximumAttendees: 'Maximale Teilnehmerzahl',
-        eventImageUrl: 'Veranstaltungsbild-URL',
-        enterImageUrl: 'https://beispiel.com/veranstaltungsbild.jpg',
+            // Event Form
+            createNewEvent: 'Neue Veranstaltung erstellen',
+            editEventDetails: 'Veranstaltung bearbeiten',
+            fillEventDetails: 'Füllen Sie die Details aus, um Ihre Veranstaltung zu erstellen',
+            updateEventDetails: 'Aktualisieren Sie die Details Ihrer Veranstaltung',
+            basicInformation: 'Grundinformationen',
+            eventTitleRequired: 'Veranstaltungstitel ist erforderlich',
+            enterEventTitle: 'Veranstaltungstitel eingeben',
+            descriptionRequired: 'Veranstaltungsbeschreibung ist erforderlich',
+            describeEventDetail: 'Beschreiben Sie Ihre Veranstaltung im Detail...',
+            categoryRequired: 'Kategorie ist erforderlich',
+            selectCategory: 'Kategorie auswählen',
+            maxCapacityRequired: 'Maximale Kapazität muss größer als 0 sein',
+            maximumAttendees: 'Maximale Teilnehmerzahl',
+            eventImageUrl: 'Veranstaltungsbild-URL',
+            enterImageUrl: 'https://beispiel.com/veranstaltungsbild.jpg',
 
-        // Date & Time
-        dateTime: 'Datum & Zeit',
-        multiDayEvent: 'Mehrtägige Veranstaltung: {count} Tage',
-        dayEvent: '{count}-tägige Veranstaltung',
-        startDateTime: 'Startdatum & -zeit',
-        startDateTimeRequired: 'Startdatum der Veranstaltung ist erforderlich',
-        endDateTime: 'Enddatum & -zeit',
-        leaveEmptySingleSession: 'Leer lassen für einsitzige Veranstaltungen',
-        endDateAfterStart: 'Enddatum muss nach dem Startdatum liegen',
-        registrationDeadline: 'Anmeldefrist',
-        whenRegistrationClose: 'Wann soll die Anmeldung geschlossen werden? (optional)',
-        registrationDeadlineBeforeEvent: 'Anmeldefrist muss vor Veranstaltungsbeginn liegen',
+            // Date & Time
+            dateTime: 'Datum & Zeit',
+            multiDayEvent: 'Mehrtägige Veranstaltung: {count} Tage',
+            dayEvent: '{count}-tägige Veranstaltung',
+            startDateTime: 'Startdatum & -zeit',
+            startDateTimeRequired: 'Startdatum der Veranstaltung ist erforderlich',
+            endDateTime: 'Enddatum & -zeit',
+            leaveEmptySingleSession: 'Leer lassen für einsitzige Veranstaltungen',
+            endDateAfterStart: 'Enddatum muss nach dem Startdatum liegen',
+            registrationDeadline: 'Anmeldefrist',
+            whenRegistrationClose: 'Wann soll die Anmeldung geschlossen werden? (optional)',
+            registrationDeadlineBeforeEvent: 'Anmeldefrist muss vor Veranstaltungsbeginn liegen',
 
-        // Location
-        location: 'Ort',
-        onlineEvent: 'Dies ist eine Online-Veranstaltung',
-        venueRequired: 'Veranstaltungsort ist für Präsenzveranstaltungen erforderlich',
-        selectVenue: 'Veranstaltungsort auswählen',
-        locationDetails: 'Ortsdetails',
-        meetingLinkPlatform: 'Meeting-Link oder Plattformdetails',
-        additionalLocationInfo: 'Zusätzliche Ortsinformationen',
+            // Location
+            location: 'Ort',
+            onlineEvent: 'Dies ist eine Online-Veranstaltung',
+            venueRequired: 'Veranstaltungsort ist für Präsenzveranstaltungen erforderlich',
+            selectVenue: 'Veranstaltungsort auswählen',
+            locationDetails: 'Ortsdetails',
+            meetingLinkPlatform: 'Meeting-Link oder Plattformdetails',
+            additionalLocationInfo: 'Zusätzliche Ortsinformationen',
 
-        // Ticket Types
-        ticketTypes: 'Tickettypen',
-        addTicketType: 'Tickettyp hinzufügen',
-        ticketTypesCount: 'Tickettypen',
-        totalTypes: 'Gesamttypen',
-        editable: 'Bearbeitbar',
-        locked: 'Gesperrt',
-        noTicketTypesYet: 'Noch keine Tickettypen',
-        addTicketTypesToStart: 'Fügen Sie Tickettypen hinzu, um mit dem Verkauf von Tickets für Ihre Veranstaltung zu beginnen',
-        createFirstTicketType: 'Ersten Tickettyp erstellen',
-        ticketTypeName: 'Ticketname',
-        ticketTypeNameRequired: 'Ticketname ist erforderlich',
-        ticketDescription: 'Beschreibung',
-        optionalTicketDescription: 'Optionale Beschreibung für diesen Tickettyp',
-        price: 'Preis (RM)',
-        priceRequired: 'Gültiger Preis ist erforderlich',
-        quantity: 'Menge',
-        quantityRequired: 'Ticketmenge muss größer als 0 sein',
-        quantityGreaterThanZero: 'Menge muss größer als 0 sein',
-        ticketActive: 'Aktiv (zum Kauf verfügbar)',
-        availableForPurchase: 'Zum Kauf verfügbar',
-        createTicketType: 'Tickettyp erstellen',
-        updateTicketType: 'Tickettyp aktualisieren',
-        editTicketType: 'Tickettyp bearbeiten',
+            // Ticket Types
+            ticketTypes: 'Tickettypen',
+            addTicketType: 'Tickettyp hinzufügen',
+            ticketTypesCount: 'Tickettypen',
+            totalTypes: 'Gesamttypen',
+            editable: 'Bearbeitbar',
+            locked: 'Gesperrt',
+            noTicketTypesYet: 'Noch keine Tickettypen',
+            addTicketTypesToStart: 'Fügen Sie Tickettypen hinzu, um mit dem Verkauf von Tickets für Ihre Veranstaltung zu beginnen',
+            createFirstTicketType: 'Ersten Tickettyp erstellen',
+            ticketTypeName: 'Ticketname',
+            ticketTypeNameRequired: 'Ticketname ist erforderlich',
+            ticketDescription: 'Beschreibung',
+            optionalTicketDescription: 'Optionale Beschreibung für diesen Tickettyp',
+            price: 'Preis (RM)',
+            priceRequired: 'Gültiger Preis ist erforderlich',
+            quantity: 'Menge',
+            quantityRequired: 'Ticketmenge muss größer als 0 sein',
+            quantityGreaterThanZero: 'Menge muss größer als 0 sein',
+            ticketActive: 'Aktiv (zum Kauf verfügbar)',
+            availableForPurchase: 'Zum Kauf verfügbar',
+            createTicketType: 'Tickettyp erstellen',
+            updateTicketType: 'Tickettyp aktualisieren',
+            editTicketType: 'Tickettyp bearbeiten',
 
-        // Smart Editing
-        smartTicketEditing: '💡 Intelligente Tickettyp-Bearbeitung',
-        whenCanEdit: '✅ Wann Sie bearbeiten KÖNNEN:',
-        eventDraftStatus: '• Veranstaltung ist im ENTWURF-Status',
-        noTicketsSold: '• Noch keine Tickets verkauft',
-        eventNotPublished: '• Veranstaltung ist nicht veröffentlicht',
-        whenEditingLocked: '🔒 Wann die Bearbeitung GESPERRT ist:',
-        eventIsPublished: '• Veranstaltung ist veröffentlicht',
-        ticketsAlreadySold: '• Tickets wurden bereits verkauft',
-        eventStatusNotDraft: '• Veranstaltungsstatus ist nicht ENTWURF',
-        safeToEdit: 'Sicher zu bearbeiten - noch keine Verkäufe',
-        lockedToPreserve: 'Gesperrt zur Erhaltung der Verkaufsdaten',
-        ticketsSoldCount: '{count} Ticket(s) bereits verkauft. Bearbeitung ist gesperrt, um Kaufdaten zu erhalten.',
-        cannotCreateTicketTypes: 'Kann keine neuen Tickettypen erstellen. {count} Ticket(s) wurden bereits verkauft.',
-        salesDataIntegrity: 'Veranstaltung ist veröffentlicht. Kann keine Tickettypen erstellen, um die Integrität der Verkaufsdaten zu erhalten.',
+            // Smart Editing
+            smartTicketEditing: '💡 Intelligente Tickettyp-Bearbeitung',
+            whenCanEdit: '✅ Wann Sie bearbeiten KÖNNEN:',
+            eventDraftStatus: '• Veranstaltung ist im ENTWURF-Status',
+            noTicketsSold: '• Noch keine Tickets verkauft',
+            eventNotPublished: '• Veranstaltung ist nicht veröffentlicht',
+            whenEditingLocked: '🔒 Wann die Bearbeitung GESPERRT ist:',
+            eventIsPublished: '• Veranstaltung ist veröffentlicht',
+            ticketsAlreadySold: '• Tickets wurden bereits verkauft',
+            eventStatusNotDraft: '• Veranstaltungsstatus ist nicht ENTWURF',
+            safeToEdit: 'Sicher zu bearbeiten - noch keine Verkäufe',
+            lockedToPreserve: 'Gesperrt zur Erhaltung der Verkaufsdaten',
+            ticketsSoldCount: '{count} Ticket(s) bereits verkauft. Bearbeitung ist gesperrt, um Kaufdaten zu erhalten.',
+            cannotCreateTicketTypes: 'Kann keine neuen Tickettypen erstellen. {count} Ticket(s) wurden bereits verkauft.',
+            salesDataIntegrity: 'Veranstaltung ist veröffentlicht. Kann keine Tickettypen erstellen, um die Integrität der Verkaufsdaten zu erhalten.',
 
-        // Publishing
-        publishingOptions: 'Veröffentlichungsoptionen',
-        publishEventImmediately: 'Veranstaltung sofort veröffentlichen (für die Öffentlichkeit sichtbar machen)',
-        makeVisiblePublic: 'Für die Öffentlichkeit sichtbar machen',
-        publishUnpublishLater: 'Sie können Ihre Veranstaltung später jederzeit vom Dashboard aus veröffentlichen oder zurückziehen',
-        currentlyPublished: 'Derzeit veröffentlicht',
-        currentlyUnpublished: 'Derzeit nicht veröffentlicht',
-        usePublishButtons: 'Verwenden Sie die Veröffentlichen/Zurückziehen-Buttons in der Veranstaltungsliste, um diesen Status zu ändern',
-        changePublishStatus: 'Veröffentlichungsstatus ändern',
+            // Publishing
+            publishingOptions: 'Veröffentlichungsoptionen',
+            publishEventImmediately: 'Veranstaltung sofort veröffentlichen (für die Öffentlichkeit sichtbar machen)',
+            makeVisiblePublic: 'Für die Öffentlichkeit sichtbar machen',
+            publishUnpublishLater: 'Sie können Ihre Veranstaltung später jederzeit vom Dashboard aus veröffentlichen oder zurückziehen',
+            currentlyPublished: 'Derzeit veröffentlicht',
+            currentlyUnpublished: 'Derzeit nicht veröffentlicht',
+            usePublishButtons: 'Verwenden Sie die Veröffentlichen/Zurückziehen-Buttons in der Veranstaltungsliste, um diesen Status zu ändern',
+            changePublishStatus: 'Veröffentlichungsstatus ändern',
 
-        // Validation
-        fixErrorsBelow: 'Bitte beheben Sie die Fehler unten',
-        formValidationError: 'Bitte beheben Sie Formularfehler',
-        requiredField: 'Dieses Feld ist erforderlich',
-        invalidInput: 'Ungültige Eingabe',
+            // Validation
+            fixErrorsBelow: 'Bitte beheben Sie die Fehler unten',
+            formValidationError: 'Bitte beheben Sie Formularfehler',
+            requiredField: 'Dieses Feld ist erforderlich',
+            invalidInput: 'Ungültige Eingabe',
 
-        // Success/Error Messages
-        eventCreatedSuccessfully: 'Veranstaltung und alle Tickettypen erfolgreich erstellt!',
-        eventUpdatedSuccessfully: 'Veranstaltung erfolgreich aktualisiert!',
-        ticketTypeCreatedSuccessfully: 'Tickettyp erfolgreich erstellt!',
-        ticketTypeUpdatedSuccessfully: 'Tickettyp erfolgreich aktualisiert!',
-        failedToCreateEvent: 'Fehler beim Erstellen der Veranstaltung. Bitte versuchen Sie es erneut.',
-        failedToUpdateEvent: 'Fehler beim Aktualisieren der Veranstaltung. Bitte versuchen Sie es erneut.',
-        failedToCreateTicketType: 'Fehler beim Erstellen des Tickettyps',
-        failedToUpdateTicketType: 'Fehler beim Aktualisieren des Tickettyps',
-        creatingEvent: 'Veranstaltung wird erstellt...',
-        updatingEvent: 'Veranstaltung wird aktualisiert...',
-        redirectingToDashboard: 'Weiterleitung zum Dashboard...',
-        redirectingToEventDetail: 'Weiterleitung zu Veranstaltungsdetails...',
+            // Success/Error Messages
+            eventCreatedSuccessfully: 'Veranstaltung und alle Tickettypen erfolgreich erstellt!',
+            eventUpdatedSuccessfully: 'Veranstaltung erfolgreich aktualisiert!',
+            ticketTypeCreatedSuccessfully: 'Tickettyp erfolgreich erstellt!',
+            ticketTypeUpdatedSuccessfully: 'Tickettyp erfolgreich aktualisiert!',
+            failedToCreateEvent: 'Fehler beim Erstellen der Veranstaltung. Bitte versuchen Sie es erneut.',
+            failedToUpdateEvent: 'Fehler beim Aktualisieren der Veranstaltung. Bitte versuchen Sie es erneut.',
+            failedToCreateTicketType: 'Fehler beim Erstellen des Tickettyps',
+            failedToUpdateTicketType: 'Fehler beim Aktualisieren des Tickettyps',
+            creatingEvent: 'Veranstaltung wird erstellt...',
+            updatingEvent: 'Veranstaltung wird aktualisiert...',
+            redirectingToDashboard: 'Weiterleitung zum Dashboard...',
+            redirectingToEventDetail: 'Weiterleitung zu Veranstaltungsdetails...',
 
-        // Capacity and Venues
-        capacity: 'Kapazität',
-        venue: 'Veranstaltungsort',
-        selectAVenue: 'Veranstaltungsort auswählen',
-        venueWithCapacity: '{name} - {city} (Kapazität: {capacity})',
+            // Capacity and Venues
+            capacity: 'Kapazität',
+            venue: 'Veranstaltungsort',
+            selectAVenue: 'Veranstaltungsort auswählen',
+            venueWithCapacity: '{name} - {city} (Kapazität: {capacity})',
 
-        // Categories
-        category: 'Kategorie',
-        technology: 'Technologie',
-        business: 'Geschäft',
-        music: 'Musik',
-        sports: 'Sport',
-        education: 'Bildung',
+            // Categories
+            category: 'Kategorie',
+            technology: 'Technologie',
+            business: 'Geschäft',
+            music: 'Musik',
+            sports: 'Sport',
+            education: 'Bildung',
 
-        // Event States
-        published: 'Veröffentlicht',
-        draft: 'Entwurf',
-        online: 'Online',
-        inPerson: 'Präsenz',
+            // Event States
+            published: 'Veröffentlicht',
+            draft: 'Entwurf',
+            online: 'Online',
+            inPerson: 'Präsenz',
 
-        // Multi-day
-        multiDaySchedule: 'Mehrtägiger Zeitplan',
+            // Multi-day
+            multiDaySchedule: 'Mehrtägiger Zeitplan',
 
-        // Venue Management
-        venues: 'Veranstaltungsorte',
-        createVenue: 'Veranstaltungsort erstellen',
-        venueName: 'Name des Veranstaltungsortes',
-        venueNameRequired: 'Name des Veranstaltungsortes ist erforderlich',
-        enterVenueName: 'Name des Veranstaltungsortes eingeben',
-        venueAddress: 'Adresse',
-        addressRequired: 'Adresse ist erforderlich',
-        enterVenueAddress: 'Adresse des Veranstaltungsortes eingeben',
-        venueState: 'Bundesland',
-        enterState: 'Bundesland eingeben',
-        enterStateOptional: 'Bundesland eingeben (optional)',
-        venueCountry: 'Land',
-        countryRequired: 'Land ist erforderlich',
-        enterCountry: 'Land eingeben',
-        venueZipCode: 'Postleitzahl',
-        enterZipCode: 'Postleitzahl eingeben',
-        enterZipCodeOptional: 'Postleitzahl eingeben (optional)',
-        capacityRequired: 'Kapazität muss größer als 0 sein',
-        maximumCapacity: 'Maximale Kapazität',
-        contactEmail: 'Kontakt-E-Mail',
-        contactPhone: 'Kontakttelefon',
-        website: 'Website',
-        latitude: 'Breitengrad',
-        longitude: 'Längengrad',
-        description: 'Beschreibung',
-        venueDescription: 'Beschreibung des Veranstaltungsortes',
-        describeVenue: 'Beschreiben Sie den Veranstaltungsort, Annehmlichkeiten, besondere Merkmale...',
-        venueImageUrl: 'Bild-URL des Veranstaltungsortes',
-        validEmailRequired: 'Bitte geben Sie eine gültige E-Mail-Adresse ein',
-        latitudeBetween: 'Breitengrad muss zwischen -90 und 90 liegen',
-        longitudeBetween: 'Längengrad muss zwischen -180 und 180 liegen',
-        optionalMapIntegration: 'Optional: Für Kartenintegration',
-        createNewVenue: 'Neuen Veranstaltungsort erstellen',
-        venueCreatedSuccessfully: 'Veranstaltungsort erfolgreich erstellt!',
-        failedToCreateVenue: 'Fehler beim Erstellen des Veranstaltungsortes. Bitte versuchen Sie es erneut.',
-        failedToFetchVenues: 'Fehler beim Laden der Veranstaltungsorte',
-        creatingVenue: 'Wird erstellt...',
-        loadingVenues: 'Veranstaltungsorte werden geladen...',
-        searchVenues: 'Veranstaltungsorte suchen...',
-        allCities: 'Alle Städte',
-        noVenuesFound: 'Keine Veranstaltungsorte gefunden',
-        adjustFilters: 'Versuchen Sie, Ihre Filter anzupassen',
-        getStartedFirstVenue: 'Beginnen Sie mit der Erstellung Ihres ersten Veranstaltungsortes',
-        venueLocation: 'Ort',
-        venueCapacity: 'Kapazität',
-        venueEvents: 'Veranstaltungen',
-        venueStatus: 'Status',
-        active: 'Aktiv',
-        inactive: 'Inaktiv',
-        eventsCount: '{count} Veranstaltungen',
-        viewAvailableVenues: 'Verfügbare Veranstaltungsorte anzeigen und neue erstellen',
-        createNewOnes: 'Neue erstellen',
+            // Venue Management
+            venues: 'Veranstaltungsorte',
+            createVenue: 'Veranstaltungsort erstellen',
+            venueName: 'Name des Veranstaltungsortes',
+            venueNameRequired: 'Name des Veranstaltungsortes ist erforderlich',
+            enterVenueName: 'Name des Veranstaltungsortes eingeben',
+            venueAddress: 'Adresse',
+            addressRequired: 'Adresse ist erforderlich',
+            enterVenueAddress: 'Adresse des Veranstaltungsortes eingeben',
+            venueState: 'Bundesland',
+            enterState: 'Bundesland eingeben',
+            enterStateOptional: 'Bundesland eingeben (optional)',
+            venueCountry: 'Land',
+            countryRequired: 'Land ist erforderlich',
+            enterCountry: 'Land eingeben',
+            venueZipCode: 'Postleitzahl',
+            enterZipCode: 'Postleitzahl eingeben',
+            enterZipCodeOptional: 'Postleitzahl eingeben (optional)',
+            capacityRequired: 'Kapazität muss größer als 0 sein',
+            maximumCapacity: 'Maximale Kapazität',
+            contactEmail: 'Kontakt-E-Mail',
+            contactPhone: 'Kontakttelefon',
+            website: 'Website',
+            latitude: 'Breitengrad',
+            longitude: 'Längengrad',
+            description: 'Beschreibung',
+            venueDescription: 'Beschreibung des Veranstaltungsortes',
+            describeVenue: 'Beschreiben Sie den Veranstaltungsort, Annehmlichkeiten, besondere Merkmale...',
+            venueImageUrl: 'Bild-URL des Veranstaltungsortes',
+            validEmailRequired: 'Bitte geben Sie eine gültige E-Mail-Adresse ein',
+            latitudeBetween: 'Breitengrad muss zwischen -90 und 90 liegen',
+            longitudeBetween: 'Längengrad muss zwischen -180 und 180 liegen',
+            optionalMapIntegration: 'Optional: Für Kartenintegration',
+            createNewVenue: 'Neuen Veranstaltungsort erstellen',
+            venueCreatedSuccessfully: 'Veranstaltungsort erfolgreich erstellt!',
+            failedToCreateVenue: 'Fehler beim Erstellen des Veranstaltungsortes. Bitte versuchen Sie es erneut.',
+            failedToFetchVenues: 'Fehler beim Laden der Veranstaltungsorte',
+            creatingVenue: 'Wird erstellt...',
+            loadingVenues: 'Veranstaltungsorte werden geladen...',
+            searchVenues: 'Veranstaltungsorte suchen...',
+            allCities: 'Alle Städte',
+            noVenuesFound: 'Keine Veranstaltungsorte gefunden',
+            adjustFilters: 'Versuchen Sie, Ihre Filter anzupassen',
+            getStartedFirstVenue: 'Beginnen Sie mit der Erstellung Ihres ersten Veranstaltungsortes',
+            venueLocation: 'Ort',
+            venueCapacity: 'Kapazität',
+            venueEvents: 'Veranstaltungen',
+            venueStatus: 'Status',
+            active: 'Aktiv',
+            inactive: 'Inaktiv',
+            eventsCount: '{count} Veranstaltungen',
+            viewAvailableVenues: 'Verfügbare Veranstaltungsorte anzeigen und neue erstellen',
+            createNewOnes: 'Neue erstellen',
 
-        // Ticket Management
-        tickets: 'Tickets',
-        ticketManagement: 'Ticket-Verwaltung',
-        manageTicketTypes: 'Verwalten Sie Tickettypen, validieren Sie Tickets und bearbeiten Sie Check-ins',
-        validateTickets: 'Tickets validieren',
-        checkIn: 'Check-in',
-        ticketValidation: 'Ticket-Validierung',
-        ticketCheckIn: 'Ticket-Check-in',
-        ticketsAndCheckIn: 'Tickets & Check-in',
+            // Ticket Management
+            tickets: 'Tickets',
+            ticketManagement: 'Ticket-Verwaltung',
+            manageTicketTypes: 'Verwalten Sie Tickettypen, validieren Sie Tickets und bearbeiten Sie Check-ins',
+            validateTickets: 'Tickets validieren',
+            checkIn: 'Check-in',
+            ticketValidation: 'Ticket-Validierung',
+            ticketCheckIn: 'Ticket-Check-in',
+            ticketsAndCheckIn: 'Tickets & Check-in',
 
-        // Ticket Types Management
-        createTicketTypeAction: 'Tickettyp erstellen',
-        ticketTypeLimitations: '⚠️ Wichtig: Einschränkungen bei der Erstellung von Tickettypen',
-        publishedEventsRestriction: 'Veröffentlichte Veranstaltungen: Tickettypen können nicht geändert werden, um bestehende Verkaufsdaten zu erhalten',
-        eventsWithSalesRestriction: 'Veranstaltungen mit Verkäufen: Die Bearbeitung von Tickettypen wird gesperrt, sobald Tickets verkauft werden',
-        draftStatusRequired: 'Für die Erstellung von Tickettypen: Veranstaltungen müssen im ENTWURF-Status ohne bestehende Verkäufe sein',
-        alternativeCreateEvent: 'Alternative: Erstellen Sie eine neue Veranstaltung, wenn Sie andere Tickettypen benötigen',
-        onlyWorksForDraft: 'Funktioniert nur für Entwurfs-Veranstaltungen ohne bestehende Verkäufe',
-        createNewEventLink: 'Neue Veranstaltung erstellen',
-        manageEventsLink: 'Veranstaltungen verwalten',
+            // Ticket Types Management
+            createTicketTypeAction: 'Tickettyp erstellen',
+            ticketTypeLimitations: '⚠️ Wichtig: Einschränkungen bei der Erstellung von Tickettypen',
+            publishedEventsRestriction: 'Veröffentlichte Veranstaltungen: Tickettypen können nicht geändert werden, um bestehende Verkaufsdaten zu erhalten',
+            eventsWithSalesRestriction: 'Veranstaltungen mit Verkäufen: Die Bearbeitung von Tickettypen wird gesperrt, sobald Tickets verkauft werden',
+            draftStatusRequired: 'Für die Erstellung von Tickettypen: Veranstaltungen müssen im ENTWURF-Status ohne bestehende Verkäufe sein',
+            alternativeCreateEvent: 'Alternative: Erstellen Sie eine neue Veranstaltung, wenn Sie andere Tickettypen benötigen',
+            onlyWorksForDraft: 'Funktioniert nur für Entwurfs-Veranstaltungen ohne bestehende Verkäufe',
+            createNewEventLink: 'Neue Veranstaltung erstellen',
+            manageEventsLink: 'Veranstaltungen verwalten',
 
-        // Ticket Form
-        selectAnEvent: 'Veranstaltung auswählen',
-        ticketCreationRequirements: '⚠️ Anforderungen für die Ticket-Erstellung',
-        eventMustBeDraft: 'Veranstaltung muss im ENTWURF-Status sein (nicht veröffentlicht)',
-        noExistingTicketSales: 'Veranstaltung darf keine bestehenden Ticketverkäufe haben',
-        mustBeEventOrganizer: 'Sie müssen der Veranstaltungsorganisator sein',
-        editTicketsDuringCreation: 'Falls dies fehlschlägt, bearbeiten Sie Tickettypen während der Veranstaltungserstellung',
-        ticketEvent: 'Veranstaltung',
-        eventRequired: 'Veranstaltung ist erforderlich',
-        noEventsFound: 'Keine Veranstaltungen gefunden',
-        needCreateEventFirst: 'Sie müssen zuerst eine Veranstaltung erstellen, bevor Sie Tickettypen erstellen.',
+            // Ticket Form
+            selectAnEvent: 'Veranstaltung auswählen',
+            ticketCreationRequirements: '⚠️ Anforderungen für die Ticket-Erstellung',
+            eventMustBeDraft: 'Veranstaltung muss im ENTWURF-Status sein (nicht veröffentlicht)',
+            noExistingTicketSales: 'Veranstaltung darf keine bestehenden Ticketverkäufe haben',
+            mustBeEventOrganizer: 'Sie müssen der Veranstaltungsorganisator sein',
+            editTicketsDuringCreation: 'Falls dies fehlschlägt, bearbeiten Sie Tickettypen während der Veranstaltungserstellung',
+            ticketEvent: 'Veranstaltung',
+            eventRequired: 'Veranstaltung ist erforderlich',
+            noEventsFound: 'Keine Veranstaltungen gefunden',
+            needCreateEventFirst: 'Sie müssen zuerst eine Veranstaltung erstellen, bevor Sie Tickettypen erstellen.',
 
-        // Ticket Types Display
-        loadingTicketTypes: 'Tickettypen werden geladen...',
-        noTicketTypesFound: 'Keine Tickettypen gefunden',
-        adjustFiltersOrCreate: 'Versuchen Sie, Ihre Filter anzupassen oder erstellen Sie Ihren ersten Tickettyp',
-        createFirstTicketTypePrompt: 'Erstellen Sie Ihren ersten Tickettyp',
-        ticketType: 'Tickettyp',
-        event: 'Veranstaltung',
-        availability: 'Verfügbarkeit',
-        status: 'Status',
-        remaining: 'verbleibend',
+            // Ticket Types Display
+            loadingTicketTypes: 'Tickettypen werden geladen...',
+            noTicketTypesFound: 'Keine Tickettypen gefunden',
+            adjustFiltersOrCreate: 'Versuchen Sie, Ihre Filter anzupassen oder erstellen Sie Ihren ersten Tickettyp',
+            createFirstTicketTypePrompt: 'Erstellen Sie Ihren ersten Tickettyp',
+            ticketType: 'Tickettyp',
+            event: 'Veranstaltung',
+            availability: 'Verfügbarkeit',
+            status: 'Status',
+            remaining: 'verbleibend',
 
-        // Validation Tab
-        validateTicket: 'Ticket validieren',
-        enterTicketNumber: 'Ticketnummer eingeben',
-        validating: 'Wird validiert...',
-        validate: 'Validieren',
-        validTicket: 'Gültiges Ticket',
-        invalidTicket: 'Ungültiges Ticket',
-        ticketNumber: 'Ticketnummer',
-        attendeeName: 'Teilnehmer',
-        alreadyUsed: 'Bereits verwendet',
-        notUsed: 'Nicht verwendet',
+            // Validation Tab
+            validateTicket: 'Ticket validieren',
+            enterTicketNumber: 'Ticketnummer eingeben',
+            validating: 'Wird validiert...',
+            validate: 'Validieren',
+            validTicket: 'Gültiges Ticket',
+            invalidTicket: 'Ungültiges Ticket',
+            ticketNumber: 'Ticketnummer',
+            attendeeName: 'Teilnehmer',
+            alreadyUsed: 'Bereits verwendet',
+            notUsed: 'Nicht verwendet',
 
-        // Check-in Tab
-        checkInTicket: 'Ticket-Check-in',
-        enterTicketNumberCheckIn: 'Ticketnummer für Check-in eingeben',
-        checkingIn: 'Check-in läuft...',
-        ticketCheckedInSuccessfully: 'Ticket erfolgreich eingecheckt',
+            // Check-in Tab
+            checkInTicket: 'Ticket-Check-in',
+            enterTicketNumberCheckIn: 'Ticketnummer für Check-in eingeben',
+            checkingIn: 'Check-in läuft...',
+            ticketCheckedInSuccessfully: 'Ticket erfolgreich eingecheckt',
 
-        // Ticket Warnings
-        importantTicketLimitations: '⚠️ Wichtig: Einschränkungen bei der Erstellung von Tickettypen',
-        cannotModifyPublished: '• Veröffentlichte Veranstaltungen: Tickettypen können nicht geändert werden, um bestehende Verkaufsdaten zu erhalten',
-        editingLockedAfterSales: '• Veranstaltungen mit Verkäufen: Die Bearbeitung von Tickettypen wird gesperrt, sobald Tickets verkauft werden',
-        draftStatusForCreation: '• Für die Erstellung von Tickettypen: Veranstaltungen müssen im ENTWURF-Status ohne bestehende Verkäufe sein',
-        createNewEventAlternative: '• Alternative: Erstellen Sie eine neue Veranstaltung, wenn Sie andere Tickettypen benötigen',
+            // Ticket Warnings
+            importantTicketLimitations: '⚠️ Wichtig: Einschränkungen bei der Erstellung von Tickettypen',
+            cannotModifyPublished: '• Veröffentlichte Veranstaltungen: Tickettypen können nicht geändert werden, um bestehende Verkaufsdaten zu erhalten',
+            editingLockedAfterSales: '• Veranstaltungen mit Verkäufen: Die Bearbeitung von Tickettypen wird gesperrt, sobald Tickets verkauft werden',
+            draftStatusForCreation: '• Für die Erstellung von Tickettypen: Veranstaltungen müssen im ENTWURF-Status ohne bestehende Verkäufe sein',
+            createNewEventAlternative: '• Alternative: Erstellen Sie eine neue Veranstaltung, wenn Sie andere Tickettypen benötigen',
 
-        // Business Rules
-        businessRulesWarning: '⚠️ Anforderungen für die Ticket-Erstellung',
+            // Business Rules
+            businessRulesWarning: '⚠️ Anforderungen für die Ticket-Erstellung',
 
-        // Ticket States
-        ticketInactive: 'Inaktiv',
+            // Ticket States
+            ticketInactive: 'Inaktiv',
 
-        // General UI
-        optional: 'optional',
-        required: 'erforderlich',
+            // General UI
+            optional: 'optional',
+            required: 'erforderlich',
 
-        // Appearance
-        theme: 'Design',
-        lightMode: 'Heller Modus',
-        darkMode: 'Dunkler Modus',
-        autoMode: 'Automatischer Modus',
-        accentColor: 'Akzentfarbe',
-        fontSize: 'Schriftgröße',
-        compactMode: 'Kompakter Modus',
+            // Appearance
+            theme: 'Design',
+            lightMode: 'Heller Modus',
+            darkMode: 'Dunkler Modus',
+            autoMode: 'Automatischer Modus',
+            accentColor: 'Akzentfarbe',
+            fontSize: 'Schriftgröße',
+            compactMode: 'Kompakter Modus',
 
-        // Time and Date
-        timeFormat: 'Zeitformat',
-        dateFormat: 'Datumsformat',
-        currency: 'Währung',
-        timezone: 'Zeitzone',
+            // Time and Date
+            timeFormat: 'Zeitformat',
+            dateFormat: 'Datumsformat',
+            currency: 'Währung',
+            timezone: 'Zeitzone',
 
-        // Messages
-        saveSuccess: 'Einstellungen erfolgreich gespeichert!',
-        saveError: 'Fehler beim Speichern der Einstellungen',
-        loadError: 'Fehler beim Laden der Daten',
+            // Messages
+            saveSuccess: 'Einstellungen erfolgreich gespeichert!',
+            saveError: 'Fehler beim Speichern der Einstellungen',
+            loadError: 'Fehler beim Laden der Daten',
 
-        // Dashboard specific
-        welcomeBack: 'Willkommen zurück, {name}!',
-        virtualEvent: 'Virtuelle Veranstaltung',
-        viewAllEvents: 'Alle Veranstaltungen anzeigen →',
-        upcomingEvents: 'Bevorstehende Veranstaltungen',
-        unpublish: 'Zurückziehen',
-        unlimited: 'Unbegrenzt',
-        uncategorized: 'Unkategorisiert',
-        totalRevenue: 'Gesamtumsatz',
-        totalEvents: 'Gesamte Veranstaltungen',
-        ticketsSold: 'Verkaufte Tickets',
-        revenue: 'Umsatz',
-        publish: 'Veröffentlichen',
-        noEventsYet: 'Noch keine Veranstaltungen',
-        maxCapacity: 'Maximale Kapazität',
-        loadingDashboard: 'Dashboard wird geladen...',
-        dashboardError: 'Fehler beim Laden der Dashboard-Daten',
-        publishedCount: '{count} veröffentlicht'
-    },
+            // Dashboard specific
+            welcomeBack: 'Willkommen zurück, {name}!',
+            virtualEvent: 'Virtuelle Veranstaltung',
+            viewAllEvents: 'Alle Veranstaltungen anzeigen →',
+            upcomingEvents: 'Bevorstehende Veranstaltungen',
+            unpublish: 'Zurückziehen',
+            unlimited: 'Unbegrenzt',
+            uncategorized: 'Unkategorisiert',
+            totalRevenue: 'Gesamtumsatz',
+            totalEvents: 'Gesamte Veranstaltungen',
+            ticketsSold: 'Verkaufte Tickets',
+            revenue: 'Umsatz',
+            publish: 'Veröffentlichen',
+            noEventsYet: 'Noch keine Veranstaltungen',
+            maxCapacity: 'Maximale Kapazität',
+            loadingDashboard: 'Dashboard wird geladen...',
+            dashboardError: 'Fehler beim Laden der Dashboard-Daten',
+            publishedCount: '{count} veröffentlicht',
 
+            // Analytics Dashboard
+            analytics: 'Analysen',
+            analyticsSubtitle: 'Umfassende Einblicke für Ihre Veranstaltungen',
+            comprehensiveInsights: 'Umfassende Einblicke für Ihre Veranstaltungen',
+            refreshData: 'Aktualisieren',
+            someDataCouldntBeLoaded: 'Einige Daten konnten nicht geladen werden:',
+
+            // Key Metrics
+            totalAttendees: 'Gesamtteilnehmer',
+            activeEvents: 'Aktive Veranstaltungen',
+            venuesUsed: 'Verwendete Veranstaltungsorte',
+            fromLastMonth: 'vom letzten Monat',
+            noRevenueYet: 'Noch kein Umsatz',
+            noAttendeesYet: 'Noch keine Teilnehmer',
+            eventsRunning: 'Laufende Veranstaltungen',
+            noActiveEvents: 'Keine aktiven Veranstaltungen',
+            venuePartnerships: 'Veranstaltungsort-Partnerschaften',
+            noVenuesYet: 'Noch keine Veranstaltungsorte',
+
+            // Charts and Analytics
+            topRevenueEvents: 'Umsatzstärkste Veranstaltungen',
+            noEventsWithRevenueData: 'Noch keine Veranstaltungen mit Umsatzdaten',
+            createAndPublishEvents: 'Erstellen und veröffentlichen Sie Veranstaltungen',
+            seeRevenueAnalytics: 'um Umsatzanalysen zu sehen',
+            paymentMethodDistribution: 'Verteilung der Zahlungsmethoden',
+            noPaymentDataAvailable: 'Keine Zahlungsdaten verfügbar',
+            eventCapacityUtilization: 'Kapazitätsauslastung der Veranstaltungen',
+            utilizationPercentage: 'Auslastung',
+            noEventsFoundForPeriod: 'Keine Veranstaltungen für den gewählten Zeitraum gefunden',
+            monthlyTrends: 'Monatliche Trends',
+
+            // Demographics
+            genderDistribution: 'Geschlechterverteilung',
+            noDemographicDataAvailable: 'Keine demografischen Daten verfügbar',
+            venuePerformance: 'Veranstaltungsort-Performance',
+            avgAttendance: 'Durchschnittliche Teilnahme',
+            noVenueDataAvailable: 'Keine Veranstaltungsort-Daten verfügbar',
+
+            // Events Needing Attention
+            eventsNeedingAttention: 'Veranstaltungen, die Aufmerksamkeit benötigen',
+            utilization: 'Auslastung',
+            daysUntilEvent: 'Tage bis zur Veranstaltung',
+            potentialIssues: 'Mögliche Probleme:',
+            recommendations: 'Empfehlungen:',
+            allEventsPerformingWell: 'Alle Veranstaltungen laufen gut!',
+            noEventsWithLowAttendance: 'Keine Veranstaltungen mit geringer Teilnahme gefunden',
+
+            // Time periods
+            last7Days: 'Letzte 7 Tage',
+            last30Days: 'Letzte 30 Tage',
+            last3Months: 'Letzte 3 Monate',
+            last6Months: 'Letzte 6 Monate',
+            lastYear: 'Letztes Jahr',
+
+            // Status messages
+            checkingAuthentication: 'Authentifizierung wird überprüft...',
+            authenticationRequired: 'Authentifizierung erforderlich',
+            pleaseLogInToView: 'Bitte melden Sie sich an, um das Analyse-Dashboard zu sehen.',
+            goToLogin: 'Zur Anmeldung',
+
+            // Orders and remaining
+        orders: 'Bestellungen',
+        // Organization Settings
+        organizationInformation: 'Organisationsinformationen',
+        businessLicense: 'Gewerbeschein',
+
+        // Notification Settings
+        emailNotifications: 'E-Mail-Benachrichtigungen',
+        smsNotifications: 'SMS-Benachrichtigungen',
+        newBookings: 'Neue Buchungen',
+        getNotifiedNewBooking: 'Benachrichtigung erhalten, wenn jemand Ihre Veranstaltung bucht',
+        cancellations: 'Stornierungen',
+        getNotifiedCancellations: 'Benachrichtigung erhalten, wenn Buchungen storniert werden',
+        lowInventoryNotifications: 'Benachrichtigungen bei niedrigem Bestand',
+        dailyReports: 'Tägliche Berichte',
+        receiveDailySummary: 'Tägliche Zusammenfassung von Buchungen und Umsätzen erhalten',
+        weeklyReports: 'Wöchentliche Berichte',
+        receiveWeeklyAnalytics: 'Wöchentliche Analysen und Einblicke erhalten',
+        monthlyReports: 'Monatliche Berichte',
+
+        // Security Settings
+        securitySettings: 'Sicherheitseinstellungen',
+        twoFactorAuthentication: 'Zwei-Faktor-Authentifizierung',
+        addExtraLayerSecurity: 'Fügen Sie Ihrem Konto eine zusätzliche Sicherheitsebene hinzu',
+        loginNotifications: 'Anmelde-Benachrichtigungen',
+        getNotifiedNewLogins: 'Benachrichtigung bei neuen Anmeldeversuchen erhalten',
+        sessionTimeout: 'Sitzungszeitüberschreitung',
+        sessionTimeoutMinutes: 'Sitzungszeitüberschreitung (Minuten)',
+
+        // Password Settings
+        changePassword: 'Passwort ändern',
+        currentPassword: 'Aktuelles Passwort',
+        newPassword: 'Neues Passwort',
+        confirmNewPassword: 'Neues Passwort bestätigen',
+        minimumCharacters: 'Mindestens 6 Zeichen',
+        passwordsDoNotMatch: 'Die neuen Passwörter stimmen nicht überein',
+        passwordTooShort: 'Das neue Passwort muss mindestens 6 Zeichen lang sein',
+        changingPassword: 'Passwort wird geändert...',
+        passwordChanged: 'Passwort erfolgreich geändert',
+
+        // Event Default Settings
+        eventDefaults: 'Standard-Veranstaltungseinstellungen',
+        defaultEventDuration: 'Standard-Veranstaltungsdauer',
+        defaultEventDurationMinutes: 'Standard-Veranstaltungsdauer (Minuten)',
+        ticketSaleStart: 'Ticketverkaufsstart',
+        ticketSaleStartDays: 'Ticketverkaufsstart (Tage vor der Veranstaltung)',
+        defaultRefundPolicy: 'Standard-Rückerstattungsrichtlinie',
+        requireApproval: 'Genehmigung erforderlich',
+        requireApprovalBeforeLive: 'Genehmigung vor Veröffentlichung erforderlich',
+        autoPublish: 'Automatische Veröffentlichung',
+        autoPublishWhenCreated: 'Veranstaltungen bei Erstellung automatisch veröffentlichen',
+
+        // Language & Region Settings
+        languageRegion: 'Sprache & Region',
+        languagePreferences: 'Spracheinstellungen und regionale Formate',
+        regionalFormats: 'Regionale Formate',
+        interfaceLanguage: 'Oberflächensprache',
+        timeDateFormats: 'Zeit- und Datumsformate',
+        currencySettings: 'Währungseinstellungen',
+        livePreview: 'Live-Vorschau',
+
+        // Time Format Settings
+        hour12Format: '12-Stunden-Format',
+        hour24Format: '24-Stunden-Format',
+
+        // Date Format Settings
+        dateFormatExample: 'Beispiel: {example}',
+
+        // Display Settings
+        displaySettings: 'Anzeigeeinstellungen',
+        fontSizeSmall: 'Klein',
+        fontSizeMedium: 'Mittel',
+        fontSizeLarge: 'Groß',
+        reduceSpacing: 'Abstand zwischen Elementen reduzieren',
+
+        // Theme Settings
+        themeSettings: 'Design-Einstellungen',
+        choosePreferredTheme: 'Wählen Sie Ihr bevorzugtes Oberflächendesign',
+        cleanBrightInterface: 'Saubere und helle Oberfläche',
+        easyOnEyes: 'Augenschonend',
+        followsSystemPreference: 'Folgt Systemeinstellung',
+        accentColorSettings: 'Akzentfarbe',
+        chooseAccentColor: 'Wählen Sie Ihre bevorzugte Akzentfarbe',
+
+        // Success Messages
+        settingsSavedSuccessfully: 'Einstellungen erfolgreich gespeichert!',
+        profileUpdatedSuccessfully: 'Profil erfolgreich aktualisiert!',
+        organizationUpdatedSuccessfully: 'Organisation erfolgreich aktualisiert!',
+        preferencesUpdatedSuccessfully: 'Einstellungen erfolgreich aktualisiert!',
+
+        // Error Messages
+        failedToUpdateProfile: 'Fehler beim Aktualisieren des Profils',
+        failedToUpdateOrganization: 'Fehler beim Aktualisieren der Organisation',
+        failedToUpdatePreferences: 'Fehler beim Aktualisieren der Einstellungen',
+        failedToChangePassword: 'Fehler beim Ändern des Passworts',
+
+        // Loading States
+        loadingProfile: 'Profil wird geladen...',
+        savingChanges: 'Änderungen werden gespeichert...',
+
+        // Authentication (already exists as authenticationRequired, but adding full context)
+        pleaseLoginToAccess: 'Bitte melden Sie sich an, um auf Ihre Einstellungen zuzugreifen.',
+
+        // General Settings
+        manageAccount: 'Verwalten Sie Ihr Konto und Ihre Veranstaltungseinstellungen',
+        eventPreferences: 'Veranstaltungseinstellungen',
+        saved: 'Gespeichert!',
+        saveChanges: 'Änderungen speichern',
+
+        // Verification Status
+        emailNotVerified: 'E-Mail-Adresse nicht verifiziert',
+        phoneNotVerified: 'Telefonnummer nicht verifiziert',
+        verified: 'Verifiziert',
+
+        // Color Names (for dynamic translation)
+        blue: 'Blau',
+        purple: 'Violett',
+        green: 'Grün',
+        red: 'Rot',
+        orange: 'Orange',
+        pink: 'Rosa',
+
+        // Size Names (already exist as small, medium, large but adding for consistency)
+        small: 'Klein',
+        medium: 'Mittel',
+        large: 'Groß'
+        },
     // Italian translations
     it: {
-        // Common
-        save: 'Salva',
-        cancel: 'Annulla',
-        delete: 'Elimina',
-        edit: 'Modifica',
-        view: 'Visualizza',
-        loading: 'Caricamento...',
-        error: 'Errore',
-        success: 'Successo',
-        confirm: 'Conferma',
-        back: 'Indietro',
-        create: 'Crea',
-        update: 'Aggiorna',
+            // Common
+            save: 'Salva',
+            cancel: 'Annulla',
+            delete: 'Elimina',
+            edit: 'Modifica',
+            view: 'Visualizza',
+            loading: 'Caricamento...',
+            error: 'Errore',
+            success: 'Successo',
+            confirm: 'Conferma',
+            back: 'Indietro',
+            create: 'Crea',
+            update: 'Aggiorna',
 
-        // Navigation
-        dashboard: 'Dashboard',
-        events: 'Eventi',
-        settings: 'Impostazioni',
-        profile: 'Profilo',
-        logout: 'Disconnetti',
+            // Navigation
+            dashboard: 'Dashboard',
+            events: 'Eventi',
+            settings: 'Impostazioni',
+            profile: 'Profilo',
+            logout: 'Disconnetti',
 
-        // Settings
-        personalInformation: 'Informazioni personali',
-        organization: 'Organizzazione',
-        notifications: 'Notifiche',
-        security: 'Sicurezza',
-        appearance: 'Aspetto',
-        language: 'Lingua',
-        preferences: 'Preferenze',
+            // Settings
+            personalInformation: 'Informazioni personali',
+            organization: 'Organizzazione',
+            notifications: 'Notifiche',
+            security: 'Sicurezza',
+            appearance: 'Aspetto',
+            language: 'Lingua',
+            preferences: 'Preferenze',
 
-        // Profile
-        firstName: 'Nome',
-        lastName: 'Cognome',
-        email: 'Email',
-        phoneNumber: 'Numero di telefono',
-        companyName: 'Nome dell\'azienda',
-        address: 'Indirizzo',
-        city: 'Città',
-        state: 'Stato',
-        zipCode: 'Codice postale',
-        country: 'Paese',
+            // Profile
+            firstName: 'Nome',
+            lastName: 'Cognome',
+            email: 'Email',
+            phoneNumber: 'Numero di telefono',
+            companyName: 'Nome dell\'azienda',
+            address: 'Indirizzo',
+            city: 'Città',
+            state: 'Stato',
+            zipCode: 'Codice postale',
+            country: 'Paese',
 
-        // Events
-        createEvent: 'Crea evento',
-        editEvent: 'Modifica evento',
-        eventTitle: 'Titolo dell\'evento',
-        eventDescription: 'Descrizione dell\'evento',
-        eventDate: 'Data dell\'evento',
-        eventTime: 'Ora dell\'evento',
-        eventLocation: 'Luogo dell\'evento',
-        ticketPrice: 'Prezzo del biglietto',
-        yourEvents: 'I tuoi eventi',
-        createYourFirstEvent: 'Crea il tuo primo evento',
-        createFirstEventPrompt: 'Crea il tuo primo evento per iniziare con EventPro.',
-        eventsSubtitle: 'Gestisci i tuoi eventi e monitora le loro prestazioni',
-        allEvents: 'Tutti gli eventi',
-        unpublished: 'Non pubblicato',
-        searchEvents: 'Cerca eventi...',
-        noDescriptionAvailable: 'Nessuna descrizione disponibile',
-        dateNotSet: 'Data non impostata',
-        invalidDate: 'Data non valida',
-        timeNotSet: 'Ora non impostata',
-        invalidTime: 'Ora non valida',
-        confirmDeleteEvent: 'Sei sicuro di voler eliminare "{title}"? Questa azione non può essere annullata.',
-        failedToDeleteEvent: 'Impossibile eliminare l\'evento',
-        failedToTogglePublish: 'Impossibile {action} l\'evento',
-        noEventsMatchSearch: 'Nessun evento corrisponde alla tua ricerca',
-        adjustSearchCriteria: 'Prova ad aggiustare i tuoi criteri di ricerca o filtro',
+            // Events
+            createEvent: 'Crea evento',
+            editEvent: 'Modifica evento',
+            eventTitle: 'Titolo dell\'evento',
+            eventDescription: 'Descrizione dell\'evento',
+            eventDate: 'Data dell\'evento',
+            eventTime: 'Ora dell\'evento',
+            eventLocation: 'Luogo dell\'evento',
+            ticketPrice: 'Prezzo del biglietto',
+            yourEvents: 'I tuoi eventi',
+            createYourFirstEvent: 'Crea il tuo primo evento',
+            createFirstEventPrompt: 'Crea il tuo primo evento per iniziare con EventPro.',
+            eventsSubtitle: 'Gestisci i tuoi eventi e monitora le loro prestazioni',
+            allEvents: 'Tutti gli eventi',
+            unpublished: 'Non pubblicato',
+            searchEvents: 'Cerca eventi...',
+            noDescriptionAvailable: 'Nessuna descrizione disponibile',
+            dateNotSet: 'Data non impostata',
+            invalidDate: 'Data non valida',
+            timeNotSet: 'Ora non impostata',
+            invalidTime: 'Ora non valida',
+            confirmDeleteEvent: 'Sei sicuro di voler eliminare "{title}"? Questa azione non può essere annullata.',
+            failedToDeleteEvent: 'Impossibile eliminare l\'evento',
+            failedToTogglePublish: 'Impossibile {action} l\'evento',
+            noEventsMatchSearch: 'Nessun evento corrisponde alla tua ricerca',
+            adjustSearchCriteria: 'Prova ad aggiustare i tuoi criteri di ricerca o filtro',
 
-        // Event Form
-        createNewEvent: 'Crea nuovo evento',
-        editEventDetails: 'Modifica evento',
-        fillEventDetails: 'Compila i dettagli per creare il tuo evento',
-        updateEventDetails: 'Aggiorna i dettagli del tuo evento',
-        basicInformation: 'Informazioni di base',
-        eventTitleRequired: 'Il titolo dell\'evento è obbligatorio',
-        enterEventTitle: 'Inserisci il titolo dell\'evento',
-        descriptionRequired: 'La descrizione dell\'evento è obbligatoria',
-        describeEventDetail: 'Descrivi il tuo evento in dettaglio...',
-        categoryRequired: 'La categoria è obbligatoria',
-        selectCategory: 'Seleziona categoria',
-        maxCapacityRequired: 'La capacità massima deve essere maggiore di 0',
-        maximumAttendees: 'Numero massimo di partecipanti',
-        eventImageUrl: 'URL immagine evento',
-        enterImageUrl: 'https://esempio.com/immagine-evento.jpg',
+            // Event Form
+            createNewEvent: 'Crea nuovo evento',
+            editEventDetails: 'Modifica evento',
+            fillEventDetails: 'Compila i dettagli per creare il tuo evento',
+            updateEventDetails: 'Aggiorna i dettagli del tuo evento',
+            basicInformation: 'Informazioni di base',
+            eventTitleRequired: 'Il titolo dell\'evento è obbligatorio',
+            enterEventTitle: 'Inserisci il titolo dell\'evento',
+            descriptionRequired: 'La descrizione dell\'evento è obbligatoria',
+            describeEventDetail: 'Descrivi il tuo evento in dettaglio...',
+            categoryRequired: 'La categoria è obbligatoria',
+            selectCategory: 'Seleziona categoria',
+            maxCapacityRequired: 'La capacità massima deve essere maggiore di 0',
+            maximumAttendees: 'Numero massimo di partecipanti',
+            eventImageUrl: 'URL immagine evento',
+            enterImageUrl: 'https://esempio.com/immagine-evento.jpg',
 
-        // Date & Time
-        dateTime: 'Data e ora',
-        multiDayEvent: 'Evento di più giorni: {count} giorni',
-        dayEvent: 'Evento di {count} giorno',
-        startDateTime: 'Data e ora di inizio',
-        startDateTimeRequired: 'La data di inizio dell\'evento è obbligatoria',
-        endDateTime: 'Data e ora di fine',
-        leaveEmptySingleSession: 'Lascia vuoto per eventi a sessione singola',
-        endDateAfterStart: 'La data di fine deve essere dopo la data di inizio',
-        registrationDeadline: 'Scadenza registrazione',
-        whenRegistrationClose: 'Quando dovrebbe chiudersi la registrazione? (opzionale)',
-        registrationDeadlineBeforeEvent: 'La scadenza della registrazione deve essere prima dell\'inizio dell\'evento',
+            // Date & Time
+            dateTime: 'Data e ora',
+            multiDayEvent: 'Evento di più giorni: {count} giorni',
+            dayEvent: 'Evento di {count} giorno',
+            startDateTime: 'Data e ora di inizio',
+            startDateTimeRequired: 'La data di inizio dell\'evento è obbligatoria',
+            endDateTime: 'Data e ora di fine',
+            leaveEmptySingleSession: 'Lascia vuoto per eventi a sessione singola',
+            endDateAfterStart: 'La data di fine deve essere dopo la data di inizio',
+            registrationDeadline: 'Scadenza registrazione',
+            whenRegistrationClose: 'Quando dovrebbe chiudersi la registrazione? (opzionale)',
+            registrationDeadlineBeforeEvent: 'La scadenza della registrazione deve essere prima dell\'inizio dell\'evento',
 
-        // Location
-        location: 'Luogo',
-        onlineEvent: 'Questo è un evento online',
-        venueRequired: 'Il luogo è obbligatorio per eventi in presenza',
-        selectVenue: 'Seleziona luogo',
-        locationDetails: 'Dettagli del luogo',
-        meetingLinkPlatform: 'Link della riunione o dettagli della piattaforma',
-        additionalLocationInfo: 'Informazioni aggiuntive sul luogo',
+            // Location
+            location: 'Luogo',
+            onlineEvent: 'Questo è un evento online',
+            venueRequired: 'Il luogo è obbligatorio per eventi in presenza',
+            selectVenue: 'Seleziona luogo',
+            locationDetails: 'Dettagli del luogo',
+            meetingLinkPlatform: 'Link della riunione o dettagli della piattaforma',
+            additionalLocationInfo: 'Informazioni aggiuntive sul luogo',
 
-        // Ticket Types
-        ticketTypes: 'Tipi di biglietto',
-        addTicketType: 'Aggiungi tipo di biglietto',
-        ticketTypesCount: 'Tipi di biglietto',
-        totalTypes: 'Tipi totali',
-        editable: 'Modificabile',
-        locked: 'Bloccato',
-        noTicketTypesYet: 'Nessun tipo di biglietto ancora',
-        addTicketTypesToStart: 'Aggiungi tipi di biglietto per iniziare a vendere biglietti per il tuo evento',
-        createFirstTicketType: 'Crea primo tipo di biglietto',
-        ticketTypeName: 'Nome biglietto',
-        ticketTypeNameRequired: 'Il nome del biglietto è obbligatorio',
-        ticketDescription: 'Descrizione',
-        optionalTicketDescription: 'Descrizione opzionale per questo tipo di biglietto',
-        price: 'Prezzo (RM)',
-        priceRequired: 'È richiesto un prezzo valido',
-        quantity: 'Quantità',
-        quantityRequired: 'La quantità di biglietti deve essere maggiore di 0',
-        quantityGreaterThanZero: 'La quantità deve essere maggiore di 0',
-        ticketActive: 'Attivo (disponibile per l\'acquisto)',
-        availableForPurchase: 'Disponibile per l\'acquisto',
-        createTicketType: 'Crea tipo di biglietto',
-        updateTicketType: 'Aggiorna tipo di biglietto',
-        editTicketType: 'Modifica tipo di biglietto',
+            // Ticket Types
+            ticketTypes: 'Tipi di biglietto',
+            addTicketType: 'Aggiungi tipo di biglietto',
+            ticketTypesCount: 'Tipi di biglietto',
+            totalTypes: 'Tipi totali',
+            editable: 'Modificabile',
+            locked: 'Bloccato',
+            noTicketTypesYet: 'Nessun tipo di biglietto ancora',
+            addTicketTypesToStart: 'Aggiungi tipi di biglietto per iniziare a vendere biglietti per il tuo evento',
+            createFirstTicketType: 'Crea primo tipo di biglietto',
+            ticketTypeName: 'Nome biglietto',
+            ticketTypeNameRequired: 'Il nome del biglietto è obbligatorio',
+            ticketDescription: 'Descrizione',
+            optionalTicketDescription: 'Descrizione opzionale per questo tipo di biglietto',
+            price: 'Prezzo (RM)',
+            priceRequired: 'È richiesto un prezzo valido',
+            quantity: 'Quantità',
+            quantityRequired: 'La quantità di biglietti deve essere maggiore di 0',
+            quantityGreaterThanZero: 'La quantità deve essere maggiore di 0',
+            ticketActive: 'Attivo (disponibile per l\'acquisto)',
+            availableForPurchase: 'Disponibile per l\'acquisto',
+            createTicketType: 'Crea tipo di biglietto',
+            updateTicketType: 'Aggiorna tipo di biglietto',
+            editTicketType: 'Modifica tipo di biglietto',
 
-        // Smart Editing
-        smartTicketEditing: '💡 Modifica intelligente dei tipi di biglietto',
-        whenCanEdit: '✅ Quando PUOI modificare:',
-        eventDraftStatus: '• L\'evento è in stato BOZZA',
-        noTicketsSold: '• Nessun biglietto venduto ancora',
-        eventNotPublished: '• L\'evento non è pubblicato',
-        whenEditingLocked: '🔒 Quando la modifica è BLOCCATA:',
-        eventIsPublished: '• L\'evento è pubblicato',
-        ticketsAlreadySold: '• I biglietti sono già stati venduti',
-        eventStatusNotDraft: '• Lo stato dell\'evento non è BOZZA',
-        safeToEdit: 'Sicuro da modificare - nessuna vendita ancora',
-        lockedToPreserve: 'Bloccato per preservare i dati di vendita',
-        ticketsSoldCount: '{count} biglietto/i già venduto/i. La modifica è bloccata per preservare i dati di acquisto.',
-        cannotCreateTicketTypes: 'Impossibile creare nuovi tipi di biglietto. {count} biglietto/i sono già stati venduti.',
-        salesDataIntegrity: 'L\'evento è pubblicato. Impossibile creare tipi di biglietto per preservare l\'integrità dei dati di vendita.',
+            // Smart Editing
+            smartTicketEditing: '💡 Modifica intelligente dei tipi di biglietto',
+            whenCanEdit: '✅ Quando PUOI modificare:',
+            eventDraftStatus: '• L\'evento è in stato BOZZA',
+            noTicketsSold: '• Nessun biglietto venduto ancora',
+            eventNotPublished: '• L\'evento non è pubblicato',
+            whenEditingLocked: '🔒 Quando la modifica è BLOCCATA:',
+            eventIsPublished: '• L\'evento è pubblicato',
+            ticketsAlreadySold: '• I biglietti sono già stati venduti',
+            eventStatusNotDraft: '• Lo stato dell\'evento non è BOZZA',
+            safeToEdit: 'Sicuro da modificare - nessuna vendita ancora',
+            lockedToPreserve: 'Bloccato per preservare i dati di vendita',
+            ticketsSoldCount: '{count} biglietto/i già venduto/i. La modifica è bloccata per preservare i dati di acquisto.',
+            cannotCreateTicketTypes: 'Impossibile creare nuovi tipi di biglietto. {count} biglietto/i sono già stati venduti.',
+            salesDataIntegrity: 'L\'evento è pubblicato. Impossibile creare tipi di biglietto per preservare l\'integrità dei dati di vendita.',
 
-        // Publishing
-        publishingOptions: 'Opzioni di pubblicazione',
-        publishEventImmediately: 'Pubblica evento immediatamente (rendilo visibile al pubblico)',
-        makeVisiblePublic: 'Rendilo visibile al pubblico',
-        publishUnpublishLater: 'Puoi sempre pubblicare o annullare la pubblicazione del tuo evento più tardi dalla dashboard',
-        currentlyPublished: 'Attualmente pubblicato',
-        currentlyUnpublished: 'Attualmente non pubblicato',
-        usePublishButtons: 'Usa i pulsanti pubblica/annulla pubblicazione nell\'elenco eventi per cambiare questo stato',
-        changePublishStatus: 'Cambia stato di pubblicazione',
+            // Publishing
+            publishingOptions: 'Opzioni di pubblicazione',
+            publishEventImmediately: 'Pubblica evento immediatamente (rendilo visibile al pubblico)',
+            makeVisiblePublic: 'Rendilo visibile al pubblico',
+            publishUnpublishLater: 'Puoi sempre pubblicare o annullare la pubblicazione del tuo evento più tardi dalla dashboard',
+            currentlyPublished: 'Attualmente pubblicato',
+            currentlyUnpublished: 'Attualmente non pubblicato',
+            usePublishButtons: 'Usa i pulsanti pubblica/annulla pubblicazione nell\'elenco eventi per cambiare questo stato',
+            changePublishStatus: 'Cambia stato di pubblicazione',
 
-        // Validation
-        fixErrorsBelow: 'Si prega di correggere gli errori sotto',
-        formValidationError: 'Si prega di correggere gli errori del modulo',
-        requiredField: 'Questo campo è obbligatorio',
-        invalidInput: 'Input non valido',
+            // Validation
+            fixErrorsBelow: 'Si prega di correggere gli errori sotto',
+            formValidationError: 'Si prega di correggere gli errori del modulo',
+            requiredField: 'Questo campo è obbligatorio',
+            invalidInput: 'Input non valido',
 
-        // Success/Error Messages
-        eventCreatedSuccessfully: 'Evento e tutti i tipi di biglietto creati con successo!',
-        eventUpdatedSuccessfully: 'Evento aggiornato con successo!',
-        ticketTypeCreatedSuccessfully: 'Tipo di biglietto creato con successo!',
-        ticketTypeUpdatedSuccessfully: 'Tipo di biglietto aggiornato con successo!',
-        failedToCreateEvent: 'Impossibile creare l\'evento. Si prega di riprovare.',
-        failedToUpdateEvent: 'Impossibile aggiornare l\'evento. Si prega di riprovare.',
-        failedToCreateTicketType: 'Impossibile creare il tipo di biglietto',
-        failedToUpdateTicketType: 'Impossibile aggiornare il tipo di biglietto',
-        creatingEvent: 'Creazione evento...',
-        updatingEvent: 'Aggiornamento evento...',
-        redirectingToDashboard: 'Reindirizzamento alla dashboard...',
-        redirectingToEventDetail: 'Reindirizzamento ai dettagli dell\'evento...',
+            // Success/Error Messages
+            eventCreatedSuccessfully: 'Evento e tutti i tipi di biglietto creati con successo!',
+            eventUpdatedSuccessfully: 'Evento aggiornato con successo!',
+            ticketTypeCreatedSuccessfully: 'Tipo di biglietto creato con successo!',
+            ticketTypeUpdatedSuccessfully: 'Tipo di biglietto aggiornato con successo!',
+            failedToCreateEvent: 'Impossibile creare l\'evento. Si prega di riprovare.',
+            failedToUpdateEvent: 'Impossibile aggiornare l\'evento. Si prega di riprovare.',
+            failedToCreateTicketType: 'Impossibile creare il tipo di biglietto',
+            failedToUpdateTicketType: 'Impossibile aggiornare il tipo di biglietto',
+            creatingEvent: 'Creazione evento...',
+            updatingEvent: 'Aggiornamento evento...',
+            redirectingToDashboard: 'Reindirizzamento alla dashboard...',
+            redirectingToEventDetail: 'Reindirizzamento ai dettagli dell\'evento...',
 
-        // Capacity and Venues
-        capacity: 'Capacità',
-        venue: 'Luogo',
-        selectAVenue: 'Seleziona un luogo',
-        venueWithCapacity: '{name} - {city} (Capacità: {capacity})',
+            // Capacity and Venues
+            capacity: 'Capacità',
+            venue: 'Luogo',
+            selectAVenue: 'Seleziona un luogo',
+            venueWithCapacity: '{name} - {city} (Capacità: {capacity})',
 
-        // Categories
-        category: 'Categoria',
-        technology: 'Tecnologia',
-        business: 'Business',
-        music: 'Musica',
-        sports: 'Sport',
-        education: 'Educazione',
+            // Categories
+            category: 'Categoria',
+            technology: 'Tecnologia',
+            business: 'Business',
+            music: 'Musica',
+            sports: 'Sport',
+            education: 'Educazione',
 
-        // Event States
-        published: 'Pubblicato',
-        draft: 'Bozza',
-        online: 'Online',
-        inPerson: 'In presenza',
+            // Event States
+            published: 'Pubblicato',
+            draft: 'Bozza',
+            online: 'Online',
+            inPerson: 'In presenza',
 
-        // Multi-day
-        multiDaySchedule: 'Programma multi-giorno',
+            // Multi-day
+            multiDaySchedule: 'Programma multi-giorno',
 
-        // Venue Management
-        venues: 'Luoghi',
-        createVenue: 'Crea luogo',
-        venueName: 'Nome del luogo',
-        venueNameRequired: 'Il nome del luogo è obbligatorio',
-        enterVenueName: 'Inserisci il nome del luogo',
-        venueAddress: 'Indirizzo',
-        addressRequired: 'L\'indirizzo è obbligatorio',
-        enterVenueAddress: 'Inserisci l\'indirizzo del luogo',
-        venueState: 'Stato',
-        enterState: 'Inserisci lo stato',
-        enterStateOptional: 'Inserisci lo stato (opzionale)',
-        venueCountry: 'Paese',
-        countryRequired: 'Il paese è obbligatorio',
-        enterCountry: 'Inserisci il paese',
-        venueZipCode: 'Codice postale',
-        enterZipCode: 'Inserisci il codice postale',
-        enterZipCodeOptional: 'Inserisci il codice postale (opzionale)',
-        capacityRequired: 'La capacità deve essere maggiore di 0',
-        maximumCapacity: 'Capacità massima',
-        contactEmail: 'Email di contatto',
-        contactPhone: 'Telefono di contatto',
-        website: 'Sito web',
-        latitude: 'Latitudine',
-        longitude: 'Longitudine',
-        description: 'Descrizione',
-        venueDescription: 'Descrizione del luogo',
-        describeVenue: 'Descrivi il luogo, i servizi, le caratteristiche speciali...',
-        venueImageUrl: 'URL immagine del luogo',
-        validEmailRequired: 'Si prega di inserire un indirizzo email valido',
-        latitudeBetween: 'La latitudine deve essere tra -90 e 90',
-        longitudeBetween: 'La longitudine deve essere tra -180 e 180',
-        optionalMapIntegration: 'Opzionale: Per l\'integrazione delle mappe',
-        createNewVenue: 'Crea nuovo luogo',
-        venueCreatedSuccessfully: 'Luogo creato con successo!',
-        failedToCreateVenue: 'Impossibile creare il luogo. Si prega di riprovare.',
-        failedToFetchVenues: 'Impossibile caricare i luoghi',
-        creatingVenue: 'Creazione...',
-        loadingVenues: 'Caricamento luoghi...',
-        searchVenues: 'Cerca luoghi...',
-        allCities: 'Tutte le città',
-        noVenuesFound: 'Nessun luogo trovato',
-        adjustFilters: 'Prova ad aggiustare i tuoi filtri',
-        getStartedFirstVenue: 'Inizia creando il tuo primo luogo',
-        venueLocation: 'Posizione',
-        venueCapacity: 'Capacità',
-        venueEvents: 'Eventi',
-        venueStatus: 'Stato',
-        active: 'Attivo',
-        inactive: 'Inattivo',
-        eventsCount: '{count} eventi',
-        viewAvailableVenues: 'Visualizza luoghi disponibili e creane di nuovi',
-        createNewOnes: 'Creane di nuovi',
+            // Venue Management
+            venues: 'Luoghi',
+            createVenue: 'Crea luogo',
+            venueName: 'Nome del luogo',
+            venueNameRequired: 'Il nome del luogo è obbligatorio',
+            enterVenueName: 'Inserisci il nome del luogo',
+            venueAddress: 'Indirizzo',
+            addressRequired: 'L\'indirizzo è obbligatorio',
+            enterVenueAddress: 'Inserisci l\'indirizzo del luogo',
+            venueState: 'Stato',
+            enterState: 'Inserisci lo stato',
+            enterStateOptional: 'Inserisci lo stato (opzionale)',
+            venueCountry: 'Paese',
+            countryRequired: 'Il paese è obbligatorio',
+            enterCountry: 'Inserisci il paese',
+            venueZipCode: 'Codice postale',
+            enterZipCode: 'Inserisci il codice postale',
+            enterZipCodeOptional: 'Inserisci il codice postale (opzionale)',
+            capacityRequired: 'La capacità deve essere maggiore di 0',
+            maximumCapacity: 'Capacità massima',
+            contactEmail: 'Email di contatto',
+            contactPhone: 'Telefono di contatto',
+            website: 'Sito web',
+            latitude: 'Latitudine',
+            longitude: 'Longitudine',
+            description: 'Descrizione',
+            venueDescription: 'Descrizione del luogo',
+            describeVenue: 'Descrivi il luogo, i servizi, le caratteristiche speciali...',
+            venueImageUrl: 'URL immagine del luogo',
+            validEmailRequired: 'Si prega di inserire un indirizzo email valido',
+            latitudeBetween: 'La latitudine deve essere tra -90 e 90',
+            longitudeBetween: 'La longitudine deve essere tra -180 e 180',
+            optionalMapIntegration: 'Opzionale: Per l\'integrazione delle mappe',
+            createNewVenue: 'Crea nuovo luogo',
+            venueCreatedSuccessfully: 'Luogo creato con successo!',
+            failedToCreateVenue: 'Impossibile creare il luogo. Si prega di riprovare.',
+            failedToFetchVenues: 'Impossibile caricare i luoghi',
+            creatingVenue: 'Creazione...',
+            loadingVenues: 'Caricamento luoghi...',
+            searchVenues: 'Cerca luoghi...',
+            allCities: 'Tutte le città',
+            noVenuesFound: 'Nessun luogo trovato',
+            adjustFilters: 'Prova ad aggiustare i tuoi filtri',
+            getStartedFirstVenue: 'Inizia creando il tuo primo luogo',
+            venueLocation: 'Posizione',
+            venueCapacity: 'Capacità',
+            venueEvents: 'Eventi',
+            venueStatus: 'Stato',
+            active: 'Attivo',
+            inactive: 'Inattivo',
+            eventsCount: '{count} eventi',
+            viewAvailableVenues: 'Visualizza luoghi disponibili e creane di nuovi',
+            createNewOnes: 'Creane di nuovi',
 
-        // Ticket Management
-        tickets: 'Biglietti',
-        ticketManagement: 'Gestione biglietti',
-        manageTicketTypes: 'Gestisci tipi di biglietto, valida biglietti e gestisci check-in',
-        validateTickets: 'Valida biglietti',
-        checkIn: 'Check-in',
-        ticketValidation: 'Validazione biglietti',
-        ticketCheckIn: 'Check-in biglietti',
-        ticketsAndCheckIn: 'Biglietti e check-in',
+            // Ticket Management
+            tickets: 'Biglietti',
+            ticketManagement: 'Gestione biglietti',
+            manageTicketTypes: 'Gestisci tipi di biglietto, valida biglietti e gestisci check-in',
+            validateTickets: 'Valida biglietti',
+            checkIn: 'Check-in',
+            ticketValidation: 'Validazione biglietti',
+            ticketCheckIn: 'Check-in biglietti',
+            ticketsAndCheckIn: 'Biglietti e check-in',
 
-        // Ticket Types Management
-        createTicketTypeAction: 'Crea tipo di biglietto',
-        ticketTypeLimitations: '⚠️ Importante: Limitazioni nella creazione dei tipi di biglietto',
-        publishedEventsRestriction: 'Eventi pubblicati: I tipi di biglietto non possono essere modificati per preservare i dati di vendita esistenti',
-        eventsWithSalesRestriction: 'Eventi con vendite: La modifica dei tipi di biglietto è bloccata una volta che i biglietti sono venduti',
-        draftStatusRequired: 'Per la creazione di tipi di biglietto: Gli eventi devono essere in stato BOZZA senza vendite esistenti',
-        alternativeCreateEvent: 'Alternativa: Crea un nuovo evento se hai bisogno di tipi di biglietto diversi',
-        onlyWorksForDraft: 'Funziona solo per eventi in bozza senza vendite esistenti',
-        createNewEventLink: 'Crea nuovo evento',
-        manageEventsLink: 'Gestisci eventi',
+            // Ticket Types Management
+            createTicketTypeAction: 'Crea tipo di biglietto',
+            ticketTypeLimitations: '⚠️ Importante: Limitazioni nella creazione dei tipi di biglietto',
+            publishedEventsRestriction: 'Eventi pubblicati: I tipi di biglietto non possono essere modificati per preservare i dati di vendita esistenti',
+            eventsWithSalesRestriction: 'Eventi con vendite: La modifica dei tipi di biglietto è bloccata una volta che i biglietti sono venduti',
+            draftStatusRequired: 'Per la creazione di tipi di biglietto: Gli eventi devono essere in stato BOZZA senza vendite esistenti',
+            alternativeCreateEvent: 'Alternativa: Crea un nuovo evento se hai bisogno di tipi di biglietto diversi',
+            onlyWorksForDraft: 'Funziona solo per eventi in bozza senza vendite esistenti',
+            createNewEventLink: 'Crea nuovo evento',
+            manageEventsLink: 'Gestisci eventi',
 
-        // Ticket Form
-        selectAnEvent: 'Seleziona un evento',
-        ticketCreationRequirements: '⚠️ Requisiti per la creazione di biglietti',
-        eventMustBeDraft: 'L\'evento deve essere in stato BOZZA (non pubblicato)',
-        noExistingTicketSales: 'L\'evento non deve avere vendite di biglietti esistenti',
-        mustBeEventOrganizer: 'Devi essere l\'organizzatore dell\'evento',
-        editTicketsDuringCreation: 'Se questo fallisce, modifica i tipi di biglietto durante la creazione dell\'evento',
-        ticketEvent: 'Evento',
-        eventRequired: 'L\'evento è obbligatorio',
-        noEventsFound: 'Nessun evento trovato',
-        needCreateEventFirst: 'Devi creare un evento prima di creare tipi di biglietto.',
+            // Ticket Form
+            selectAnEvent: 'Seleziona un evento',
+            ticketCreationRequirements: '⚠️ Requisiti per la creazione di biglietti',
+            eventMustBeDraft: 'L\'evento deve essere in stato BOZZA (non pubblicato)',
+            noExistingTicketSales: 'L\'evento non deve avere vendite di biglietti esistenti',
+            mustBeEventOrganizer: 'Devi essere l\'organizzatore dell\'evento',
+            editTicketsDuringCreation: 'Se questo fallisce, modifica i tipi di biglietto durante la creazione dell\'evento',
+            ticketEvent: 'Evento',
+            eventRequired: 'L\'evento è obbligatorio',
+            noEventsFound: 'Nessun evento trovato',
+            needCreateEventFirst: 'Devi creare un evento prima di creare tipi di biglietto.',
 
-        // Ticket Types Display
-        loadingTicketTypes: 'Caricamento tipi di biglietto...',
-        noTicketTypesFound: 'Nessun tipo di biglietto trovato',
-        adjustFiltersOrCreate: 'Prova ad aggiustare i tuoi filtri o crea il tuo primo tipo di biglietto',
-        createFirstTicketTypePrompt: 'Crea il tuo primo tipo di biglietto',
-        ticketType: 'Tipo di biglietto',
-        event: 'Evento',
-        availability: 'Disponibilità',
-        status: 'Stato',
-        remaining: 'rimanenti',
+            // Ticket Types Display
+            loadingTicketTypes: 'Caricamento tipi di biglietto...',
+            noTicketTypesFound: 'Nessun tipo di biglietto trovato',
+            adjustFiltersOrCreate: 'Prova ad aggiustare i tuoi filtri o crea il tuo primo tipo di biglietto',
+            createFirstTicketTypePrompt: 'Crea il tuo primo tipo di biglietto',
+            ticketType: 'Tipo di biglietto',
+            event: 'Evento',
+            availability: 'Disponibilità',
+            status: 'Stato',
+            remaining: 'rimanenti',
 
-        // Validation Tab
-        validateTicket: 'Valida biglietto',
-        enterTicketNumber: 'Inserisci il numero del biglietto',
-        validating: 'Validazione...',
-        validate: 'Valida',
-        validTicket: 'Biglietto valido',
-        invalidTicket: 'Biglietto non valido',
-        ticketNumber: 'Numero biglietto',
-        attendeeName: 'Partecipante',
-        alreadyUsed: 'Già usato',
-        notUsed: 'Non usato',
+            // Validation Tab
+            validateTicket: 'Valida biglietto',
+            enterTicketNumber: 'Inserisci il numero del biglietto',
+            validating: 'Validazione...',
+            validate: 'Valida',
+            validTicket: 'Biglietto valido',
+            invalidTicket: 'Biglietto non valido',
+            ticketNumber: 'Numero biglietto',
+            attendeeName: 'Partecipante',
+            alreadyUsed: 'Già usato',
+            notUsed: 'Non usato',
 
-        // Check-in Tab
-        checkInTicket: 'Check-in biglietto',
-        enterTicketNumberCheckIn: 'Inserisci il numero del biglietto per il check-in',
-        checkingIn: 'Check-in in corso...',
-        ticketCheckedInSuccessfully: 'Biglietto registrato con successo',
+            // Check-in Tab
+            checkInTicket: 'Check-in biglietto',
+            enterTicketNumberCheckIn: 'Inserisci il numero del biglietto per il check-in',
+            checkingIn: 'Check-in in corso...',
+            ticketCheckedInSuccessfully: 'Biglietto registrato con successo',
 
-        // Ticket Warnings
-        importantTicketLimitations: '⚠️ Importante: Limitazioni nella creazione dei tipi di biglietto',
-        cannotModifyPublished: '• Eventi pubblicati: I tipi di biglietto non possono essere modificati per preservare i dati di vendita esistenti',
-        editingLockedAfterSales: '• Eventi con vendite: La modifica dei tipi di biglietto è bloccata una volta che i biglietti sono venduti',
-        draftStatusForCreation: '• Per la creazione di tipi di biglietto: Gli eventi devono essere in stato BOZZA senza vendite esistenti',
-        createNewEventAlternative: '• Alternativa: Crea un nuovo evento se hai bisogno di tipi di biglietto diversi',
+            // Ticket Warnings
+            importantTicketLimitations: '⚠️ Importante: Limitazioni nella creazione dei tipi di biglietto',
+            cannotModifyPublished: '• Eventi pubblicati: I tipi di biglietto non possono essere modificati per preservare i dati di vendita esistenti',
+            editingLockedAfterSales: '• Eventi con vendite: La modifica dei tipi di biglietto è bloccata una volta che i biglietti sono venduti',
+            draftStatusForCreation: '• Per la creazione di tipi di biglietto: Gli eventi devono essere in stato BOZZA senza vendite esistenti',
+            createNewEventAlternative: '• Alternativa: Crea un nuovo evento se hai bisogno di tipi di biglietto diversi',
 
-        // Business Rules
-        businessRulesWarning: '⚠️ Requisiti per la creazione di biglietti',
+            // Business Rules
+            businessRulesWarning: '⚠️ Requisiti per la creazione di biglietti',
 
-        // Ticket States
-        ticketInactive: 'Inattivo',
+            // Ticket States
+            ticketInactive: 'Inattivo',
 
-        // General UI
-        optional: 'opzionale',
-        required: 'obbligatorio',
+            // General UI
+            optional: 'opzionale',
+            required: 'obbligatorio',
 
-        // Appearance
-        theme: 'Tema',
-        lightMode: 'Modalità chiara',
-        darkMode: 'Modalità scura',
-        autoMode: 'Modalità automatica',
-        accentColor: 'Colore accento',
-        fontSize: 'Dimensione carattere',
-        compactMode: 'Modalità compatta',
+            // Appearance
+            theme: 'Tema',
+            lightMode: 'Modalità chiara',
+            darkMode: 'Modalità scura',
+            autoMode: 'Modalità automatica',
+            accentColor: 'Colore accento',
+            fontSize: 'Dimensione carattere',
+            compactMode: 'Modalità compatta',
 
-        // Time and Date
-        timeFormat: 'Formato ora',
-        dateFormat: 'Formato data',
-        currency: 'Valuta',
-        timezone: 'Fuso orario',
+            // Time and Date
+            timeFormat: 'Formato ora',
+            dateFormat: 'Formato data',
+            currency: 'Valuta',
+            timezone: 'Fuso orario',
 
-        // Messages
-        saveSuccess: 'Impostazioni salvate con successo!',
-        saveError: 'Impossibile salvare le impostazioni',
-        loadError: 'Impossibile caricare i dati',
+            // Messages
+            saveSuccess: 'Impostazioni salvate con successo!',
+            saveError: 'Impossibile salvare le impostazioni',
+            loadError: 'Impossibile caricare i dati',
 
-        // Dashboard specific
-        welcomeBack: 'Bentornato, {name}!',
-        virtualEvent: 'Evento virtuale',
-        viewAllEvents: 'Visualizza tutti gli eventi →',
-        upcomingEvents: 'Eventi in arrivo',
-        unpublish: 'Annulla pubblicazione',
-        unlimited: 'Illimitato',
-        uncategorized: 'Non categorizzato',
-        totalRevenue: 'Ricavi totali',
-        totalEvents: 'Eventi totali',
-        ticketsSold: 'Biglietti venduti',
-        revenue: 'Ricavi',
-        publish: 'Pubblica',
-        noEventsYet: 'Nessun evento ancora',
-        maxCapacity: 'Capacità massima',
-        loadingDashboard: 'Caricamento della tua dashboard...',
-        dashboardError: 'Impossibile caricare i dati della dashboard',
-        publishedCount: '{count} pubblicati'
+            // Dashboard specific
+            welcomeBack: 'Bentornato, {name}!',
+            virtualEvent: 'Evento virtuale',
+            viewAllEvents: 'Visualizza tutti gli eventi →',
+            upcomingEvents: 'Eventi in arrivo',
+            unpublish: 'Annulla pubblicazione',
+            unlimited: 'Illimitato',
+            uncategorized: 'Non categorizzato',
+            totalRevenue: 'Ricavi totali',
+            totalEvents: 'Eventi totali',
+            ticketsSold: 'Biglietti venduti',
+            revenue: 'Ricavi',
+            publish: 'Pubblica',
+            noEventsYet: 'Nessun evento ancora',
+            maxCapacity: 'Capacità massima',
+            loadingDashboard: 'Caricamento della tua dashboard...',
+            dashboardError: 'Impossibile caricare i dati della dashboard',
+            publishedCount: '{count} pubblicati',
+
+            // Analytics Dashboard
+            analytics: 'Analisi',
+            analyticsSubtitle: 'Approfondimenti completi per i tuoi eventi',
+            comprehensiveInsights: 'Approfondimenti completi per i tuoi eventi',
+            refreshData: 'Aggiorna',
+            someDataCouldntBeLoaded: 'Alcuni dati non sono stati caricati:',
+
+            // Key Metrics
+            totalAttendees: 'Totale partecipanti',
+            activeEvents: 'Eventi attivi',
+            venuesUsed: 'Luoghi utilizzati',
+            fromLastMonth: 'dal mese scorso',
+            noRevenueYet: 'Nessun ricavo ancora',
+            noAttendeesYet: 'Nessun partecipante ancora',
+            eventsRunning: 'Eventi in corso',
+            noActiveEvents: 'Nessun evento attivo',
+            venuePartnerships: 'Partnership con luoghi',
+            noVenuesYet: 'Nessun luogo ancora',
+
+            // Charts and Analytics
+            topRevenueEvents: 'Eventi con maggiori ricavi',
+            noEventsWithRevenueData: 'Nessun evento con dati sui ricavi ancora',
+            createAndPublishEvents: 'Crea e pubblica eventi',
+            seeRevenueAnalytics: 'per vedere le analisi dei ricavi',
+            paymentMethodDistribution: 'Distribuzione metodi di pagamento',
+            noPaymentDataAvailable: 'Nessun dato di pagamento disponibile',
+            eventCapacityUtilization: 'Utilizzo capacità eventi',
+            utilizationPercentage: 'utilizzo',
+            noEventsFoundForPeriod: 'Nessun evento trovato per il periodo selezionato',
+            monthlyTrends: 'Tendenze mensili',
+
+            // Demographics
+            genderDistribution: 'Distribuzione per genere',
+            noDemographicDataAvailable: 'Nessun dato demografico disponibile',
+            venuePerformance: 'Performance dei luoghi',
+            avgAttendance: 'Partecipazione media',
+            noVenueDataAvailable: 'Nessun dato sui luoghi disponibile',
+
+            // Events Needing Attention
+            eventsNeedingAttention: 'Eventi che richiedono attenzione',
+            utilization: 'utilizzo',
+            daysUntilEvent: 'giorni all\'evento',
+            potentialIssues: 'Problemi potenziali:',
+            recommendations: 'Raccomandazioni:',
+            allEventsPerformingWell: 'Tutti gli eventi stanno andando bene!',
+            noEventsWithLowAttendance: 'Nessun evento con bassa partecipazione trovato',
+
+            // Time periods
+            last7Days: 'Ultimi 7 giorni',
+            last30Days: 'Ultimi 30 giorni',
+            last3Months: 'Ultimi 3 mesi',
+            last6Months: 'Ultimi 6 mesi',
+            lastYear: 'Ultimo anno',
+
+            // Status messages
+            checkingAuthentication: 'Verifica autenticazione...',
+            authenticationRequired: 'Autenticazione richiesta',
+            pleaseLogInToView: 'Accedi per visualizzare la dashboard di analisi.',
+            goToLogin: 'Vai al login',
+
+            // Orders and remaining
+        orders: 'ordini',
+        // Organization Settings
+        organizationInformation: 'Informazioni sull\'Organizzazione',
+        businessLicense: 'Licenza Commerciale',
+
+        // Notification Settings
+        emailNotifications: 'Notifiche Email',
+        smsNotifications: 'Notifiche SMS',
+        newBookings: 'Nuove Prenotazioni',
+        getNotifiedNewBooking: 'Ricevi notifiche quando qualcuno prenota il tuo evento',
+        cancellations: 'Cancellazioni',
+        getNotifiedCancellations: 'Ricevi notifiche quando le prenotazioni vengono cancellate',
+        lowInventoryNotifications: 'Notifiche Inventario Basso',
+        dailyReports: 'Report Giornalieri',
+        receiveDailySummary: 'Ricevi un riepilogo giornaliero di prenotazioni e ricavi',
+        weeklyReports: 'Report Settimanali',
+        receiveWeeklyAnalytics: 'Ricevi analisi e statistiche settimanali',
+        monthlyReports: 'Report Mensili',
+
+        // Security Settings
+        securitySettings: 'Impostazioni di Sicurezza',
+        twoFactorAuthentication: 'Autenticazione a Due Fattori',
+        addExtraLayerSecurity: 'Aggiungi un ulteriore livello di sicurezza al tuo account',
+        loginNotifications: 'Notifiche di Accesso',
+        getNotifiedNewLogins: 'Ricevi notifiche di nuovi tentativi di accesso',
+        sessionTimeout: 'Timeout Sessione',
+        sessionTimeoutMinutes: 'Timeout sessione (minuti)',
+
+        // Password Settings
+        changePassword: 'Cambia Password',
+        currentPassword: 'Password Attuale',
+        newPassword: 'Nuova Password',
+        confirmNewPassword: 'Conferma Nuova Password',
+        minimumCharacters: 'Minimo 6 caratteri',
+        passwordsDoNotMatch: 'Le nuove password non corrispondono',
+        passwordTooShort: 'La nuova password deve contenere almeno 6 caratteri',
+        changingPassword: 'Modifica Password in corso...',
+        passwordChanged: 'Password Modificata con Successo',
+
+        // Event Default Settings
+        eventDefaults: 'Impostazioni Predefinite Eventi',
+        defaultEventDuration: 'Durata Predefinita Evento',
+        defaultEventDurationMinutes: 'Durata predefinita evento (minuti)',
+        ticketSaleStart: 'Inizio Vendita Biglietti',
+        ticketSaleStartDays: 'Inizio vendita biglietti (giorni prima dell\'evento)',
+        defaultRefundPolicy: 'Politica di Rimborso Predefinita',
+        requireApproval: 'Richiede Approvazione',
+        requireApprovalBeforeLive: 'Richiede approvazione prima della pubblicazione',
+        autoPublish: 'Pubblicazione Automatica',
+        autoPublishWhenCreated: 'Pubblica automaticamente gli eventi quando vengono creati',
+
+        // Language & Region Settings
+        languageRegion: 'Lingua e Regione',
+        languagePreferences: 'Preferenze lingua e formati regionali',
+        regionalFormats: 'Formati regionali',
+        interfaceLanguage: 'Lingua Interfaccia',
+        timeDateFormats: 'Formati Ora e Data',
+        currencySettings: 'Impostazioni Valuta',
+        livePreview: 'Anteprima Live',
+
+        // Time Format Settings
+        hour12Format: 'Formato 12 ore',
+        hour24Format: 'Formato 24 ore',
+
+        // Date Format Settings
+        dateFormatExample: 'Esempio: {example}',
+
+        // Display Settings
+        displaySettings: 'Impostazioni Visualizzazione',
+        fontSizeSmall: 'Piccolo',
+        fontSizeMedium: 'Medio',
+        fontSizeLarge: 'Grande',
+        reduceSpacing: 'Riduci spaziatura tra gli elementi',
+
+        // Theme Settings
+        themeSettings: 'Impostazioni Tema',
+        choosePreferredTheme: 'Scegli il tuo tema interfaccia preferito',
+        cleanBrightInterface: 'Interfaccia pulita e luminosa',
+        easyOnEyes: 'Riposante per gli occhi',
+        followsSystemPreference: 'Segue le preferenze di sistema',
+        accentColorSettings: 'Colore Accento',
+        chooseAccentColor: 'Scegli il tuo colore accento preferito',
+
+        // Success Messages
+        settingsSavedSuccessfully: 'Impostazioni salvate con successo!',
+        profileUpdatedSuccessfully: 'Profilo aggiornato con successo!',
+        organizationUpdatedSuccessfully: 'Organizzazione aggiornata con successo!',
+        preferencesUpdatedSuccessfully: 'Preferenze aggiornate con successo!',
+
+        // Error Messages
+        failedToUpdateProfile: 'Impossibile aggiornare il profilo',
+        failedToUpdateOrganization: 'Impossibile aggiornare l\'organizzazione',
+        failedToUpdatePreferences: 'Impossibile aggiornare le preferenze',
+        failedToChangePassword: 'Impossibile cambiare la password',
+
+        // Loading States
+        loadingProfile: 'Caricamento profilo...',
+        savingChanges: 'Salvataggio modifiche...',
+
+        // Authentication (already exists as authenticationRequired, but adding full context)
+        pleaseLoginToAccess: 'Accedi per accedere alle tue impostazioni.',
+
+        // General Settings
+        manageAccount: 'Gestisci il tuo account e le preferenze degli eventi',
+        eventPreferences: 'Preferenze eventi',
+        saved: 'Salvato!',
+        saveChanges: 'Salva Modifiche',
+
+        // Verification Status
+        emailNotVerified: 'Indirizzo email non verificato',
+        phoneNotVerified: 'Numero di telefono non verificato',
+        verified: 'Verificato',
+
+        // Color Names (for dynamic translation)
+        blue: 'Blu',
+        purple: 'Viola',
+        green: 'Verde',
+        red: 'Rosso',
+        orange: 'Arancione',
+        pink: 'Rosa',
+
+        // Size Names (already exist but adding for consistency)
+        small: 'Piccolo',
+        medium: 'Medio',
+        large: 'Grande'
+        }
+};
+
+const extendedTranslations = {
+    en: {
+        ...translations.en,  // Your existing English translations
+        ...settingsTranslationsEn
+    },
+    es: {
+        ...translations.es,  // Your existing Spanish translations
+        ...settingsTranslationsEs
+    },
+    fr: {
+        ...translations.fr,  // Your existing French translations
+        ...settingsTranslationsFr
+    },
+    de: {
+        ...translations.de,  // Your existing German translations
+        ...settingsTranslationsDe
+    },
+    it: {
+        ...translations.it,  // Your existing Italian translations
+        ...settingsTranslationsIt
     }
 };
+
+
 // I18n Context
 interface I18nContextType {
     currentLanguage: string;
@@ -2471,6 +4389,15 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             {children}
         </I18nContext.Provider>
     );
+};
+
+export {
+    settingsTranslationsEn,
+    settingsTranslationsEs,
+    settingsTranslationsFr,
+    settingsTranslationsDe,
+    settingsTranslationsIt,
+    extendedTranslations
 };
 
 // Hook to use I18n context

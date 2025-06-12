@@ -10,10 +10,63 @@ namespace EventTicketing.API.Controllers
     public class VenuesController : ControllerBase
     {
         private readonly IEventService _eventService;
+        private readonly IImageStorageService _imageStorageService;
 
-        public VenuesController(IEventService eventService)
+        public VenuesController(IEventService eventService, IImageStorageService imageStorageService)
         {
             _eventService = eventService;
+            _imageStorageService = imageStorageService;
+        }
+
+        [HttpPost("{id}/upload-image")]
+        [Authorize(Roles = "Admin,Organizer")]
+        public async Task<ActionResult> UploadVenueImage(int id, IFormFile file)
+        {
+            try
+            {
+                if (!await _imageStorageService.ValidateImageAsync(file))
+                {
+                    return BadRequest(new { message = "Invalid image file. Please upload a valid image (JPEG, PNG, WebP, GIF) under 5MB." });
+                }
+
+                var imageUrl = await _eventService.UploadVenueImageAsync(id, file);
+
+                return Ok(new
+                {
+                    success = true,
+                    imageUrl = imageUrl,
+                    message = "Venue image uploaded successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // DELETE: api/venues/{id}/image
+        [HttpDelete("{id}/image")]
+        [Authorize(Roles = "Admin,Organizer")]
+        public async Task<ActionResult> DeleteVenueImage(int id)
+        {
+            try
+            {
+                var venue = await _eventService.GetVenueByIdAsync(id);
+
+                if (!string.IsNullOrEmpty(venue.ImageUrl))
+                {
+                    await _imageStorageService.DeleteImageAsync(venue.ImageUrl);
+
+                    // Note: You'll need to add an UpdateVenue method to EventService
+                    // or handle this directly in the database
+                }
+
+                return Ok(new { message = "Venue image deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // GET: api/venues

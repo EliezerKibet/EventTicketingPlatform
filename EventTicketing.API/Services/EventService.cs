@@ -8,10 +8,92 @@ namespace EventTicketing.API.Services
     public class EventService : IEventService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IImageStorageService _imageStorageService;
 
-        public EventService(ApplicationDbContext context)
+        public EventService(ApplicationDbContext context, IImageStorageService imageStorageService)
         {
             _context = context;
+            _imageStorageService = imageStorageService; // ✅ Now it's properly injected
+        }
+
+        public async Task<string> UploadEventBannerAsync(int eventId, IFormFile file, int organizerId)
+        {
+            // Verify event exists and user owns it
+            var eventEntity = await _context.Events.FindAsync(eventId);
+            if (eventEntity == null)
+                throw new Exception("Event not found");
+
+            if (eventEntity.OrganizerId != organizerId)
+                throw new Exception("You can only upload images for your own events");
+
+            // Delete old banner if exists
+            if (!string.IsNullOrEmpty(eventEntity.BannerImageUrl))
+            {
+                await _imageStorageService.DeleteImageAsync(eventEntity.BannerImageUrl);
+            }
+
+            // Upload new banner
+            var imageUrl = await _imageStorageService.UploadEventBannerAsync(file, eventId);
+
+            // Update event with new banner URL
+            eventEntity.BannerImageUrl = imageUrl;
+            eventEntity.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return imageUrl;
+        }
+
+        public async Task<string> UploadEventImageAsync(int eventId, IFormFile file, int organizerId)
+        {
+            // Verify event exists and user owns it
+            var eventEntity = await _context.Events.FindAsync(eventId);
+            if (eventEntity == null)
+                throw new Exception("Event not found");
+
+            if (eventEntity.OrganizerId != organizerId)
+                throw new Exception("You can only upload images for your own events");
+
+            // Delete old image if exists
+            if (!string.IsNullOrEmpty(eventEntity.ImageUrl))
+            {
+                await _imageStorageService.DeleteImageAsync(eventEntity.ImageUrl);
+            }
+
+            // Upload new image
+            var imageUrl = await _imageStorageService.UploadEventImageAsync(file, eventId);
+
+            // Update event with new image URL
+            eventEntity.ImageUrl = imageUrl;
+            eventEntity.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return imageUrl;
+        }
+
+        public async Task<string> UploadVenueImageAsync(int venueId, IFormFile file)
+        {
+            // Verify venue exists
+            var venue = await _context.Venues.FindAsync(venueId);
+            if (venue == null)
+                throw new Exception("Venue not found");
+
+            // Delete old image if exists
+            if (!string.IsNullOrEmpty(venue.ImageUrl))
+            {
+                await _imageStorageService.DeleteImageAsync(venue.ImageUrl);
+            }
+
+            // Upload new image
+            var imageUrl = await _imageStorageService.UploadVenueImageAsync(file, venueId);
+
+            // Update venue with new image URL
+            venue.ImageUrl = imageUrl;
+
+            await _context.SaveChangesAsync();
+
+            return imageUrl;
         }
 
         public async Task<EventResponseDto> CreateEventAsync(CreateEventDto createEventDto, int organizerId)

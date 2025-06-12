@@ -256,13 +256,6 @@ const OrganizerDashboard: React.FC = () => {
                 <div className="flex justify-between items-center">
                     <div className={`flex ${isCompact ? 'gap-1' : 'gap-2'}`}>
                         <button
-                            onClick={() => window.open(`organizer/events/preview/${event.eventId}`, '_blank')}
-                            className={`flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 theme-transition`}
-                        >
-                            <Eye className="h-4 w-4 mr-1" />
-                            {t('view')}
-                        </button>
-                        <button
                             onClick={() => window.location.href = `/organizer/events/${event.eventId}/edit`}
                             className={`flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} ${themeClasses.themeMuted} ${themeClasses.themeMutedFg} rounded-lg ${isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} theme-transition`}
                         >

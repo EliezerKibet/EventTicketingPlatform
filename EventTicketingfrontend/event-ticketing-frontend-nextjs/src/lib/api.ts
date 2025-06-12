@@ -276,6 +276,7 @@ interface UpdateUserProfileDto {
     bio?: string;
     website?: string;
     timeZone?: string;
+    profileImageUrl?: string; 
 }
 
 interface UserOrganization {
@@ -369,6 +370,17 @@ interface ApiResponse<T> {
     errors?: string[];
 }
 
+interface ImageUploadResponse {
+    success: boolean;
+    imageUrl?: string;
+    message?: string;
+}
+
+interface ImageValidationResult {
+    isValid: boolean;
+    error?: string;
+}
+
 // Enhanced API configuration with environment support
 const getApiBaseUrl = (): string => {
     if (typeof window !== 'undefined') {
@@ -377,7 +389,317 @@ const getApiBaseUrl = (): string => {
     return process.env.API_URL || 'http://localhost:5251/api';
 };
 
+
+
+
+// Image helper utilities
+export const imageUtils = {
+    // Get image with fallback
+    getImageWithFallback: (
+        imageUrl?: string,
+        type: 'event-banner' | 'event-image' | 'venue' | 'user' | 'category' = 'event-image'
+    ): string => {
+        if (imageUrl && imageUrl.trim() !== '') {
+            // If it's already a full URL, return as-is
+            if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                return imageUrl;
+            }
+            // If it's a relative path, ensure it starts with /
+            return imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+        }
+
+        const defaults = {
+            'event-banner': '/images/defaults/event-banner.jpg',
+            'event-image': '/images/defaults/event-image.jpg',
+            'venue': '/images/defaults/venue-placeholder.jpg',
+            'user': '/images/defaults/user-avatar.jpg',
+            'category': '/images/defaults/category-icon.png'
+        };
+
+        return defaults[type];
+    },
+
+    // Resize image for preview (client-side)
+    resizeImageForPreview: (file: File, maxWidth = 400, maxHeight = 300, quality = 0.8): Promise<string> => {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d')!;
+            const img = new Image();
+
+            img.onload = () => {
+                const { width, height } = img;
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+
+                canvas.width = width * ratio;
+                canvas.height = height * ratio;
+
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+
+            img.src = URL.createObjectURL(file);
+        });
+    },
+
+    // Get file size in human readable format
+    formatFileSize: (bytes: number): string => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+};
+
+
+export const imageApi = {
+    // Validation helper
+    validateImageFile: (file: File): ImageValidationResult => {
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+        if (!allowedTypes.includes(file.type)) {
+            return {
+                isValid: false,
+                error: 'Please select a valid image file (JPEG, PNG, WebP, or GIF)'
+            };
+        }
+
+        if (file.size > maxSize) {
+            return {
+                isValid: false,
+                error: 'File size must be less than 5MB'
+            };
+        }
+
+        return { isValid: true };
+    },
+
+    // Event Images
+    uploadEventBanner: async (eventId: number, file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            console.log(`📸 Uploading event banner for event ${eventId}`);
+
+            const response = await api.post(`/events/${eventId}/upload-banner`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            console.log('📸 Event banner uploaded successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Event banner upload failed:', error.message);
+            throw new Error(`Failed to upload event banner: ${error.message}`);
+        }
+    },
+
+    uploadEventImage: async (eventId: number, file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            console.log(`📸 Uploading event image for event ${eventId}`);
+
+            const response = await api.post(`/events/${eventId}/upload-image`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            console.log('📸 Event image uploaded successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Event image upload failed:', error.message);
+            throw new Error(`Failed to upload event image: ${error.message}`);
+        }
+    },
+
+    deleteEventBanner: async (eventId: number): Promise<ImageUploadResponse> => {
+        try {
+            console.log(`📸 Deleting event banner for event ${eventId}`);
+            const response = await api.delete(`/events/${eventId}/banner`);
+            console.log('📸 Event banner deleted successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Event banner deletion failed:', error.message);
+            throw new Error(`Failed to delete event banner: ${error.message}`);
+        }
+    },
+
+    deleteEventImage: async (eventId: number): Promise<ImageUploadResponse> => {
+        try {
+            console.log(`📸 Deleting event image for event ${eventId}`);
+            const response = await api.delete(`/events/${eventId}/image`);
+            console.log('📸 Event image deleted successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Event image deletion failed:', error.message);
+            throw new Error(`Failed to delete event image: ${error.message}`);
+        }
+    },
+
+    // User Profile Images
+    uploadUserProfileImage: async (file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            console.log('📸 Uploading user profile image');
+
+            const response = await api.post('/user/upload-profile-image', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            console.log('📸 Profile image uploaded successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Profile image upload failed:', error.message);
+            throw new Error(`Failed to upload profile image: ${error.message}`);
+        }
+    },
+
+    deleteUserProfileImage: async (): Promise<ImageUploadResponse> => {
+        try {
+            console.log('📸 Deleting user profile image');
+            const response = await api.delete('/user/profile-image');
+            console.log('📸 Profile image deleted successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Profile image deletion failed:', error.message);
+            throw new Error(`Failed to delete profile image: ${error.message}`);
+        }
+    },
+
+    // Venue Images
+    uploadVenueImage: async (venueId: number, file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            console.log(`📸 Uploading venue image for venue ${venueId}`);
+
+            const response = await api.post(`/venues/${venueId}/upload-image`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            console.log('📸 Venue image uploaded successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Venue image upload failed:', error.message);
+            throw new Error(`Failed to upload venue image: ${error.message}`);
+        }
+    },
+
+    deleteVenueImage: async (venueId: number): Promise<ImageUploadResponse> => {
+        try {
+            console.log(`📸 Deleting venue image for venue ${venueId}`);
+            const response = await api.delete(`/venues/${venueId}/image`);
+            console.log('📸 Venue image deleted successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Venue image deletion failed:', error.message);
+            throw new Error(`Failed to delete venue image: ${error.message}`);
+        }
+    },
+
+    // Category Icons (Admin only)
+    uploadCategoryIcon: async (categoryId: number, file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            console.log(`📸 Uploading category icon for category ${categoryId}`);
+
+            const response = await api.post(`/categories/${categoryId}/upload-icon`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            console.log('📸 Category icon uploaded successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Category icon upload failed:', error.message);
+            throw new Error(`Failed to upload category icon: ${error.message}`);
+        }
+    },
+
+    deleteCategoryIcon: async (categoryId: number): Promise<ImageUploadResponse> => {
+        try {
+            console.log(`📸 Deleting category icon for category ${categoryId}`);
+            const response = await api.delete(`/categories/${categoryId}/icon`);
+            console.log('📸 Category icon deleted successfully');
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Category icon deletion failed:', error.message);
+            throw new Error(`Failed to delete category icon: ${error.message}`);
+        }
+    }
+};
+
 export const userApi = {
+
+    updateProfileWithImage: async (
+        profileData: UpdateUserProfileDto,
+        profileImageFile?: File,
+        deleteImage = false
+    ): Promise<UserProfile> => {
+        try {
+            console.log('👤 Updating profile with image');
+
+            // Step 1: Update profile data
+            let updatedProfile = await userApi.updateProfile(profileData);
+
+            // Step 2: Handle image operations
+            if (deleteImage) {
+                await imageApi.deleteUserProfileImage();
+            } else if (profileImageFile) {
+                await imageApi.uploadUserProfileImage(profileImageFile);
+                // Fetch updated profile to get new image URL
+                updatedProfile = await userApi.getProfile();
+            }
+
+            console.log('👤 Profile updated successfully');
+            return updatedProfile;
+        } catch (error: any) {
+            console.error('👤 Profile update with image failed:', error.message);
+            throw error;
+        }
+    },
+
     // Profile management
     getProfile: async (): Promise<UserProfile> => {
         try {
@@ -730,6 +1052,96 @@ export const eventsApi = {
 
     unpublishEvent: async (id: number): Promise<void> => {
         await api.post(`/events/${id}/unpublish`);
+    },
+
+    // Enhanced create event with image upload support
+    createEventWithImages: async (
+        eventData: CreateEventDto,
+        bannerFile?: File,
+        imageFile?: File
+    ): Promise<Event> => {
+        try {
+            console.log('🎯 Creating event with images');
+
+            // Step 1: Create the event first
+            const event = await eventsApi.createEvent(eventData);
+            console.log('🎯 Event created, ID:', event.eventId);
+
+            // Step 2: Upload banner if provided
+            if (bannerFile) {
+                try {
+                    const bannerResult = await imageApi.uploadEventBanner(event.eventId, bannerFile);
+                    console.log('🎯 Banner uploaded:', bannerResult.imageUrl);
+
+                    // Update event with banner URL
+                    const updateData: UpdateEventDto = { bannerImageUrl: bannerResult.imageUrl };
+                    await eventsApi.updateEvent(event.eventId, updateData);
+                } catch (bannerError) {
+                    console.warn('🎯 Banner upload failed, continuing without banner:', bannerError);
+                }
+            }
+
+            // Step 3: Upload image if provided
+            if (imageFile) {
+                try {
+                    const imageResult = await imageApi.uploadEventImage(event.eventId, imageFile);
+                    console.log('🎯 Image uploaded:', imageResult.imageUrl);
+
+                    // Update event with image URL
+                    const updateData: UpdateEventDto = { imageUrl: imageResult.imageUrl };
+                    await eventsApi.updateEvent(event.eventId, updateData);
+                } catch (imageError) {
+                    console.warn('🎯 Image upload failed, continuing without image:', imageError);
+                }
+            }
+
+            // Step 4: Return the updated event
+            return await eventsApi.getEvent(event.eventId);
+        } catch (error: any) {
+            console.error('🎯 Event creation with images failed:', error.message);
+            throw error;
+        }
+    },
+
+    // Update event with image handling
+    updateEventWithImages: async (
+        eventId: number,
+        eventData: UpdateEventDto,
+        bannerFile?: File,
+        imageFile?: File,
+        deleteBanner = false,
+        deleteImage = false
+    ): Promise<Event> => {
+        try {
+            console.log('🎯 Updating event with images');
+
+            // Step 1: Update event data
+            let updatedEvent = await eventsApi.updateEvent(eventId, eventData);
+
+            // Step 2: Handle banner operations
+            if (deleteBanner) {
+                await imageApi.deleteEventBanner(eventId);
+            } else if (bannerFile) {
+                const bannerResult = await imageApi.uploadEventBanner(eventId, bannerFile);
+                const updateData: UpdateEventDto = { bannerImageUrl: bannerResult.imageUrl };
+                updatedEvent = await eventsApi.updateEvent(eventId, updateData);
+            }
+
+            // Step 3: Handle image operations
+            if (deleteImage) {
+                await imageApi.deleteEventImage(eventId);
+            } else if (imageFile) {
+                const imageResult = await imageApi.uploadEventImage(eventId, imageFile);
+                const updateData: UpdateEventDto = { imageUrl: imageResult.imageUrl };
+                updatedEvent = await eventsApi.updateEvent(eventId, updateData);
+            }
+
+            console.log('🎯 Event updated successfully');
+            return await eventsApi.getEvent(eventId);
+        } catch (error: any) {
+            console.error('🎯 Event update with images failed:', error.message);
+            throw error;
+        }
     }
 };
 
@@ -767,6 +1179,35 @@ export const venuesApi = {
     createVenue: async (venueData: CreateVenueDto): Promise<Venue> => {
         const response = await api.post('/venues', venueData);
         return response.data;
+    },
+
+    createVenueWithImage: async (
+        venueData: CreateVenueDto,
+        imageFile?: File
+    ): Promise<Venue> => {
+        try {
+            console.log('🏢 Creating venue with image');
+
+            // Step 1: Create venue
+            const venue = await venuesApi.createVenue(venueData);
+            console.log('🏢 Venue created, ID:', venue.venueId);
+
+            // Step 2: Upload image if provided
+            if (imageFile) {
+                try {
+                    const imageResult = await imageApi.uploadVenueImage(venue.venueId, imageFile);
+                    console.log('🏢 Venue image uploaded:', imageResult.imageUrl);
+                } catch (imageError) {
+                    console.warn('🏢 Venue image upload failed, continuing without image:', imageError);
+                }
+            }
+
+            // Step 3: Return updated venue
+            return await venuesApi.getVenue(venue.venueId);
+        } catch (error: any) {
+            console.error('🏢 Venue creation with image failed:', error.message);
+            throw error;
+        }
     }
 };
 

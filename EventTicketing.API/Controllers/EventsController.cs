@@ -11,10 +11,12 @@ namespace EventTicketing.API.Controllers
     public class EventsController : ControllerBase
     {
         private readonly IEventService _eventService;
+        private readonly IImageStorageService _imageStorageService;
 
-        public EventsController(IEventService eventService)
+        public EventsController(IEventService eventService, IImageStorageService imageStorageService)
         {
             _eventService = eventService;
+            _imageStorageService = imageStorageService;
         }
 
         private int GetCurrentUserId()
@@ -24,6 +26,126 @@ namespace EventTicketing.API.Controllers
                 throw new UnauthorizedAccessException("User not authenticated");
 
             return int.Parse(userIdClaim.Value);
+        }
+
+        [HttpPost("{id}/upload-banner")]
+        public async Task<ActionResult> UploadEventBanner(int id, IFormFile file)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                if (!await _imageStorageService.ValidateImageAsync(file))
+                {
+                    return BadRequest(new { message = "Invalid image file. Please upload a valid image (JPEG, PNG, WebP, GIF) under 5MB." });
+                }
+
+                var imageUrl = await _eventService.UploadEventBannerAsync(id, file, userId);
+
+                return Ok(new
+                {
+                    success = true,
+                    imageUrl = imageUrl,
+                    message = "Event banner uploaded successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // POST: api/events/{id}/upload-image
+        [HttpPost("{id}/upload-image")]
+        [Authorize]
+        public async Task<ActionResult> UploadEventImage(int id, IFormFile file)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                if (!await _imageStorageService.ValidateImageAsync(file))
+                {
+                    return BadRequest(new { message = "Invalid image file. Please upload a valid image (JPEG, PNG, WebP, GIF) under 5MB." });
+                }
+
+                var imageUrl = await _eventService.UploadEventImageAsync(id, file, userId);
+
+                return Ok(new
+                {
+                    success = true,
+                    imageUrl = imageUrl,
+                    message = "Event image uploaded successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // DELETE: api/events/{id}/banner
+        [HttpDelete("{id}/banner")]
+        [Authorize]
+        public async Task<ActionResult> DeleteEventBanner(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var eventEntity = await _eventService.GetEventByIdAsync(id);
+                if (eventEntity.OrganizerId != userId)
+                {
+                    return Forbid("You can only modify your own events");
+                }
+
+                if (!string.IsNullOrEmpty(eventEntity.BannerImageUrl))
+                {
+                    await _imageStorageService.DeleteImageAsync(eventEntity.BannerImageUrl);
+
+                    // Update event to remove banner URL
+                    var updateDto = new UpdateEventDto { BannerImageUrl = null };
+                    await _eventService.UpdateEventAsync(id, updateDto, userId);
+                }
+
+                return Ok(new { message = "Event banner deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // DELETE: api/events/{id}/image
+        [HttpDelete("{id}/image")]
+        [Authorize]
+        public async Task<ActionResult> DeleteEventImage(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                var eventEntity = await _eventService.GetEventByIdAsync(id);
+                if (eventEntity.OrganizerId != userId)
+                {
+                    return Forbid("You can only modify your own events");
+                }
+
+                if (!string.IsNullOrEmpty(eventEntity.ImageUrl))
+                {
+                    await _imageStorageService.DeleteImageAsync(eventEntity.ImageUrl);
+
+                    // Update event to remove image URL
+                    var updateDto = new UpdateEventDto { ImageUrl = null };
+                    await _eventService.UpdateEventAsync(id, updateDto, userId);
+                }
+
+                return Ok(new { message = "Event image deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // GET: api/events

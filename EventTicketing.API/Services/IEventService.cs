@@ -24,5 +24,10 @@ namespace EventTicketing.API.Services
 		Task<VenueResponseDto> CreateVenueAsync(CreateVenueDto createVenueDto);
 		Task<List<VenueResponseDto>> GetVenuesAsync(string? city = null);
 		Task<VenueResponseDto> GetVenueByIdAsync(int venueId);
-	}
+
+        //Images
+        Task<string> UploadEventBannerAsync(int eventId, IFormFile file, int organizerId);
+        Task<string> UploadEventImageAsync(int eventId, IFormFile file, int organizerId);
+        Task<string> UploadVenueImageAsync(int venueId, IFormFile file);
+    }
 }

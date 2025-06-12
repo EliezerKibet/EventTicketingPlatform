@@ -70,6 +70,12 @@ namespace EventTicketing.API.Services
             user.PhoneNumber = updateDto.PhoneNumber;
             user.DateOfBirth = updateDto.DateOfBirth;
 
+            // ADD THIS: Update profile image URL if provided
+            if (updateDto.ProfileImageUrl != null)
+            {
+                user.ProfileImageUrl = updateDto.ProfileImageUrl;
+            }
+
             // Update or create user profile
             if (user.UserProfile == null)
             {

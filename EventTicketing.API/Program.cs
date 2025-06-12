@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.FileProviders; // ADD THIS LINE
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,7 +63,7 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IQrCodeService, QrCodeService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IUserService, UserService>();
-
+builder.Services.AddScoped<IImageStorageService, LocalImageStorageService>();
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -80,6 +81,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "default-key"))
         };
     });
+
+builder.Services.Configure<StaticFileOptions>(options =>
+{
+    options.ServeUnknownFileTypes = false;
+    options.DefaultContentType = "application/octet-stream";
+});
 
 // CORS for React frontend
 builder.Services.AddCors(options =>
@@ -105,6 +112,23 @@ if (app.Environment.IsDevelopment())
         c.RoutePrefix = "swagger";
     });
 }
+
+// Enable static files for image serving
+app.UseStaticFiles();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.WebRootPath, "images")),
+    RequestPath = "/images",
+    OnPrepareResponse = ctx =>
+    {
+        // Cache images for 1 year
+        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000");
+        // Add CORS headers if needed for frontend
+        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+    }
+});
 
 // ENABLE HTTPS REDIRECT
 app.UseHttpsRedirection();

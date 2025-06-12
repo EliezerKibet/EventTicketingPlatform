@@ -44,7 +44,10 @@ namespace EventTicketing.API.Models.DTOs
         public DateTime? DateOfBirth { get; set; }
         public string? Bio { get; set; }
         public string? Website { get; set; }
+     
         public string? TimeZone { get; set; }
+
+        public string? ProfileImageUrl { get; set; }
     }
 
     // Organization details DTO

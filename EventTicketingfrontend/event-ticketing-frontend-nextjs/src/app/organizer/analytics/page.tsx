@@ -4,6 +4,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 import {
     BarChart,
     Bar,
@@ -32,6 +34,7 @@ import {
     Wifi,
     WifiOff
 } from 'lucide-react';
+import { useI18n } from '../../../components/providers/I18nProvider';
 
 // TypeScript interfaces for analytics data
 interface EventRevenueData {
@@ -171,6 +174,7 @@ interface StatCardProps {
 const OrganizerAnalytics: React.FC = () => {
     const themeClasses = useThemeClasses();
     const { isDark } = useTheme();
+    const { t } = useI18n();
 
     const [selectedPeriod, setSelectedPeriod] = useState<string>('last30days');
     const [loading, setLoading] = useState<boolean>(false);
@@ -442,7 +446,7 @@ const OrganizerAnalytics: React.FC = () => {
             <div className={`flex items-center justify-center min-h-screen ${themeClasses.background}`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p className={themeClasses.text}>Checking authentication...</p>
+                    <p className={themeClasses.text}>{t('checkingAuthentication')}</p>
                 </div>
             </div>
         );
@@ -453,13 +457,13 @@ const OrganizerAnalytics: React.FC = () => {
             <div className={`flex items-center justify-center min-h-screen ${themeClasses.background}`}>
                 <div className={`text-center ${themeClasses.card} p-8 rounded-lg shadow-md`}>
                     <WifiOff className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                    <h2 className={`text-2xl font-bold ${themeClasses.text} mb-2`}>Authentication Required</h2>
-                    <p className={`${themeClasses.textMuted} mb-4`}>Please log in to view the analytics dashboard.</p>
+                    <h2 className={`text-2xl font-bold ${themeClasses.text} mb-2`}>{t('authenticationRequired')}</h2>
+                    <p className={`${themeClasses.textMuted} mb-4`}>{t('pleaseLogInToView')}</p>
                     <button
                         onClick={() => window.location.href = '/login'}
                         className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                     >
-                        Go to Login
+                        {t('goToLogin')}
                     </button>
                 </div>
             </div>
@@ -479,8 +483,8 @@ const OrganizerAnalytics: React.FC = () => {
             <div className="mb-8">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className={`text-3xl font-bold ${themeClasses.text} mb-2`}>Analytics Dashboard</h1>
-                        <p className={themeClasses.textMuted}>Comprehensive insights for your events</p>
+                        <h1 className={`text-3xl font-bold ${themeClasses.text} mb-2`}>{t('analytics')}</h1>
+                        <p className={themeClasses.textMuted}>{t('comprehensiveInsights')}</p>
                     </div>
                     <button
                         onClick={fetchAnalyticsData}
@@ -488,7 +492,7 @@ const OrganizerAnalytics: React.FC = () => {
                         className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
                     >
                         <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
+                        {t('refreshData')}
                     </button>
                 </div>
 
@@ -497,7 +501,7 @@ const OrganizerAnalytics: React.FC = () => {
                     <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                         <div className="flex items-center">
                             <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" />
-                            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Some data couldn&apos;t be loaded:</h3>
+                            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">{t('someDataCouldntBeLoaded')}</h3>
                         </div>
                         <ul className="mt-2 text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside">
                             {apiErrors.map((error, index) => (
@@ -513,11 +517,11 @@ const OrganizerAnalytics: React.FC = () => {
                         onChange={(e) => setSelectedPeriod(e.target.value)}
                         className={`px-4 py-2 border ${themeClasses.border} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.card} ${themeClasses.text}`}
                     >
-                        <option value="last7days">Last 7 Days</option>
-                        <option value="last30days">Last 30 Days</option>
-                        <option value="last3months">Last 3 Months</option>
-                        <option value="last6months">Last 6 Months</option>
-                        <option value="lastyear">Last Year</option>
+                        <option value="last7days">{t('last7Days')}</option>
+                        <option value="last30days">{t('last30Days')}</option>
+                        <option value="last3months">{t('last3Months')}</option>
+                        <option value="last6months">{t('last6Months')}</option>
+                        <option value="lastyear">{t('lastYear')}</option>
                     </select>
                 </div>
             </div>
@@ -525,28 +529,28 @@ const OrganizerAnalytics: React.FC = () => {
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard
-                    title="Total Revenue"
+                    title={t('totalRevenue')}
                     value={`$${analyticsData.revenue.totalRevenue.toLocaleString()}`}
                     icon={DollarSign}
-                    trend={analyticsData.revenue.totalRevenue > 0 ? "+12.5% from last month" : "No revenue yet"}
+                    trend={analyticsData.revenue.totalRevenue > 0 ? t('fromLastMonth') : t('noRevenueYet')}
                 />
                 <StatCard
-                    title="Total Attendees"
+                    title={t('totalAttendees')}
                     value={analyticsData.revenue.totalAttendees.toLocaleString()}
                     icon={Users}
-                    trend={analyticsData.revenue.totalAttendees > 0 ? "+8.3% from last month" : "No attendees yet"}
+                    trend={analyticsData.revenue.totalAttendees > 0 ? t('fromLastMonth') : t('noAttendeesYet')}
                 />
                 <StatCard
-                    title="Active Events"
+                    title={t('activeEvents')}
                     value={analyticsData.revenue.activeEvents.toString()}
                     icon={Calendar}
-                    trend={analyticsData.revenue.activeEvents > 0 ? "Events running" : "No active events"}
+                    trend={analyticsData.revenue.activeEvents > 0 ? t('eventsRunning') : t('noActiveEvents')}
                 />
                 <StatCard
-                    title="Venues Used"
+                    title={t('venuesUsed')}
                     value={analyticsData.revenue.totalVenues.toString()}
                     icon={MapPin}
-                    trend={analyticsData.revenue.totalVenues > 0 ? "Venue partnerships" : "No venues yet"}
+                    trend={analyticsData.revenue.totalVenues > 0 ? t('venuePartnerships') : t('noVenuesYet')}
                 />
             </div>
 
@@ -555,7 +559,7 @@ const OrganizerAnalytics: React.FC = () => {
                 <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
                     <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                         <DollarSign className="w-5 h-5 mr-2 text-green-500" />
-                        Top Revenue Events
+                        {t('topRevenueEvents')}
                     </h3>
                     {analyticsData.revenue.events.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
@@ -578,8 +582,8 @@ const OrganizerAnalytics: React.FC = () => {
                         <div className={`flex items-center justify-center h-64 ${themeClasses.textMuted}`}>
                             <div className="text-center">
                                 <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                                <p>No events with revenue data yet</p>
-                                <p className="text-sm">Create and publish events to see revenue analytics</p>
+                                <p>{t('noEventsWithRevenueData')}</p>
+                                <p className="text-sm">{t('createAndPublishEvents')} {t('seeRevenueAnalytics')}</p>
                             </div>
                         </div>
                     )}
@@ -587,7 +591,7 @@ const OrganizerAnalytics: React.FC = () => {
 
                 {/* Payment Methods */}
                 <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
-                    <h3 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>Payment Method Distribution</h3>
+                    <h3 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>{t('paymentMethodDistribution')}</h3>
                     {analyticsData.payments.methods.length > 0 ? (
                         <div className="flex flex-col lg:flex-row items-center">
                             <ResponsiveContainer width="60%" height={250}>
@@ -620,7 +624,7 @@ const OrganizerAnalytics: React.FC = () => {
                                         <div className="text-right">
                                             <span className={`text-sm font-medium ${themeClasses.text}`}>{method.percentage}%</span>
                                             <br />
-                                            <span className={`text-xs ${themeClasses.textMuted}`}>{method.orderCount} orders</span>
+                                            <span className={`text-xs ${themeClasses.textMuted}`}>{method.orderCount} {t('orders')}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -630,7 +634,7 @@ const OrganizerAnalytics: React.FC = () => {
                         <div className={`flex items-center justify-center h-64 ${themeClasses.textMuted}`}>
                             <div className="text-center">
                                 <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                                <p>No payment data available</p>
+                                <p>{t('noPaymentDataAvailable')}</p>
                             </div>
                         </div>
                     )}
@@ -641,7 +645,7 @@ const OrganizerAnalytics: React.FC = () => {
             <div className={`${themeClasses.card} rounded-lg shadow-md p-6 mb-8`}>
                 <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                     <Users className="w-5 h-5 mr-2 text-blue-500" />
-                    Event Capacity Utilization
+                    {t('eventCapacityUtilization')}
                 </h3>
                 {analyticsData.capacity.events.length > 0 ? (
                     <div className="space-y-4">
@@ -649,7 +653,7 @@ const OrganizerAnalytics: React.FC = () => {
                             <div key={event.eventId} className="flex items-center space-x-4">
                                 <div className="w-1/3">
                                     <p className={`font-medium text-sm ${themeClasses.text}`}>{event.eventName}</p>
-                                    <p className={`text-xs ${themeClasses.textMuted}`}>{event.ticketsSold}/{event.maxCapacity} tickets</p>
+                                    <p className={`text-xs ${themeClasses.textMuted}`}>{event.ticketsSold}/{event.maxCapacity} {t('tickets')}</p>
                                 </div>
                                 <div className="flex-1">
                                     <div className={`w-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-3`}>
@@ -662,7 +666,7 @@ const OrganizerAnalytics: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className={`font-medium ${themeClasses.text}`}>{event.utilizationPercentage.toFixed(1)}%</p>
+                                    <p className={`font-medium ${themeClasses.text}`}>{event.utilizationPercentage.toFixed(1)}% {t('utilization')}</p>
                                 </div>
                             </div>
                         ))}
@@ -671,7 +675,7 @@ const OrganizerAnalytics: React.FC = () => {
                     <div className={`flex items-center justify-center h-32 ${themeClasses.textMuted}`}>
                         <div className="text-center">
                             <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                            <p>No events found for the selected period</p>
+                            <p>{t('noEventsFoundForPeriod')}</p>
                         </div>
                     </div>
                 )}
@@ -682,7 +686,7 @@ const OrganizerAnalytics: React.FC = () => {
                 <div className={`${themeClasses.card} rounded-lg shadow-md p-6 mb-8`}>
                     <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                         <Calendar className="w-5 h-5 mr-2 text-purple-500" />
-                        Monthly Trends
+                        {t('monthlyTrends')}
                     </h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={analyticsData.seasonal.monthlyTrends}>
@@ -691,8 +695,8 @@ const OrganizerAnalytics: React.FC = () => {
                             <YAxis yAxisId="left" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
                             <YAxis yAxisId="right" orientation="right" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
                             <Tooltip content={<CustomTooltip isDark={isDark} />} />
-                            <Bar yAxisId="left" dataKey="eventCount" fill={COLORS[4]} name="Events" />
-                            <Line yAxisId="right" type="monotone" dataKey="totalRevenue" stroke={COLORS[2]} strokeWidth={2} name="Revenue ($)" />
+                            <Bar yAxisId="left" dataKey="eventCount" fill={COLORS[4]} name={t('events')} />
+                            <Line yAxisId="right" type="monotone" dataKey="totalRevenue" stroke={COLORS[2]} strokeWidth={2} name={`${t('revenue')} ($)`} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
@@ -701,7 +705,7 @@ const OrganizerAnalytics: React.FC = () => {
             {/* Demographics */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
-                    <h3 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>Gender Distribution</h3>
+                    <h3 className={`text-lg font-semibold mb-4 ${themeClasses.text}`}>{t('genderDistribution')}</h3>
                     {analyticsData.demographics.genderDistribution.some(group => group.count > 0) ? (
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={analyticsData.demographics.genderDistribution}>
@@ -716,7 +720,7 @@ const OrganizerAnalytics: React.FC = () => {
                         <div className={`flex items-center justify-center h-64 ${themeClasses.textMuted}`}>
                             <div className="text-center">
                                 <Users className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                                <p>No demographic data available</p>
+                                <p>{t('noDemographicDataAvailable')}</p>
                             </div>
                         </div>
                     )}
@@ -726,7 +730,7 @@ const OrganizerAnalytics: React.FC = () => {
                 <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
                     <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                         <MapPin className="w-5 h-5 mr-2 text-blue-500" />
-                        Venue Performance
+                        {t('venuePerformance')}
                     </h3>
                     {analyticsData.venues.performance.length > 0 ? (
                         <div className="space-y-4">
@@ -737,15 +741,15 @@ const OrganizerAnalytics: React.FC = () => {
                                     </div>
                                     <div className="grid grid-cols-3 gap-4 text-sm">
                                         <div>
-                                            <p className={themeClasses.textMuted}>Events</p>
+                                            <p className={themeClasses.textMuted}>{t('events')}</p>
                                             <p className={`font-medium ${themeClasses.text}`}>{venue.eventCount}</p>
                                         </div>
                                         <div>
-                                            <p className={themeClasses.textMuted}>Avg Attendance</p>
+                                            <p className={themeClasses.textMuted}>{t('avgAttendance')}</p>
                                             <p className={`font-medium ${themeClasses.text}`}>{venue.avgAttendance}</p>
                                         </div>
                                         <div>
-                                            <p className={themeClasses.textMuted}>Revenue</p>
+                                            <p className={themeClasses.textMuted}>{t('revenue')}</p>
                                             <p className={`font-medium ${themeClasses.text}`}>${venue.totalRevenue.toLocaleString()}</p>
                                         </div>
                                     </div>
@@ -756,7 +760,7 @@ const OrganizerAnalytics: React.FC = () => {
                         <div className={`flex items-center justify-center h-48 ${themeClasses.textMuted}`}>
                             <div className="text-center">
                                 <MapPin className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                                <p>No venue data available</p>
+                                <p>{t('noVenueDataAvailable')}</p>
                             </div>
                         </div>
                     )}
@@ -767,7 +771,7 @@ const OrganizerAnalytics: React.FC = () => {
             <div className={`${themeClasses.card} rounded-lg shadow-md p-6`}>
                 <h3 className={`text-lg font-semibold mb-4 flex items-center ${themeClasses.text}`}>
                     <AlertTriangle className="w-5 h-5 mr-2 text-red-500" />
-                    Events Needing Attention
+                    {t('eventsNeedingAttention')}
                 </h3>
                 {analyticsData.lowAttendance.events.length > 0 ? (
                     <div className="space-y-6">
@@ -777,10 +781,10 @@ const OrganizerAnalytics: React.FC = () => {
                                     <div>
                                         <h4 className={`font-semibold text-lg ${themeClasses.text}`}>{event.eventName}</h4>
                                         <p className={`text-sm ${themeClasses.textMuted}`}>
-                                            {event.ticketsSold}/{event.maxCapacity} tickets sold ({event.utilizationPercentage}% utilization)
+                                            {event.ticketsSold}/{event.maxCapacity} {t('ticketsSold')} ({event.utilizationPercentage}% {t('utilization')})
                                         </p>
                                         <p className={`text-sm ${themeClasses.text} font-medium`}>
-                                            ⏰ {event.daysUntilEvent} days until event
+                                            ⏰ {event.daysUntilEvent} {t('daysUntilEvent')}
                                         </p>
                                     </div>
                                     <div className="text-right">
@@ -792,36 +796,17 @@ const OrganizerAnalytics: React.FC = () => {
 
                                 {event.ticketTypes.length > 0 && (
                                     <div className="mb-4">
-                                        <h5 className={`font-medium ${themeClasses.text} mb-2`}>Ticket Types:</h5>
+                                        <h5 className={`font-medium ${themeClasses.text} mb-2`}>{t('ticketTypes')}:</h5>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
                                             {event.ticketTypes.map((ticket: TicketTypeData, index: number) => (
                                                 <div key={index} className={`${themeClasses.card} p-2 rounded border ${themeClasses.border}`}>
                                                     <p className={`font-medium ${themeClasses.text}`}>{ticket.typeName}</p>
-                                                    <p className={themeClasses.textMuted}>${ticket.price} - {ticket.sold} sold</p>
+                                                    <p className={themeClasses.textMuted}>${ticket.price} - {ticket.sold} {t('ticketsSold')}</p>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 )}
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <h5 className={`font-medium ${themeClasses.text} mb-2`}>Potential Issues:</h5>
-                                        <ul className={`list-disc list-inside text-sm space-y-1 ${themeClasses.textMuted}`}>
-                                            {event.potentialIssues.map((issue: string, index: number) => (
-                                                <li key={index}>{issue}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <h5 className={`font-medium ${themeClasses.text} mb-2`}>Recommendations:</h5>
-                                        <ul className={`list-disc list-inside text-sm space-y-1 ${themeClasses.textMuted}`}>
-                                            {event.recommendations.map((rec: string, index: number) => (
-                                                <li key={index}>{rec}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                </div>
                             </div>
                         ))}
                     </div>
@@ -829,8 +814,8 @@ const OrganizerAnalytics: React.FC = () => {
                     <div className={`flex items-center justify-center h-32 ${themeClasses.textMuted}`}>
                         <div className="text-center">
                             <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-400" />
-                            <p>All events are performing well!</p>
-                            <p className="text-sm">No events with low attendance found</p>
+                            <p>{t('allEventsPerformingWell')}</p>
+                            <p className="text-sm">{t('noEventsWithLowAttendance')}</p>
                         </div>
                     </div>
                 )}

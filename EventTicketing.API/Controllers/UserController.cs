@@ -12,10 +12,12 @@ namespace EventTicketing.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IImageStorageService _imageStorageService;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IImageStorageService imageStorageService)
         {
             _userService = userService;
+            _imageStorageService = imageStorageService;
         }
 
         private int GetCurrentUserId()
@@ -25,6 +27,95 @@ namespace EventTicketing.API.Controllers
                 throw new UnauthorizedAccessException("User not authenticated");
 
             return int.Parse(userIdClaim.Value);
+        }
+
+        [HttpPost("upload-profile-image")]
+        public async Task<ActionResult> UploadProfileImage(IFormFile file)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+
+                if (!await _imageStorageService.ValidateImageAsync(file))
+                {
+                    return BadRequest(new { message = "Invalid image file. Please upload a valid image (JPEG, PNG, WebP, GIF) under 5MB." });
+                }
+
+                // Get current user profile to delete old image
+                var currentProfile = await _userService.GetUserProfileAsync(userId);
+                if (!string.IsNullOrEmpty(currentProfile.ProfileImageUrl))
+                {
+                    await _imageStorageService.DeleteImageAsync(currentProfile.ProfileImageUrl);
+                }
+
+                // Upload new image
+                var imageUrl = await _imageStorageService.UploadUserProfileImageAsync(file, userId);
+
+                // Update user profile with new image URL
+                var updateDto = new UpdateUserProfileDto
+                {
+                    FirstName = currentProfile.FirstName,
+                    LastName = currentProfile.LastName,
+                    Email = currentProfile.Email,
+                    PhoneNumber = currentProfile.PhoneNumber,
+                    DateOfBirth = currentProfile.DateOfBirth,
+                    Bio = currentProfile.Bio,
+                    Website = currentProfile.Website,
+                    TimeZone = currentProfile.TimeZone,
+                    ProfileImageUrl = imageUrl // Add this field to your DTO if not present
+                };
+
+                await _userService.UpdateUserProfileAsync(userId, updateDto);
+
+                return Ok(new
+                {
+                    success = true,
+                    imageUrl = imageUrl,
+                    message = "Profile image uploaded successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // DELETE: api/user/profile-image
+        [HttpDelete("profile-image")]
+        public async Task<ActionResult> DeleteProfileImage()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var currentProfile = await _userService.GetUserProfileAsync(userId);
+
+                if (!string.IsNullOrEmpty(currentProfile.ProfileImageUrl))
+                {
+                    await _imageStorageService.DeleteImageAsync(currentProfile.ProfileImageUrl);
+
+                    // Update user profile to remove image URL
+                    var updateDto = new UpdateUserProfileDto
+                    {
+                        FirstName = currentProfile.FirstName,
+                        LastName = currentProfile.LastName,
+                        Email = currentProfile.Email,
+                        PhoneNumber = currentProfile.PhoneNumber,
+                        DateOfBirth = currentProfile.DateOfBirth,
+                        Bio = currentProfile.Bio,
+                        Website = currentProfile.Website,
+                        TimeZone = currentProfile.TimeZone,
+                        ProfileImageUrl = null // Remove the image
+                    };
+
+                    await _userService.UpdateUserProfileAsync(userId, updateDto);
+                }
+
+                return Ok(new { message = "Profile image deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // GET: api/user/profile
