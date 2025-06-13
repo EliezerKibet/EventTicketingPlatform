@@ -627,6 +627,36 @@ export interface TranslationKeys {
     medium: string;
     large: string;
 
+    // Image Management - Add these new keys
+    eventImages: string;
+    bannerImage: string;
+    bannerImageDescription: string;
+    eventImage: string;
+    eventImageDescription: string;
+    noBannerImage: string;
+    noEventImage: string;
+    changeBanner: string;
+    uploadBanner: string;
+    changeImage: string;
+    uploadImage: string;
+    uploadingImages: string;
+    imageGuidelines: string;
+    supportedFormats: string;
+    maxFileSize: string;
+    bannerRecommended: string;
+    imageRecommended: string;
+    invalidImageFile: string;
+    imageUploadFailed: string;
+    imageUploadSuccess: string;
+    selectImageFile: string;
+    imageProcessing: string;
+    imagePreview: string;
+    removeImage: string;
+    cropImage: string;
+    rotateImage: string;
+    imageQuality: string;
+    compressImage: string;
+    dropImageHere: string;
 }
 
 interface SettingsTranslationKeys {
@@ -756,6 +786,37 @@ interface SettingsTranslationKeys {
     small: string;
     medium: string;
     large: string;
+
+    // Image Management - Add these new keys
+    eventImages: string;
+    bannerImage: string;
+    bannerImageDescription: string;
+    eventImage: string;
+    eventImageDescription: string;
+    noBannerImage: string;
+    noEventImage: string;
+    changeBanner: string;
+    uploadBanner: string;
+    changeImage: string;
+    uploadImage: string;
+    uploadingImages: string;
+    imageGuidelines: string;
+    supportedFormats: string;
+    maxFileSize: string;
+    bannerRecommended: string;
+    imageRecommended: string;
+    invalidImageFile: string;
+    imageUploadFailed: string;
+    imageUploadSuccess: string;
+    selectImageFile: string;
+    imageProcessing: string;
+    imagePreview: string;
+    removeImage: string;
+    cropImage: string;
+    rotateImage: string;
+    imageQuality: string;
+    compressImage: string;
+    dropImageHere: string;
 }
 
 const settingsTranslationsEn: SettingsTranslationKeys = {
@@ -884,7 +945,37 @@ const settingsTranslationsEn: SettingsTranslationKeys = {
     // Size Names
     small: 'Small',
     medium: 'Medium',
-    large: 'Large'
+    large: 'Large',
+
+    eventImages: 'Event Images',
+    bannerImage: 'Banner Image',
+    bannerImageDescription: 'Large banner image displayed at the top of your event page',
+    eventImage: 'Event Image',
+    eventImageDescription: 'Main image shown in event listings and cards',
+    noBannerImage: 'No banner image uploaded',
+    noEventImage: 'No event image uploaded',
+    changeBanner: 'Change Banner',
+    uploadBanner: 'Upload Banner',
+    changeImage: 'Change Image',
+    uploadImage: 'Upload Image',
+    uploadingImages: 'Uploading images...',
+    imageGuidelines: 'Image Guidelines',
+    supportedFormats: 'Supported formats',
+    maxFileSize: 'Maximum file size',
+    bannerRecommended: 'Banner recommended size',
+    imageRecommended: 'Image recommended size',
+    invalidImageFile: 'Invalid image file',
+    imageUploadFailed: 'Image upload failed',
+    imageUploadSuccess: 'Image uploaded successfully',
+    selectImageFile: 'Select image file',
+    imageProcessing: 'Processing image...',
+    imagePreview: 'Image preview',
+    removeImage: 'Remove image',
+    cropImage: 'Crop image',
+    rotateImage: 'Rotate image',
+    imageQuality: 'Image quality',
+    compressImage: 'Compress image',
+    dropImageHere: 'Drop image here or click to upload',
 };
 
 // Spanish translations for settings
@@ -1014,7 +1105,38 @@ const settingsTranslationsEs: SettingsTranslationKeys = {
     // Size Names
     small: 'Pequeño',
     medium: 'Mediano',
-    large: 'Grande'
+    large: 'Grande',
+
+    // Image Management
+    eventImages: 'Imágenes del Evento',
+    bannerImage: 'Imagen de Banner',
+    bannerImageDescription: 'Imagen de banner grande mostrada en la parte superior de tu página de evento',
+    eventImage: 'Imagen del Evento',
+    eventImageDescription: 'Imagen principal mostrada en listados y tarjetas de eventos',
+    noBannerImage: 'No se ha subido imagen de banner',
+    noEventImage: 'No se ha subido imagen del evento',
+    changeBanner: 'Cambiar Banner',
+    uploadBanner: 'Subir Banner',
+    changeImage: 'Cambiar Imagen',
+    uploadImage: 'Subir Imagen',
+    uploadingImages: 'Subiendo imágenes...',
+    imageGuidelines: 'Directrices de Imagen',
+    supportedFormats: 'Formatos soportados',
+    maxFileSize: 'Tamaño máximo de archivo',
+    bannerRecommended: 'Tamaño recomendado del banner',
+    imageRecommended: 'Tamaño recomendado de imagen',
+    invalidImageFile: 'Archivo de imagen inválido',
+    imageUploadFailed: 'Error al subir imagen',
+    imageUploadSuccess: 'Imagen subida exitosamente',
+    selectImageFile: 'Seleccionar archivo de imagen',
+    imageProcessing: 'Procesando imagen...',
+    imagePreview: 'Vista previa de imagen',
+    removeImage: 'Eliminar imagen',
+    cropImage: 'Recortar imagen',
+    rotateImage: 'Rotar imagen',
+    imageQuality: 'Calidad de imagen',
+    compressImage: 'Comprimir imagen',
+    dropImageHere: 'Suelta la imagen aquí o haz clic para subir',
 };
 
 // French translations for settings
@@ -1144,7 +1266,37 @@ const settingsTranslationsFr: SettingsTranslationKeys = {
     // Size Names
     small: 'Petit',
     medium: 'Moyen',
-    large: 'Grand'
+    large: 'Grand',
+    // Image Management
+    eventImages: 'Images de l\'Événement',
+    bannerImage: 'Image de Bannière',
+    bannerImageDescription: 'Grande image de bannière affichée en haut de votre page d\'événement',
+    eventImage: 'Image de l\'Événement',
+    eventImageDescription: 'Image principale affichée dans les listes et cartes d\'événements',
+    noBannerImage: 'Aucune image de bannière téléchargée',
+    noEventImage: 'Aucune image d\'événement téléchargée',
+    changeBanner: 'Changer la Bannière',
+    uploadBanner: 'Télécharger la Bannière',
+    changeImage: 'Changer l\'Image',
+    uploadImage: 'Télécharger l\'Image',
+    uploadingImages: 'Téléchargement des images...',
+    imageGuidelines: 'Directives d\'Image',
+    supportedFormats: 'Formats supportés',
+    maxFileSize: 'Taille maximale du fichier',
+    bannerRecommended: 'Taille recommandée de la bannière',
+    imageRecommended: 'Taille recommandée de l\'image',
+    invalidImageFile: 'Fichier image invalide',
+    imageUploadFailed: 'Échec du téléchargement de l\'image',
+    imageUploadSuccess: 'Image téléchargée avec succès',
+    selectImageFile: 'Sélectionner un fichier image',
+    imageProcessing: 'Traitement de l\'image...',
+    imagePreview: 'Aperçu de l\'image',
+    removeImage: 'Supprimer l\'image',
+    cropImage: 'Recadrer l\'image',
+    rotateImage: 'Faire pivoter l\'image',
+    imageQuality: 'Qualité de l\'image',
+    compressImage: 'Compresser l\'image',
+    dropImageHere: 'Déposez l\'image ici ou cliquez pour télécharger',
 };
 
 // German translations for settings
@@ -1274,7 +1426,38 @@ const settingsTranslationsDe: SettingsTranslationKeys = {
     // Size Names
     small: 'Klein',
     medium: 'Mittel',
-    large: 'Groß'
+    large: 'Groß',
+
+    // Image Management
+    eventImages: 'Veranstaltungsbilder',
+    bannerImage: 'Banner-Bild',
+    bannerImageDescription: 'Großes Banner-Bild, das oben auf Ihrer Veranstaltungsseite angezeigt wird',
+    eventImage: 'Veranstaltungsbild',
+    eventImageDescription: 'Hauptbild, das in Veranstaltungslisten und -karten angezeigt wird',
+    noBannerImage: 'Kein Banner-Bild hochgeladen',
+    noEventImage: 'Kein Veranstaltungsbild hochgeladen',
+    changeBanner: 'Banner Ändern',
+    uploadBanner: 'Banner Hochladen',
+    changeImage: 'Bild Ändern',
+    uploadImage: 'Bild Hochladen',
+    uploadingImages: 'Bilder werden hochgeladen...',
+    imageGuidelines: 'Bild-Richtlinien',
+    supportedFormats: 'Unterstützte Formate',
+    maxFileSize: 'Maximale Dateigröße',
+    bannerRecommended: 'Empfohlene Banner-Größe',
+    imageRecommended: 'Empfohlene Bildgröße',
+    invalidImageFile: 'Ungültige Bilddatei',
+    imageUploadFailed: 'Bild-Upload fehlgeschlagen',
+    imageUploadSuccess: 'Bild erfolgreich hochgeladen',
+    selectImageFile: 'Bilddatei auswählen',
+    imageProcessing: 'Bild wird verarbeitet...',
+    imagePreview: 'Bildvorschau',
+    removeImage: 'Bild entfernen',
+    cropImage: 'Bild zuschneiden',
+    rotateImage: 'Bild drehen',
+    imageQuality: 'Bildqualität',
+    compressImage: 'Bild komprimieren',
+    dropImageHere: 'Bild hier ablegen oder klicken, um hochzuladen',
 };
 
 // Italian translations for settings
@@ -1404,7 +1587,38 @@ const settingsTranslationsIt: SettingsTranslationKeys = {
     // Size Names
     small: 'Piccolo',
     medium: 'Medio',
-    large: 'Grande'
+    large: 'Grande',
+
+    // Image Management
+    eventImages: 'Immagini dell\'Evento',
+    bannerImage: 'Immagine Banner',
+    bannerImageDescription: 'Grande immagine banner visualizzata in cima alla pagina del tuo evento',
+    eventImage: 'Immagine Evento',
+    eventImageDescription: 'Immagine principale mostrata negli elenchi e nelle schede degli eventi',
+    noBannerImage: 'Nessuna immagine banner caricata',
+    noEventImage: 'Nessuna immagine evento caricata',
+    changeBanner: 'Cambia Banner',
+    uploadBanner: 'Carica Banner',
+    changeImage: 'Cambia Immagine',
+    uploadImage: 'Carica Immagine',
+    uploadingImages: 'Caricamento immagini...',
+    imageGuidelines: 'Linee Guida Immagini',
+    supportedFormats: 'Formati supportati',
+    maxFileSize: 'Dimensione massima file',
+    bannerRecommended: 'Dimensione raccomandata banner',
+    imageRecommended: 'Dimensione raccomandata immagine',
+    invalidImageFile: 'File immagine non valido',
+    imageUploadFailed: 'Caricamento immagine fallito',
+    imageUploadSuccess: 'Immagine caricata con successo',
+    selectImageFile: 'Seleziona file immagine',
+    imageProcessing: 'Elaborazione immagine...',
+    imagePreview: 'Anteprima immagine',
+    removeImage: 'Rimuovi immagine',
+    cropImage: 'Ritaglia immagine',
+    rotateImage: 'Ruota immagine',
+    imageQuality: 'Qualità immagine',
+    compressImage: 'Comprimi immagine',
+    dropImageHere: 'Trascina l\'immagine qui o clicca per caricare',
 };
 
 // Helper function for string interpolation
@@ -1977,7 +2191,38 @@ const translations: Record<string, TranslationKeys> = {
         // Size Names (for dynamic translation)
         small: 'Small',
         medium: 'Medium',
-        large: 'Large'
+        large: 'Large',
+
+        // Image Management
+        eventImages: 'Event Images',
+        bannerImage: 'Banner Image',
+        bannerImageDescription: 'Large banner image displayed at the top of your event page',
+        eventImage: 'Event Image',
+        eventImageDescription: 'Main image shown in event listings and cards',
+        noBannerImage: 'No banner image uploaded',
+        noEventImage: 'No event image uploaded',
+        changeBanner: 'Change Banner',
+        uploadBanner: 'Upload Banner',
+        changeImage: 'Change Image',
+        uploadImage: 'Upload Image',
+        uploadingImages: 'Uploading images...',
+        imageGuidelines: 'Image Guidelines',
+        supportedFormats: 'Supported formats',
+        maxFileSize: 'Maximum file size',
+        bannerRecommended: 'Banner recommended size',
+        imageRecommended: 'Image recommended size',
+        invalidImageFile: 'Invalid image file',
+        imageUploadFailed: 'Image upload failed',
+        imageUploadSuccess: 'Image uploaded successfully',
+        selectImageFile: 'Select image file',
+        imageProcessing: 'Processing image...',
+        imagePreview: 'Image preview',
+        removeImage: 'Remove image',
+        cropImage: 'Crop image',
+        rotateImage: 'Rotate image',
+        imageQuality: 'Image quality',
+        compressImage: 'Compress image',
+        dropImageHere: 'Drop image here or click to upload',
     },
     // Spanish translations
     es: {
@@ -2539,7 +2784,38 @@ const translations: Record<string, TranslationKeys> = {
         // Size Names
         small: 'Pequeño',
         medium: 'Mediano',
-        large: 'Grande'
+        large: 'Grande',
+
+        // Image Management
+        eventImages: 'Imágenes del Evento',
+        bannerImage: 'Imagen de Banner',
+        bannerImageDescription: 'Imagen de banner grande mostrada en la parte superior de tu página de evento',
+        eventImage: 'Imagen del Evento',
+        eventImageDescription: 'Imagen principal mostrada en listados y tarjetas de eventos',
+        noBannerImage: 'No se ha subido imagen de banner',
+        noEventImage: 'No se ha subido imagen del evento',
+        changeBanner: 'Cambiar Banner',
+        uploadBanner: 'Subir Banner',
+        changeImage: 'Cambiar Imagen',
+        uploadImage: 'Subir Imagen',
+        uploadingImages: 'Subiendo imágenes...',
+        imageGuidelines: 'Directrices de Imagen',
+        supportedFormats: 'Formatos soportados',
+        maxFileSize: 'Tamaño máximo de archivo',
+        bannerRecommended: 'Tamaño recomendado del banner',
+        imageRecommended: 'Tamaño recomendado de imagen',
+        invalidImageFile: 'Archivo de imagen inválido',
+        imageUploadFailed: 'Error al subir imagen',
+        imageUploadSuccess: 'Imagen subida exitosamente',
+        selectImageFile: 'Seleccionar archivo de imagen',
+        imageProcessing: 'Procesando imagen...',
+        imagePreview: 'Vista previa de imagen',
+        removeImage: 'Eliminar imagen',
+        cropImage: 'Recortar imagen',
+        rotateImage: 'Rotar imagen',
+        imageQuality: 'Calidad de imagen',
+        compressImage: 'Comprimir imagen',
+        dropImageHere: 'Suelta la imagen aquí o haz clic para subir',
     },
     // French translations
     fr: {
@@ -3100,7 +3376,38 @@ const translations: Record<string, TranslationKeys> = {
         // Size Names
         small: 'Petit',
         medium: 'Moyen',
-        large: 'Grand'
+        large: 'Grand',
+
+        // Image Management
+        eventImages: 'Images de l\'Événement',
+        bannerImage: 'Image de Bannière',
+        bannerImageDescription: 'Grande image de bannière affichée en haut de votre page d\'événement',
+        eventImage: 'Image de l\'Événement',
+        eventImageDescription: 'Image principale affichée dans les listes et cartes d\'événements',
+        noBannerImage: 'Aucune image de bannière téléchargée',
+        noEventImage: 'Aucune image d\'événement téléchargée',
+        changeBanner: 'Changer la Bannière',
+        uploadBanner: 'Télécharger la Bannière',
+        changeImage: 'Changer l\'Image',
+        uploadImage: 'Télécharger l\'Image',
+        uploadingImages: 'Téléchargement des images...',
+        imageGuidelines: 'Directives d\'Image',
+        supportedFormats: 'Formats supportés',
+        maxFileSize: 'Taille maximale du fichier',
+        bannerRecommended: 'Taille recommandée de la bannière',
+        imageRecommended: 'Taille recommandée de l\'image',
+        invalidImageFile: 'Fichier image invalide',
+        imageUploadFailed: 'Échec du téléchargement de l\'image',
+        imageUploadSuccess: 'Image téléchargée avec succès',
+        selectImageFile: 'Sélectionner un fichier image',
+        imageProcessing: 'Traitement de l\'image...',
+        imagePreview: 'Aperçu de l\'image',
+        removeImage: 'Supprimer l\'image',
+        cropImage: 'Recadrer l\'image',
+        rotateImage: 'Faire pivoter l\'image',
+        imageQuality: 'Qualité de l\'image',
+        compressImage: 'Compresser l\'image',
+        dropImageHere: 'Déposez l\'image ici ou cliquez pour télécharger',
     },
     // German translations
     de: {
@@ -3663,7 +3970,38 @@ const translations: Record<string, TranslationKeys> = {
         // Size Names (already exist as small, medium, large but adding for consistency)
         small: 'Klein',
         medium: 'Mittel',
-        large: 'Groß'
+        large: 'Groß',
+
+        // Image Management
+        eventImages: 'Veranstaltungsbilder',
+        bannerImage: 'Banner-Bild',
+        bannerImageDescription: 'Großes Banner-Bild, das oben auf Ihrer Veranstaltungsseite angezeigt wird',
+        eventImage: 'Veranstaltungsbild',
+        eventImageDescription: 'Hauptbild, das in Veranstaltungslisten und -karten angezeigt wird',
+        noBannerImage: 'Kein Banner-Bild hochgeladen',
+        noEventImage: 'Kein Veranstaltungsbild hochgeladen',
+        changeBanner: 'Banner Ändern',
+        uploadBanner: 'Banner Hochladen',
+        changeImage: 'Bild Ändern',
+        uploadImage: 'Bild Hochladen',
+        uploadingImages: 'Bilder werden hochgeladen...',
+        imageGuidelines: 'Bild-Richtlinien',
+        supportedFormats: 'Unterstützte Formate',
+        maxFileSize: 'Maximale Dateigröße',
+        bannerRecommended: 'Empfohlene Banner-Größe',
+        imageRecommended: 'Empfohlene Bildgröße',
+        invalidImageFile: 'Ungültige Bilddatei',
+        imageUploadFailed: 'Bild-Upload fehlgeschlagen',
+        imageUploadSuccess: 'Bild erfolgreich hochgeladen',
+        selectImageFile: 'Bilddatei auswählen',
+        imageProcessing: 'Bild wird verarbeitet...',
+        imagePreview: 'Bildvorschau',
+        removeImage: 'Bild entfernen',
+        cropImage: 'Bild zuschneiden',
+        rotateImage: 'Bild drehen',
+        imageQuality: 'Bildqualität',
+        compressImage: 'Bild komprimieren',
+        dropImageHere: 'Ziehen Sie Ihr Bild hierher oder klicken Sie zum Hochladen',
         },
     // Italian translations
     it: {
@@ -4226,7 +4564,38 @@ const translations: Record<string, TranslationKeys> = {
         // Size Names (already exist but adding for consistency)
         small: 'Piccolo',
         medium: 'Medio',
-        large: 'Grande'
+        large: 'Grande',
+
+        // Image Management
+        eventImages: 'Immagini dell\'Evento',
+        bannerImage: 'Immagine Banner',
+        bannerImageDescription: 'Grande immagine banner visualizzata in cima alla pagina del tuo evento',
+        eventImage: 'Immagine Evento',
+        eventImageDescription: 'Immagine principale mostrata negli elenchi e nelle schede degli eventi',
+        noBannerImage: 'Nessuna immagine banner caricata',
+        noEventImage: 'Nessuna immagine evento caricata',
+        changeBanner: 'Cambia Banner',
+        uploadBanner: 'Carica Banner',
+        changeImage: 'Cambia Immagine',
+        uploadImage: 'Carica Immagine',
+        uploadingImages: 'Caricamento immagini...',
+        imageGuidelines: 'Linee Guida Immagini',
+        supportedFormats: 'Formati supportati',
+        maxFileSize: 'Dimensione massima file',
+        bannerRecommended: 'Dimensione raccomandata banner',
+        imageRecommended: 'Dimensione raccomandata immagine',
+        invalidImageFile: 'File immagine non valido',
+        imageUploadFailed: 'Caricamento immagine fallito',
+        imageUploadSuccess: 'Immagine caricata con successo',
+        selectImageFile: 'Seleziona file immagine',
+        imageProcessing: 'Elaborazione immagine...',
+        imagePreview: 'Anteprima immagine',
+        removeImage: 'Rimuovi immagine',
+        cropImage: 'Ritaglia immagine',
+        rotateImage: 'Ruota immagine',
+        imageQuality: 'Qualità immagine',
+        compressImage: 'Comprimi immagine',
+        dropImageHere: 'Trascina l\'immagine qui o clicca per selezionare',
         }
 };
 

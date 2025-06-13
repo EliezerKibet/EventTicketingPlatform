@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 
 namespace EventTicketing.API.Services
 {
@@ -6,8 +6,6 @@ namespace EventTicketing.API.Services
     {
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<LocalImageStorageService> _logger;
-        private const int MaxFileSizeBytes = 5 * 1024 * 1024; // 5MB
-        private readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
 
         public LocalImageStorageService(IWebHostEnvironment environment, ILogger<LocalImageStorageService> logger)
         {
@@ -17,94 +15,79 @@ namespace EventTicketing.API.Services
 
         public async Task<string> UploadEventBannerAsync(IFormFile file, int eventId)
         {
-            return await UploadImageAsync(file, "events", "banners", $"event-{eventId}");
+            return await SaveImageAsync(file, "events", "banners", $"event-{eventId}-banner");
         }
 
         public async Task<string> UploadEventImageAsync(IFormFile file, int eventId)
         {
-            return await UploadImageAsync(file, "events", "images", $"event-{eventId}");
+            return await SaveImageAsync(file, "events", null, $"event-{eventId}");
         }
 
         public async Task<string> UploadVenueImageAsync(IFormFile file, int venueId)
         {
-            return await UploadImageAsync(file, "venues", "images", $"venue-{venueId}");
+            return await SaveImageAsync(file, "venues", null, $"venue-{venueId}");
         }
 
         public async Task<string> UploadUserProfileImageAsync(IFormFile file, int userId)
         {
-            return await UploadImageAsync(file, "users", "avatars", $"user-{userId}");
+            return await SaveImageAsync(file, "users", "profiles", $"user-{userId}-profile");
         }
 
         public async Task<string> UploadCategoryIconAsync(IFormFile file, int categoryId)
         {
-            return await UploadImageAsync(file, "categories", "icons", $"category-{categoryId}");
+            return await SaveImageAsync(file, "categories", "icons", $"category-{categoryId}-icon");
         }
 
-        private async Task<string> UploadImageAsync(IFormFile file, string category, string subCategory, string prefix)
+        private async Task<string> SaveImageAsync(IFormFile file, string mainFolder, string? subFolder, string filePrefix)
         {
-            if (!await ValidateImageAsync(file))
-            {
-                throw new ArgumentException("Invalid image file");
-            }
-
-            // Create directory structure
-            var uploadsPath = Path.Combine(_environment.WebRootPath, "images", category, subCategory);
-            Directory.CreateDirectory(uploadsPath);
-
-            // Generate unique filename
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var fileName = $"{prefix}-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}{extension}";
-            var filePath = Path.Combine(uploadsPath, fileName);
-
-            // Save file
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            // Return relative URL
-            return $"/images/{category}/{subCategory}/{fileName}";
-        }
-
-        public async Task<bool> ValidateImageAsync(IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-                return false;
-
-            // Check file size
-            if (file.Length > MaxFileSizeBytes)
-                return false;
-
-            // Check file extension
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!AllowedExtensions.Contains(extension))
-                return false;
-
-            // Validate file signature (magic bytes)
-            var buffer = new byte[8];
-
             try
             {
-                using var stream = file.OpenReadStream();
+                _logger.LogInformation($"📸 Saving image: {filePrefix} in {mainFolder}/{subFolder ?? "root"}");
 
-                // FIXED: Use the standard ReadAsync method instead of ReadAtLeastAsync
-                var bytesRead = await stream.ReadAsync(buffer, 0, 8);
+                // Create filename with timestamp and GUID for uniqueness
+                var fileExtension = Path.GetExtension(file.FileName).ToLower();
+                var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                var uniqueId = Guid.NewGuid().ToString("N")[..16]; // First 16 chars
+                var fileName = $"{filePrefix}-{timestamp}-{uniqueId}{fileExtension}";
 
-                // Reset stream position for future use
-                stream.Position = 0;
-
-                // Only validate if we read enough bytes
-                if (bytesRead >= 2) // Minimum for JPEG detection
+                // Build the relative path - FIXED: No duplicate "images" folder
+                var pathParts = new List<string> { "images", mainFolder };
+                if (!string.IsNullOrEmpty(subFolder))
                 {
-                    return IsValidImageSignature(buffer);
+                    pathParts.Add(subFolder);
+                }
+                pathParts.Add(fileName);
+
+                var relativePath = Path.Combine(pathParts.ToArray());
+                var absolutePath = Path.Combine(_environment.WebRootPath, relativePath);
+
+                _logger.LogInformation($"📸 Relative path: {relativePath}");
+                _logger.LogInformation($"📸 Absolute path: {absolutePath}");
+
+                // Ensure directory exists
+                var directory = Path.GetDirectoryName(absolutePath);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                    _logger.LogInformation($"📸 Created directory: {directory}");
                 }
 
-                return false;
+                // Save the file
+                using (var stream = new FileStream(absolutePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Return clean URL path (always with forward slashes and leading slash)
+                var urlPath = "/" + relativePath.Replace('\\', '/');
+                _logger.LogInformation($"📸 File saved successfully. URL: {urlPath}");
+
+                return urlPath;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error validating image file: {FileName}", file.FileName);
-                return false;
+                _logger.LogError(ex, $"📸 Error saving image: {filePrefix}");
+                throw new Exception($"Failed to save image: {ex.Message}");
             }
         }
 
@@ -112,44 +95,118 @@ namespace EventTicketing.API.Services
         {
             try
             {
-                if (string.IsNullOrEmpty(imageUrl) || !imageUrl.StartsWith("/images/"))
-                    return false;
-
-                var fullPath = Path.Combine(_environment.WebRootPath, imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-
-                if (File.Exists(fullPath))
+                if (string.IsNullOrEmpty(imageUrl))
                 {
-                    File.Delete(fullPath);
+                    _logger.LogWarning("📸 Attempted to delete empty/null image URL");
                     return true;
                 }
-                return false;
+
+                _logger.LogInformation($"📸 Deleting image: {imageUrl}");
+
+                // Convert URL to file path
+                var relativePath = imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+                var absolutePath = Path.Combine(_environment.WebRootPath, relativePath);
+
+                _logger.LogInformation($"📸 File path: {absolutePath}");
+
+                if (File.Exists(absolutePath))
+                {
+                    File.Delete(absolutePath);
+                    _logger.LogInformation($"📸 Image deleted successfully: {absolutePath}");
+                    return true;
+                }
+                else
+                {
+                    _logger.LogWarning($"📸 Image file not found: {absolutePath}");
+                    return false;
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting image: {ImageUrl}", imageUrl);
+                _logger.LogError(ex, $"📸 Error deleting image: {imageUrl}");
                 return false;
             }
         }
 
-        private bool IsValidImageSignature(byte[] buffer)
+        public async Task<bool> ValidateImageAsync(IFormFile file)
         {
-            // JPEG
-            if (buffer.Length >= 2 && buffer[0] == 0xFF && buffer[1] == 0xD8)
-                return true;
+            try
+            {
+                if (file == null || file.Length == 0)
+                {
+                    _logger.LogWarning("📸 Validation failed: File is null or empty");
+                    return false;
+                }
 
-            // PNG
-            if (buffer.Length >= 8 && buffer[0] == 0x89 && buffer[1] == 0x50 && buffer[2] == 0x4E && buffer[3] == 0x47)
-                return true;
+                // Check file size (5MB limit)
+                const long maxFileSize = 5 * 1024 * 1024; // 5MB
+                if (file.Length > maxFileSize)
+                {
+                    _logger.LogWarning($"📸 Validation failed: File too large ({file.Length} bytes, max: {maxFileSize})");
+                    return false;
+                }
 
-            // GIF
-            if (buffer.Length >= 6 && buffer[0] == 0x47 && buffer[1] == 0x49 && buffer[2] == 0x46)
-                return true;
+                // Check content type
+                var allowedTypes = new[]
+                {
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif"
+                };
 
-            // WebP
-            if (buffer.Length >= 8 && buffer[0] == 0x52 && buffer[1] == 0x49 && buffer[2] == 0x46 && buffer[3] == 0x46)
-                return true;
+                var contentType = file.ContentType.ToLower();
+                if (!allowedTypes.Contains(contentType))
+                {
+                    _logger.LogWarning($"📸 Validation failed: Invalid content type ({contentType})");
+                    return false;
+                }
 
-            return false;
+                // Check file extension
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+                var fileExtension = Path.GetExtension(file.FileName).ToLower();
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    _logger.LogWarning($"📸 Validation failed: Invalid file extension ({fileExtension})");
+                    return false;
+                }
+
+                // Basic file header validation (optional but recommended)
+                using var stream = file.OpenReadStream();
+                var buffer = new byte[8];
+                await stream.ReadAsync(buffer, 0, 8);
+
+                // Check for common image file signatures
+                var isValidImage = IsValidImageHeader(buffer, contentType);
+                if (!isValidImage)
+                {
+                    _logger.LogWarning($"📸 Validation failed: Invalid file header for {contentType}");
+                    return false;
+                }
+
+                _logger.LogInformation($"📸 Validation passed: {file.FileName} ({file.Length} bytes, {contentType})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"📸 Error during image validation: {file?.FileName}");
+                return false;
+            }
+        }
+
+        private static bool IsValidImageHeader(byte[] buffer, string contentType)
+        {
+            if (buffer.Length < 8) return false;
+
+            return contentType switch
+            {
+                "image/jpeg" or "image/jpg" => buffer[0] == 0xFF && buffer[1] == 0xD8,
+                "image/png" => buffer[0] == 0x89 && buffer[1] == 0x50 && buffer[2] == 0x4E && buffer[3] == 0x47,
+                "image/gif" => (buffer[0] == 0x47 && buffer[1] == 0x49 && buffer[2] == 0x46),
+                "image/webp" => buffer[0] == 0x52 && buffer[1] == 0x49 && buffer[2] == 0x46 && buffer[3] == 0x46,
+                _ => true // Allow other types to pass basic validation
+            };
         }
     }
 }

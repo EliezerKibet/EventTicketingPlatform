@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useI18n } from '@/components/providers/I18nProvider'; // Add this import
+import { useI18n } from '@/components/providers/I18nProvider';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
+import { imageApi, imageUtils } from '@/lib/api'; // Added imageApi and imageUtils
 
 import {
     MapPin,
@@ -17,7 +19,10 @@ import {
     Save,
     X,
     AlertCircle,
-    CheckCircle
+    CheckCircle,
+    Upload,
+    Image as ImageIcon,
+    Trash2
 } from 'lucide-react';
 
 // Interfaces
@@ -34,6 +39,7 @@ interface Venue {
     contactEmail?: string;
     contactPhone?: string;
     website?: string;
+    imageUrl?: string; // Added imageUrl
     isActive: boolean;
     eventCount: number;
 }
@@ -57,9 +63,19 @@ interface VenueFormData {
 const VenuesPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
-    const { t } = useI18n(); // Add this hook
+    const { t } = useI18n();
     const themeClasses = useThemeClasses();
     const { isDark } = useTheme();
+
+    // Extended translation support for missing keys
+    const translateWithFallback = (key: string, fallback: string) => {
+        try {
+            const translated = t(key);
+            return translated === key ? fallback : translated;
+        } catch {
+            return fallback;
+        }
+    };
 
     const [venues, setVenues] = useState<Venue[]>([]);
     const [loading, setLoading] = useState(true);
@@ -69,6 +85,16 @@ const VenuesPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [formLoading, setFormLoading] = useState(false);
+
+    // Image upload states - ADDED
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageUploadError, setImageUploadError] = useState('');
+
+    // Edit image states - ADDED
+    const [showImageEditModal, setShowImageEditModal] = useState(false);
+    const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
+    const [imageEditLoading, setImageEditLoading] = useState(false);
 
     const [formData, setFormData] = useState<VenueFormData>({
         name: '',
@@ -135,6 +161,151 @@ const VenuesPage = () => {
 
     // Get unique cities for filter
     const cities = [...new Set(venues.map(venue => venue.city))].sort();
+
+    // Image handling functions - ADDED
+    const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setImageUploadError('');
+
+        // Validate image
+        const validation = imageApi.validateImageFile(file);
+        if (!validation.isValid) {
+            setImageUploadError(validation.error || 'Invalid image file');
+            return;
+        }
+
+        setSelectedImageFile(file);
+
+        // Create preview
+        try {
+            const preview = await imageUtils.resizeImageForPreview(file);
+            setImagePreview(preview);
+        } catch (error) {
+            console.error('Error creating image preview:', error);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setSelectedImageFile(null);
+        setImagePreview(null);
+        setImageUploadError('');
+
+        // Reset file input
+        const fileInput = document.getElementById('venue-image-input') as HTMLInputElement;
+        if (fileInput) {
+            fileInput.value = '';
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const files = Array.from(e.dataTransfer.files);
+        const imageFile = files.find(file => file.type.startsWith('image/'));
+
+        if (imageFile) {
+            setImageUploadError('');
+
+            // Validate image
+            const validation = imageApi.validateImageFile(imageFile);
+            if (!validation.isValid) {
+                setImageUploadError(validation.error || 'Invalid image file');
+                return;
+            }
+
+            setSelectedImageFile(imageFile);
+
+            // Create preview
+            try {
+                const preview = await imageUtils.resizeImageForPreview(imageFile);
+                setImagePreview(preview);
+            } catch (error) {
+                console.error('Error creating image preview:', error);
+                setImagePreview(URL.createObjectURL(imageFile));
+            }
+        } else {
+            setImageUploadError('Please select a valid image file');
+        }
+    };
+
+    // Edit image functions - ADDED
+    const handleEditImage = (venue: Venue) => {
+        setEditingVenue(venue);
+        setSelectedImageFile(null);
+        setImagePreview(venue.imageUrl ? imageUtils.getImageWithFallback(venue.imageUrl, 'venue') : null);
+        setImageUploadError('');
+        setShowImageEditModal(true);
+    };
+
+    const handleCloseImageEdit = () => {
+        setShowImageEditModal(false);
+        setEditingVenue(null);
+        setSelectedImageFile(null);
+        setImagePreview(null);
+        setImageUploadError('');
+    };
+
+    const handleSaveImage = async () => {
+        if (!editingVenue || !selectedImageFile) {
+            setImageUploadError('Please select an image to upload');
+            return;
+        }
+
+        setImageEditLoading(true);
+        setImageUploadError('');
+
+        try {
+            console.log(`Uploading image for venue ${editingVenue.venueId}`);
+            const result = await imageApi.uploadVenueImage(editingVenue.venueId, selectedImageFile);
+
+            setSuccess(translateWithFallback('venueImageUpdated', 'Venue image updated successfully!'));
+            await fetchVenues(); // Refresh the venues list
+            handleCloseImageEdit();
+
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (error: any) {
+            console.error('Error uploading venue image:', error);
+            setImageUploadError(error.message || 'Failed to upload image');
+        } finally {
+            setImageEditLoading(false);
+        }
+    };
+
+    const handleDeleteImage = async () => {
+        if (!editingVenue) return;
+
+        if (!confirm(translateWithFallback('confirmDeleteImage', 'Are you sure you want to delete this venue image?'))) {
+            return;
+        }
+
+        setImageEditLoading(true);
+        setImageUploadError('');
+
+        try {
+            console.log(`Deleting image for venue ${editingVenue.venueId}`);
+            await imageApi.deleteVenueImage(editingVenue.venueId);
+
+            setSuccess(translateWithFallback('venueImageDeleted', 'Venue image deleted successfully!'));
+            await fetchVenues(); // Refresh the venues list
+            handleCloseImageEdit();
+
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (error: any) {
+            console.error('Error deleting venue image:', error);
+            setImageUploadError(error.message || 'Failed to delete image');
+        } finally {
+            setImageEditLoading(false);
+        }
+    };
 
     // Form handling
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -218,6 +389,8 @@ const VenuesPage = () => {
         });
         setFormErrors({});
         setShowCreateForm(false);
+        // Reset image states - ADDED
+        handleRemoveImage();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -234,22 +407,23 @@ const VenuesPage = () => {
         try {
             const payload = {
                 name: formData.name.trim(),
-                description: formData.description.trim() || null,
+                description: formData.description.trim() || undefined,
                 address: formData.address.trim(),
                 city: formData.city.trim(),
-                state: formData.state.trim() || null,
-                zipCode: formData.zipCode.trim() || null,
+                state: formData.state.trim() || undefined,
+                zipCode: formData.zipCode.trim() || undefined,
                 country: formData.country.trim(),
-                latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-                longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+                latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+                longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
                 capacity: parseInt(formData.capacity),
-                contactEmail: formData.contactEmail.trim() || null,
-                contactPhone: formData.contactPhone.trim() || null,
-                website: formData.website.trim() || null
+                contactEmail: formData.contactEmail.trim() || undefined,
+                contactPhone: formData.contactPhone.trim() || undefined,
+                website: formData.website.trim() || undefined
             };
 
             console.log('Creating venue with payload:', payload);
 
+            // Create venue first
             const response = await fetch('http://localhost:5251/api/venues', {
                 method: 'POST',
                 headers: {
@@ -260,6 +434,20 @@ const VenuesPage = () => {
             });
 
             if (response.ok) {
+                const createdVenue = await response.json();
+                console.log('Venue created:', createdVenue);
+
+                // Upload image if provided
+                if (selectedImageFile) {
+                    try {
+                        console.log('Uploading venue image...');
+                        await imageApi.uploadVenueImage(createdVenue.venueId, selectedImageFile);
+                        console.log('Venue image uploaded successfully');
+                    } catch (imageError: any) {
+                        console.warn('Image upload failed, but venue was created:', imageError.message);
+                    }
+                }
+
                 setSuccess(t('venueCreatedSuccessfully'));
                 await fetchVenues();
                 resetForm();
@@ -270,7 +458,7 @@ const VenuesPage = () => {
                 console.error('Venue creation error:', errorData);
                 setError(errorData.message || t('failedToCreateVenue'));
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error creating venue:', error);
             setError(t('failedToCreateVenue'));
         } finally {
@@ -336,6 +524,156 @@ const VenuesPage = () => {
                     </div>
                 )}
 
+                {/* Image Edit Modal - ADDED */}
+                {showImageEditModal && editingVenue && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className={`${themeClasses.card} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl`}>
+                            <div className="p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className={`text-xl font-semibold ${themeClasses.text}`}>
+                                        {translateWithFallback('editVenueImage', 'Edit Venue Image')} - {editingVenue.name}
+                                    </h2>
+                                    <button
+                                        onClick={handleCloseImageEdit}
+                                        className={`${themeClasses.textMuted} hover:${themeClasses.text} transition-colors`}
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {/* Current Image Display */}
+                                    <div>
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
+                                            {translateWithFallback('currentImage', 'Current Image')}
+                                        </label>
+                                        <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                                            {editingVenue.imageUrl && !selectedImageFile ? (
+                                                <img
+                                                    src={imageUtils.getImageWithFallback(editingVenue.imageUrl, 'venue')}
+                                                    alt={editingVenue.name}
+                                                    className="w-full h-48 object-cover"
+                                                />
+                                            ) : selectedImageFile && imagePreview ? (
+                                                <img
+                                                    src={imagePreview}
+                                                    alt="New venue image preview"
+                                                    className="w-full h-48 object-cover"
+                                                />
+                                            ) : (
+                                                <div className={`w-full h-48 ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-center`}>
+                                                    <div className="text-center">
+                                                        <Building className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-2`} />
+                                                        <p className={`text-sm ${themeClasses.textMuted}`}>
+                                                            {translateWithFallback('noImageUploaded', 'No image uploaded')}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Image Upload Section */}
+                                    <div>
+                                        <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
+                                            {translateWithFallback('uploadNewImage', 'Upload New Image')}
+                                        </label>
+                                        <div
+                                            onDragOver={handleDragOver}
+                                            onDrop={handleDrop}
+                                            className={`border-2 border-dashed ${themeClasses.border} rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer`}
+                                            onClick={() => document.getElementById('edit-venue-image-input')?.click()}
+                                        >
+                                            <div className="flex flex-col items-center space-y-3">
+                                                <div className={`w-12 h-12 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-center`}>
+                                                    <ImageIcon className={`h-6 w-6 ${themeClasses.textMuted}`} />
+                                                </div>
+                                                <div>
+                                                    <p className={`font-medium ${themeClasses.text}`}>
+                                                        {translateWithFallback('clickOrDragImage', 'Click to select or drag image here')}
+                                                    </p>
+                                                    <p className={`text-sm ${themeClasses.textMuted}`}>
+                                                        {translateWithFallback('imageRequirements', 'JPEG, PNG, WebP or GIF (max 5MB)')}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                                                >
+                                                    <Upload className="h-4 w-4 mr-2 inline" />
+                                                    {translateWithFallback('selectFile', 'Select File')}
+                                                </button>
+                                            </div>
+                                            <input
+                                                id="edit-venue-image-input"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageSelect}
+                                                className="hidden"
+                                            />
+                                        </div>
+
+                                        {selectedImageFile && (
+                                            <p className={`text-sm ${themeClasses.textMuted} mt-2`}>
+                                                {translateWithFallback('selectedFile', 'Selected file')}: {selectedImageFile.name} ({imageUtils.formatFileSize(selectedImageFile.size)})
+                                            </p>
+                                        )}
+
+                                        {imageUploadError && (
+                                            <p className="text-red-500 text-sm mt-2">{imageUploadError}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className={`flex justify-between items-center pt-6 border-t ${themeClasses.border}`}>
+                                        <div>
+                                            {editingVenue.imageUrl && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDeleteImage}
+                                                    disabled={imageEditLoading}
+                                                    className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    {translateWithFallback('deleteImage', 'Delete Image')}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="flex space-x-3">
+                                            <button
+                                                type="button"
+                                                onClick={handleCloseImageEdit}
+                                                className={`px-6 py-2 border ${themeClasses.border} ${themeClasses.textMuted} rounded-lg ${themeClasses.hover} transition-colors`}
+                                            >
+                                                {t('cancel')}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleSaveImage}
+                                                disabled={!selectedImageFile || imageEditLoading}
+                                                className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                {imageEditLoading ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                        {translateWithFallback('uploading', 'Uploading...')}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Save className="h-4 w-4 mr-2" />
+                                                        {translateWithFallback('saveImage', 'Save Image')}
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                         <div className="flex items-center">
@@ -364,6 +702,98 @@ const VenuesPage = () => {
 
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Venue Image Upload Section - ADDED */}
+                                        <div className="md:col-span-2">
+                                            <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
+                                                {translateWithFallback('venueImage', 'Venue Image')}
+                                            </label>
+
+                                            {/* Image Upload Area */}
+                                            <div className="space-y-4">
+                                                {!imagePreview ? (
+                                                    <div
+                                                        onDragOver={handleDragOver}
+                                                        onDrop={handleDrop}
+                                                        className={`border-2 border-dashed ${themeClasses.border} rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer`}
+                                                        onClick={() => document.getElementById('venue-image-input')?.click()}
+                                                    >
+                                                        <div className="flex flex-col items-center space-y-4">
+                                                            <div className={`w-16 h-16 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-center`}>
+                                                                <ImageIcon className={`h-8 w-8 ${themeClasses.textMuted}`} />
+                                                            </div>
+                                                            <div>
+                                                                <p className={`text-lg font-medium ${themeClasses.text}`}>
+                                                                    {translateWithFallback('uploadVenueImage', 'Upload Venue Image')}
+                                                                </p>
+                                                                <p className={`text-sm ${themeClasses.textMuted}`}>
+                                                                    {translateWithFallback('dragDropImage', 'Drag & drop an image here, or click to select')}
+                                                                </p>
+                                                                <p className={`text-xs ${themeClasses.textMuted} mt-1`}>
+                                                                    {translateWithFallback('imageRequirements', 'JPEG, PNG, WebP or GIF (max 5MB)')}
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                            >
+                                                                <Upload className="h-4 w-4 mr-2" />
+                                                                {translateWithFallback('chooseFile', 'Choose File')}
+                                                            </button>
+                                                        </div>
+                                                        <input
+                                                            id="venue-image-input"
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={handleImageSelect}
+                                                            className="hidden"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="relative">
+                                                        <div className="relative rounded-lg overflow-hidden">
+                                                            <img
+                                                                src={imagePreview}
+                                                                alt="Venue preview"
+                                                                className="w-full h-48 object-cover"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => document.getElementById('venue-image-input')?.click()}
+                                                                    className="px-4 py-2 bg-white text-gray-900 rounded-lg mr-2 hover:bg-gray-100 transition-colors"
+                                                                >
+                                                                    {translateWithFallback('changeImage', 'Change Image')}
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleRemoveImage}
+                                                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <input
+                                                            id="venue-image-input"
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={handleImageSelect}
+                                                            className="hidden"
+                                                        />
+                                                        {selectedImageFile && (
+                                                            <p className={`text-sm ${themeClasses.textMuted} mt-2`}>
+                                                                {selectedImageFile.name} ({imageUtils.formatFileSize(selectedImageFile.size)})
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {imageUploadError && (
+                                                    <p className="text-red-500 text-sm">{imageUploadError}</p>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         {/* Venue Name */}
                                         <div className="md:col-span-2">
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
@@ -679,14 +1109,49 @@ const VenuesPage = () => {
                                     {filteredVenues.map((venue) => (
                                         <tr key={venue.venueId} className={themeClasses.hover}>
                                             <td className="px-6 py-4">
-                                                <div>
-                                                    <div className={`text-sm font-medium ${themeClasses.text}`}>{venue.name}</div>
-                                                    {venue.description && (
-                                                        <div className={`text-sm ${themeClasses.textMuted} truncate max-w-xs`}>{venue.description}</div>
-                                                    )}
-                                                    {venue.contactEmail && (
-                                                        <div className="text-xs text-blue-600 dark:text-blue-400">{venue.contactEmail}</div>
-                                                    )}
+                                                <div className="flex items-center space-x-3">
+                                                    {/* Venue Image - ENHANCED WITH CLICK TO EDIT */}
+                                                    <div className="flex-shrink-0">
+                                                        <div
+                                                            onClick={() => handleEditImage(venue)}
+                                                            className="relative group cursor-pointer"
+                                                        >
+                                                            {venue.imageUrl ? (
+                                                                <img
+                                                                    src={imageUtils.getImageWithFallback(venue.imageUrl, 'venue')}
+                                                                    alt={venue.name}
+                                                                    className="h-16 w-16 rounded-lg object-cover group-hover:opacity-75 transition-opacity"
+                                                                    loading="lazy"
+                                                                />
+                                                            ) : (
+                                                                <div className={`h-16 w-16 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-200'} flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors`}>
+                                                                    <Building className={`h-8 w-8 ${themeClasses.textMuted} group-hover:text-blue-500`} />
+                                                                </div>
+                                                            )}
+                                                            {/* Overlay on hover */}
+                                                            <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <ImageIcon className="h-6 w-6 text-white" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center space-x-2">
+                                                            <div className={`text-sm font-medium ${themeClasses.text}`}>{venue.name}</div>
+                                                            <button
+                                                                onClick={() => handleEditImage(venue)}
+                                                                className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
+                                                                title={translateWithFallback('editImage', 'Edit Image')}
+                                                            >
+                                                                <ImageIcon className="h-3 w-3" />
+                                                            </button>
+                                                        </div>
+                                                        {venue.description && (
+                                                            <div className={`text-sm ${themeClasses.textMuted} truncate max-w-xs`}>{venue.description}</div>
+                                                        )}
+                                                        {venue.contactEmail && (
+                                                            <div className="text-xs text-blue-600 dark:text-blue-400">{venue.contactEmail}</div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">

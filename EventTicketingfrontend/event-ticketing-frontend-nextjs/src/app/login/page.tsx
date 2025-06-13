@@ -128,59 +128,9 @@ export default function LoginPage() {
                         </div>
                     </form>
 
-                    {/* Quick Login Options */}
-                    <div className="mt-6">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-gray-300" />
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white text-gray-500">Quick Login (for testing)</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => fillCredentials('customer')}
-                                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                <Users className="h-4 w-4 mr-2" />
-                                Customer
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => fillCredentials('organizer')}
-                                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                <Star className="h-4 w-4 mr-2" />
-                                Organizer
-                            </button>
-                        </div>
-
-                        <div className="mt-4 text-center text-xs text-gray-500">
-                            <div className="space-y-1">
-                                <p><strong>Customer:</strong> user@events.com / password123</p>
-                                <p><strong>Organizer:</strong> organizer@events.com / password123</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            {/* Role Information */}
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="text-center">
-                        <h3 className="text-sm font-medium text-blue-900 mb-2">Access Levels</h3>
-                        <div className="space-y-1 text-xs text-blue-700">
-                            <p><strong>Customers:</strong> Browse and purchase event tickets</p>
-                            <p><strong>Organizers:</strong> Create and manage events + analytics</p>
-                            <p><strong>Admins:</strong> Full platform administration</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }

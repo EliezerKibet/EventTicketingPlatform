@@ -11,7 +11,7 @@ import {
     AlertCircle, Clock, Edit, Lock, AlertTriangle, Info, X
 } from 'lucide-react';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
-
+import { imageApi, imageUtils, eventsApi } from '@/lib/api';
 // Local interfaces to avoid import issues
 interface Category {
     categoryId: number;
@@ -98,6 +98,18 @@ const EditEventPage = () => {
     const [editingTicketType, setEditingTicketType] = useState<TicketType | null>(null);
     const [ticketFormLoading, setTicketFormLoading] = useState(false);
 
+
+    // Image handling state - add after your existing state declarations
+    const [bannerFile, setBannerFile] = useState<File | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [bannerPreview, setBannerPreview] = useState<string>('');
+    const [imagePreview, setImagePreview] = useState<string>('');
+    const [deleteBanner, setDeleteBanner] = useState(false);
+    const [deleteImage, setDeleteImage] = useState(false);
+    const [imageUploadLoading, setImageUploadLoading] = useState(false);
+
+    const [isDragging, setIsDragging] = useState(false);
+
     // Form state
     const [formData, setFormData] = useState<EventFormData>({
         title: '',
@@ -141,6 +153,35 @@ const EditEventPage = () => {
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [ticketFormErrors, setTicketFormErrors] = useState<Record<string, string>>({});
+
+
+    const [showImageModal, setShowImageModal] = useState(false);
+    const [modalImageSrc, setModalImageSrc] = useState('');
+
+    const openImageModal = (src: string) => {
+        setModalImageSrc(src);
+        setShowImageModal(true);
+    };
+
+    const ImagePreviewModal = () => (
+        showImageModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                <div className="relative max-w-4xl max-h-4xl">
+                    <img
+                        src={modalImageSrc}
+                        alt={t('imagePreview')}
+                        className="max-w-full max-h-full object-contain"
+                    />
+                    <button
+                        onClick={() => setShowImageModal(false)}
+                        className="absolute top-4 right-4 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-75"
+                    >
+                        <X className="h-6 w-6" />
+                    </button>
+                </div>
+            </div>
+        )
+    );
 
     // Load event data and initial data
     useEffect(() => {
@@ -197,7 +238,7 @@ const EditEventPage = () => {
                 }
             };
 
-            // Map API response to form data
+            // In your loadEventData function, after setting formData:
             setFormData({
                 title: eventData.title || '',
                 description: eventData.description || '',
@@ -213,6 +254,8 @@ const EditEventPage = () => {
                 isPublished: eventData.isPublished || false
             });
 
+
+
             // Fetch ticket types for this event
             await fetchTicketTypes();
 
@@ -222,6 +265,110 @@ const EditEventPage = () => {
         } finally {
             setInitialLoading(false);
         }
+    };
+
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e: React.DragEvent, type: 'banner' | 'image') => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        const files = Array.from(e.dataTransfer.files);
+        const imageFile = files.find(file => file.type.startsWith('image/'));
+
+        if (imageFile) {
+            if (type === 'banner') {
+                await handleBannerFileChange({ target: { files: [imageFile] } } as any);
+            } else {
+                await handleImageFileChange({ target: { files: [imageFile] } } as any);
+            }
+        } else {
+            setError(t('invalidImageFile'));
+        }
+    };
+
+    const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setError(''); // Clear previous errors
+
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                setError(t('invalidImageFile') + ': ' + (validation.error || t('imageUploadFailed')));
+                return;
+            }
+
+            try {
+                setImageUploadLoading(true); // Show loading state during preview generation
+                setBannerFile(file);
+                const preview = await imageUtils.resizeImageForPreview(file, 800, 400);
+                setBannerPreview(preview);
+                setDeleteBanner(false);
+
+                // Show success message for file selection
+                setSuccess(t('imageUploadSuccess'));
+                setTimeout(() => setSuccess(''), 2000);
+            } catch (error) {
+                setError(t('imageProcessing') + ' ' + t('imageUploadFailed'));
+            } finally {
+                setImageUploadLoading(false);
+            }
+        }
+    };
+
+    const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setError(''); // Clear previous errors
+
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                setError(t('invalidImageFile') + ': ' + (validation.error || t('imageUploadFailed')));
+                return;
+            }
+
+            try {
+                setImageUploadLoading(true); // Show loading state during preview generation
+                setImageFile(file);
+                const preview = await imageUtils.resizeImageForPreview(file, 400, 300);
+                setImagePreview(preview);
+                setDeleteImage(false);
+
+                // Show success message for file selection
+                setSuccess(t('imageUploadSuccess'));
+                setTimeout(() => setSuccess(''), 2000);
+            } catch (error) {
+                setError(t('imageProcessing') + ' ' + t('imageUploadFailed'));
+            } finally {
+                setImageUploadLoading(false);
+            }
+        }
+    };
+
+
+    const handleDeleteBanner = () => {
+        setBannerFile(null);
+        setBannerPreview('');
+        setDeleteBanner(true);
+        const bannerInput = document.getElementById('banner-upload') as HTMLInputElement;
+        if (bannerInput) bannerInput.value = '';
+    };
+
+    const handleDeleteImage = () => {
+        setImageFile(null);
+        setImagePreview('');
+        setDeleteImage(true);
+        const imageInput = document.getElementById('image-upload') as HTMLInputElement;
+        if (imageInput) imageInput.value = '';
     };
 
     const fetchTicketTypes = async () => {
@@ -325,6 +472,39 @@ const EditEventPage = () => {
             reason: t('safeToEdit')
         };
     };
+
+
+    const ImageDropZone = ({
+        type,
+        preview,
+        currentImage,
+        onFileSelect,
+        onDelete,
+        children
+    }: {
+        type: 'banner' | 'image';
+        preview: string;
+        currentImage: string;
+        onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        onDelete: () => void;
+        children: React.ReactNode;
+    }) => (
+        <div
+            className={`relative ${isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, type)}
+        >
+            {children}
+            {isDragging && (
+                <div className="absolute inset-0 border-2 border-dashed border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 flex items-center justify-center rounded-lg">
+                    <p className="text-blue-700 dark:text-blue-300 font-medium">
+                        {t('dropImageHere')}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
 
     const getEditingStatus = (ticketType: TicketType) => {
         const { canEdit, reason } = canEditTicketType(ticketType);
@@ -642,62 +822,65 @@ const EditEventPage = () => {
         }
 
         setLoading(true);
+        setImageUploadLoading(true);
         setError('');
         setSuccess('');
 
         try {
-            // Prepare event data for your API (matching UpdateEventDto exactly)
             const eventPayload = {
                 title: formData.title,
                 description: formData.description,
-                shortDescription: null,
+                shortDescription: undefined, // Changed from null to undefined
                 startDateTime: formData.eventDate,
-                endDateTime: formData.endDate || null,
+                endDateTime: formData.endDate || undefined, // Changed from null to undefined
                 categoryId: parseInt(formData.categoryId),
-                venueId: formData.isOnline ? null : parseInt(formData.venueId?.toString() || '0'),
-                imageUrl: formData.imageUrl || null,
-                bannerImageUrl: null,
-                tags: null,
+                venueId: formData.isOnline ? undefined : parseInt(formData.venueId?.toString() || '0'), // Changed from null to undefined
+                imageUrl: formData.imageUrl || undefined, // Changed from null to undefined
+                bannerImageUrl: undefined, // Changed from null to undefined
+                tags: undefined, // Changed from null to undefined
                 maxAttendees: parseInt(formData.maxCapacity),
                 basePrice: 0,
                 currency: "USD",
                 isOnline: formData.isOnline,
-                onlineUrl: null
+                onlineUrl: undefined // Changed from null to undefined
             };
 
-            console.log('Updating event with corrected payload:', eventPayload);
+            console.log('Updating event with images:', eventPayload);
 
-            // Update event using your real API
-            const response = await fetch(`http://localhost:5251/api/events/${eventId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                },
-                body: JSON.stringify(eventPayload)
-            });
+            // Enhanced error handling for image uploads
+            try {
+                const updatedEvent = await eventsApi.updateEventWithImages(
+                    parseInt(eventId),
+                    eventPayload,
+                    bannerFile || undefined,
+                    imageFile || undefined,
+                    deleteBanner,
+                    deleteImage
+                );
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('API Error:', errorData);
-                throw new Error(errorData.message || t('failedToUpdateEvent'));
+                console.log('Event updated successfully:', updatedEvent);
+                setSuccess(t('eventUpdatedSuccessfully'));
+
+                setTimeout(() => {
+                    router.push(`/organizer/events/${eventId}`);
+                }, 2000);
+            } catch (imageError: any) {
+                // Handle specific image upload errors
+                if (imageError.message.includes('banner')) {
+                    setError(t('bannerImage') + ' ' + t('imageUploadFailed') + ': ' + imageError.message);
+                } else if (imageError.message.includes('image')) {
+                    setError(t('eventImage') + ' ' + t('imageUploadFailed') + ': ' + imageError.message);
+                } else {
+                    setError(t('imageUploadFailed') + ': ' + imageError.message);
+                }
             }
-
-            const updatedEvent = await response.json();
-            console.log('Event updated successfully:', updatedEvent);
-
-            setSuccess(t('eventUpdatedSuccessfully'));
-
-            // Redirect to event detail page after a short delay
-            setTimeout(() => {
-                router.push(`/organizer/events/${eventId}`);
-            }, 2000);
 
         } catch (error) {
             console.error('Error updating event:', error);
             setError(error instanceof Error ? error.message : t('failedToUpdateEvent'));
         } finally {
             setLoading(false);
+            setImageUploadLoading(false);
         }
     };
 
@@ -850,22 +1033,176 @@ const EditEventPage = () => {
                                     />
                                     {formErrors.maxCapacity && <p className="text-red-500 text-sm mt-1">{formErrors.maxCapacity}</p>}
                                 </div>
+                            </div>
+                        </div>
 
-                                <div className="md:col-span-2">
+                        {/* Event Images Section - AFTER (translated) */}
+                        <div>
+                            <h2 className={`text-lg font-semibold ${themeClasses.text} mb-4`}>{t('eventImages')}</h2>
+
+                            <div className="space-y-6">
+                                <div>
                                     <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                        {t('eventImageUrl')}
+                                        {t('bannerImage')}
                                     </label>
+                                    <p className={`text-xs ${themeClasses.textMuted} mb-3`}>
+                                        {t('bannerImageDescription')}
+                                    </p>
+
+                                    <div className="mb-4">
+                                        {bannerPreview ? (
+                                            <div className="relative">
+                                                <img
+                                                    src={bannerPreview}
+                                                    alt={t('imagePreview')}
+                                                    className="w-full h-48 object-cover rounded-lg border"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDeleteBanner}
+                                                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                                    title={t('removeImage')}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        ) : formData.imageUrl && !deleteBanner ? (
+                                            <div className="relative">
+                                                <img
+                                                    src={imageUtils.getImageWithFallback(formData.imageUrl, 'event-banner')}
+                                                    alt={t('bannerImage')}
+                                                    className="w-full h-48 object-cover rounded-lg border"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDeleteBanner}
+                                                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                                    title={t('removeImage')}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className={`w-full h-48 ${themeClasses.border} border-2 border-dashed rounded-lg flex items-center justify-center ${themeClasses.textMuted}`}>
+                                                <div className="text-center">
+                                                    <Globe className="h-12 w-12 mx-auto mb-2" />
+                                                    <p>{t('noBannerImage')}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <input
-                                        type="url"
-                                        name="imageUrl"
-                                        value={formData.imageUrl}
-                                        onChange={handleInputChange}
-                                        className={`w-full px-4 py-2 ${themeClasses.card} ${themeClasses.border} border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${themeClasses.text}`}
-                                        placeholder={t('enterImageUrl')}
+                                        id="banner-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleBannerFileChange}
+                                        className="hidden"
+                                        aria-label={t('selectImageFile')}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => document.getElementById('banner-upload')?.click()}
+                                        className={`flex items-center px-4 py-2 ${themeClasses.border} border rounded-lg ${themeClasses.text} ${themeClasses.hover} transition-colors`}
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        {bannerPreview || formData.imageUrl ? t('changeBanner') : t('uploadBanner')}
+                                    </button>
+                                </div>
+
+                                {/* Event Image Section */}
+                                <div>
+                                    <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
+                                        {t('eventImage')}
+                                    </label>
+                                    <p className={`text-xs ${themeClasses.textMuted} mb-3`}>
+                                        {t('eventImageDescription')}
+                                    </p>
+
+                                    <div className="mb-4">
+                                        {imagePreview ? (
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={imagePreview}
+                                                    alt={t('imagePreview')}
+                                                    className="w-64 h-48 object-cover rounded-lg border"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDeleteImage}
+                                                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                                    title={t('removeImage')}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        ) : formData.imageUrl && !deleteImage ? (
+                                            <div className="relative inline-block">
+                                                <img
+                                                    src={imageUtils.getImageWithFallback(formData.imageUrl, 'event-image')}
+                                                    alt={t('eventImage')}
+                                                    className="w-64 h-48 object-cover rounded-lg border"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDeleteImage}
+                                                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                                    title={t('removeImage')}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className={`w-64 h-48 ${themeClasses.border} border-2 border-dashed rounded-lg flex items-center justify-center ${themeClasses.textMuted}`}>
+                                                <div className="text-center">
+                                                    <Calendar className="h-8 w-8 mx-auto mb-2" />
+                                                    <p className="text-sm">{t('noEventImage')}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <input
+                                        id="image-upload"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageFileChange}
+                                        className="hidden"
+                                        aria-label={t('selectImageFile')}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => document.getElementById('image-upload')?.click()}
+                                        className={`flex items-center px-4 py-2 ${themeClasses.border} border rounded-lg ${themeClasses.text} ${themeClasses.hover} transition-colors`}
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        {imagePreview || formData.imageUrl ? t('changeImage') : t('uploadImage')}
+                                    </button>
+                                </div>
+
+                                {/* Image Upload Progress */}
+                                {imageUploadLoading && (
+                                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                        <div className="flex items-center">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-3"></div>
+                                            <span className="text-sm text-blue-700 dark:text-blue-300">{t('uploadingImages')}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Image Guidelines */}
+                                <div className="p-4 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-800 rounded-lg">
+                                    <h4 className={`text-sm font-medium ${themeClasses.text} mb-2`}>{t('imageGuidelines')}</h4>
+                                    <ul className={`text-xs ${themeClasses.textMuted} space-y-1`}>
+                                        <li>• {t('supportedFormats')}: JPEG, PNG, WebP, GIF</li>
+                                        <li>• {t('maxFileSize')}: 5MB</li>
+                                        <li>• {t('bannerRecommended')}: 1200x400px (3:1 ratio)</li>
+                                        <li>• {t('imageRecommended')}: 400x300px (4:3 ratio)</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
+
 
                         {/* Date & Time */}
                         <div>
