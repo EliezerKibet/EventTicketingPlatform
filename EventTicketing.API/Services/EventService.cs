@@ -229,12 +229,16 @@ namespace EventTicketing.API.Services
                 .Take(pageSize)
                 .ToListAsync();
 
+          
             return events.Select(e => new EventListDto
             {
                 EventId = e.EventId,
                 Title = e.Title,
                 ShortDescription = e.ShortDescription,
                 OrganizerName = $"{e.Organizer.FirstName} {e.Organizer.LastName}",
+
+                VenueId = e.VenueId,  
+
                 VenueName = e.Venue.Name,
                 VenueCity = e.Venue.City,
                 CategoryName = e.Category.Name,
@@ -269,6 +273,10 @@ namespace EventTicketing.API.Services
                 Title = e.Title,
                 ShortDescription = e.ShortDescription,
                 OrganizerName = $"{e.Organizer.FirstName} {e.Organizer.LastName}",
+
+                
+                VenueId = e.VenueId,  
+
                 VenueName = e.Venue.Name,
                 VenueCity = e.Venue.City,
                 CategoryName = e.Category.Name,
@@ -569,6 +577,146 @@ namespace EventTicketing.API.Services
                 IsActive = venue.IsActive,
                 EventCount = venue.Events.Count(e => e.IsPublished)
             };
+        }
+
+        public async Task<List<EventListDto>> GetEventsByVenueAsync(int venueId)
+        {
+            var events = await _context.Events
+                .Include(e => e.Venue)
+                .Include(e => e.Category)
+                .Include(e => e.Organizer)
+                .Include(e => e.Tickets)  // ADD THIS
+                .Where(e => e.VenueId == venueId && e.IsPublished)
+                .OrderByDescending(e => e.StartDateTime)
+                .Select(e => new EventListDto
+                {
+                    EventId = e.EventId,
+                    Title = e.Title,
+                    Description = e.Description,
+                    ShortDescription = e.ShortDescription,
+                    OrganizerId = e.OrganizerId,
+                    OrganizerName = e.Organizer.FirstName + " " + e.Organizer.LastName,
+                    VenueId = e.VenueId,
+                    VenueName = e.Venue.Name,
+                    VenueCity = e.Venue.City,
+                    CategoryId = e.CategoryId,
+                    CategoryName = e.Category.Name,
+                    StartDateTime = e.StartDateTime,
+                    EndDateTime = e.EndDateTime,
+                    ImageUrl = e.ImageUrl,
+                    BannerImageUrl = e.BannerImageUrl,
+                    Status = e.Status.ToString(),  // FIX: Convert enum to string
+                    IsPublished = e.IsPublished,
+                    IsFeatured = e.IsFeatured,
+                    CreatedAt = e.CreatedAt,
+                    Tags = e.Tags,
+                    MaxAttendees = e.MaxAttendees,
+                    BasePrice = e.BasePrice,
+                    Currency = e.Currency,
+                    IsOnline = e.IsOnline,
+                    OnlineUrl = e.OnlineUrl,
+                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used),  // FIX: Use enum
+                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  // FIX: Use enum
+                })
+                .ToListAsync();
+
+            return events;
+        }
+
+        public async Task<List<EventListDto>> GetUpcomingEventsByVenueAsync(int venueId)
+        {
+            var now = DateTime.UtcNow;
+
+            var events = await _context.Events
+                .Include(e => e.Venue)
+                .Include(e => e.Category)
+                .Include(e => e.Organizer)
+                .Include(e => e.Tickets)  // ADD THIS
+                .Where(e => e.VenueId == venueId &&
+                           e.IsPublished &&
+                           e.StartDateTime > now)
+                .OrderBy(e => e.StartDateTime)
+                .Select(e => new EventListDto
+                {
+                    EventId = e.EventId,
+                    Title = e.Title,
+                    Description = e.Description,
+                    ShortDescription = e.ShortDescription,
+                    OrganizerId = e.OrganizerId,
+                    OrganizerName = e.Organizer.FirstName + " " + e.Organizer.LastName,
+                    VenueId = e.VenueId,
+                    VenueName = e.Venue.Name,
+                    VenueCity = e.Venue.City,
+                    CategoryId = e.CategoryId,
+                    CategoryName = e.Category.Name,
+                    StartDateTime = e.StartDateTime,
+                    EndDateTime = e.EndDateTime,
+                    ImageUrl = e.ImageUrl,
+                    BannerImageUrl = e.BannerImageUrl,
+                    Status = e.Status.ToString(),  // FIX: Convert enum to string
+                    IsPublished = e.IsPublished,
+                    IsFeatured = e.IsFeatured,
+                    CreatedAt = e.CreatedAt,
+                    Tags = e.Tags,
+                    MaxAttendees = e.MaxAttendees,
+                    BasePrice = e.BasePrice,
+                    Currency = e.Currency,
+                    IsOnline = e.IsOnline,
+                    OnlineUrl = e.OnlineUrl,
+                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used),  // FIX: Use enum
+                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  // FIX: Use enum
+                })
+                .ToListAsync();
+
+            return events;
+        }
+
+        public async Task<List<EventListDto>> GetPastEventsByVenueAsync(int venueId)
+        {
+            var now = DateTime.UtcNow;
+
+            var events = await _context.Events
+                .Include(e => e.Venue)
+                .Include(e => e.Category)
+                .Include(e => e.Organizer)
+                .Include(e => e.Tickets)  // ADD THIS
+                .Where(e => e.VenueId == venueId &&
+                           e.IsPublished &&
+                           e.StartDateTime <= now)
+                .OrderByDescending(e => e.StartDateTime)
+                .Select(e => new EventListDto
+                {
+                    EventId = e.EventId,
+                    Title = e.Title,
+                    Description = e.Description,
+                    ShortDescription = e.ShortDescription,
+                    OrganizerId = e.OrganizerId,
+                    OrganizerName = e.Organizer.FirstName + " " + e.Organizer.LastName,
+                    VenueId = e.VenueId,
+                    VenueName = e.Venue.Name,
+                    VenueCity = e.Venue.City,
+                    CategoryId = e.CategoryId,
+                    CategoryName = e.Category.Name,
+                    StartDateTime = e.StartDateTime,
+                    EndDateTime = e.EndDateTime,
+                    ImageUrl = e.ImageUrl,
+                    BannerImageUrl = e.BannerImageUrl,
+                    Status = e.Status.ToString(),  // FIX: Convert enum to string
+                    IsPublished = e.IsPublished,
+                    IsFeatured = e.IsFeatured,
+                    CreatedAt = e.CreatedAt,
+                    Tags = e.Tags,
+                    MaxAttendees = e.MaxAttendees,
+                    BasePrice = e.BasePrice,
+                    Currency = e.Currency,
+                    IsOnline = e.IsOnline,
+                    OnlineUrl = e.OnlineUrl,
+                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used),  // FIX: Use enum
+                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  // FIX: Use enum
+                })
+                .ToListAsync();
+
+            return events;
         }
     }
 }

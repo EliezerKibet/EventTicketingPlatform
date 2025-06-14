@@ -862,7 +862,7 @@ const EditEventPage = () => {
                 setSuccess(t('eventUpdatedSuccessfully'));
 
                 setTimeout(() => {
-                    router.push(`/organizer/events/${eventId}`);
+                    router.push(`/organizer/events`);
                 }, 2000);
             } catch (imageError: any) {
                 // Handle specific image upload errors
@@ -1679,7 +1679,17 @@ const EditEventPage = () => {
                                     </button>
                                 </div>
 
-                                <form onSubmit={handleUpdateTicketType} className="space-y-4">
+                                <form onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    try {
+                                        await handleUpdateTicketType(e);
+                                        // Redirect to events page after successful update
+                                        window.location.href = 'http://localhost:3000/organizer/events';
+                                    } catch (error) {
+                                        // Handle error if needed - the form will show error messages
+                                        console.error('Update failed:', error);
+                                    }
+                                }} className="space-y-4">
                                     {/* Safe Edit Notice */}
                                     <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                         <h4 className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">✅ {t('safeToEdit')}</h4>

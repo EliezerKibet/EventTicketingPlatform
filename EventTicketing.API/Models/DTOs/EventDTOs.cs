@@ -107,20 +107,29 @@ namespace EventTicketing.API.Models.DTOs
     {
         public int EventId { get; set; }
         public string Title { get; set; }
+        public string? Description { get; set; }  // ADD THIS
         public string? ShortDescription { get; set; }
+        public int OrganizerId { get; set; }  // ADD THIS
         public string OrganizerName { get; set; }
+        public int VenueId { get; set; }  // ADD THIS
         public string VenueName { get; set; }
         public string VenueCity { get; set; }
+        public int CategoryId { get; set; }  // ADD THIS
         public string CategoryName { get; set; }
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }
         public string? ImageUrl { get; set; }
+        public string? BannerImageUrl { get; set; }  // ADD THIS
         public string Status { get; set; }
         public bool IsPublished { get; set; }
         public bool IsFeatured { get; set; }
+        public DateTime CreatedAt { get; set; }  // ADD THIS
+        public string? Tags { get; set; }  // ADD THIS
+        public int MaxAttendees { get; set; }  // ADD THIS
         public decimal BasePrice { get; set; }
         public string Currency { get; set; }
         public bool IsOnline { get; set; }
+        public string? OnlineUrl { get; set; }  // ADD THIS
         public int TicketsSold { get; set; }
         public int AvailableTickets { get; set; }
     }

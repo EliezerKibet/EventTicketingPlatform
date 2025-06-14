@@ -29,5 +29,9 @@ namespace EventTicketing.API.Services
         Task<string> UploadEventBannerAsync(int eventId, IFormFile file, int organizerId);
         Task<string> UploadEventImageAsync(int eventId, IFormFile file, int organizerId);
         Task<string> UploadVenueImageAsync(int venueId, IFormFile file);
+
+        Task<List<EventListDto>> GetEventsByVenueAsync(int venueId);
+        Task<List<EventListDto>> GetUpcomingEventsByVenueAsync(int venueId);
+        Task<List<EventListDto>> GetPastEventsByVenueAsync(int venueId);
     }
 }

@@ -1,8 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // components/layouts/ConditionalLayout.tsx
 'use client';
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { Calendar, LogOut, User, Settings, Menu, X, Globe } from 'lucide-react';
+import Link from 'next/link';
 import OrganizerClientLayout from '@/app/organizer/OrganizerClientLayout';
 
 interface ConditionalLayoutProps {
@@ -11,21 +15,67 @@ interface ConditionalLayoutProps {
 
 const ConditionalLayout: React.FC<ConditionalLayoutProps> = ({ children }) => {
     const pathname = usePathname();
+    const router = useRouter();
+    const { user, logout } = useAuth();
+    const [showUserMenu, setShowUserMenu] = useState(false);
 
     // Check if we're in the organizer section
     const isOrganizerRoute = pathname?.startsWith('/organizer');
 
+    // Check if we're on the dashboard page specifically
+    const isDashboardPage = pathname === '/organizer' || pathname === '/organizer/dashboard';
+
+    // Check if we're on auth pages (login/register)
+    const isAuthPage = pathname?.includes('/login') || pathname?.includes('/register');
+
+    const handleSignOut = async () => {
+        try {
+            await logout();
+            setShowUserMenu(false);
+            router.push('/login');
+        } catch (error) {
+            console.error('Sign out error:', error);
+        }
+    };
+
     if (isOrganizerRoute) {
-        // For organizer routes, use the organizer layout which includes its own sidebar
+        // For organizer dashboard, render without header
+        if (isDashboardPage) {
+            return (
+                <div className="min-h-screen">
+                    <OrganizerClientLayout>
+                        {children}
+                    </OrganizerClientLayout>
+                </div>
+            );
+        }
+
+        // For other organizer routes, use the organizer layout with header functionality
         return (
-            <OrganizerClientLayout>
-                {children}
-            </OrganizerClientLayout>
+            <div className="min-h-screen">
+
+                {/* Click outside to close menu */}
+                {showUserMenu && (
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowUserMenu(false)}
+                    />
+                )}
+
+                {/* Organizer Layout Content */}
+                <OrganizerClientLayout>
+                    {children}
+                </OrganizerClientLayout>
+            </div>
         );
     }
 
-    // For non-organizer routes, render children without any layout wrapper
-    // This prevents the global layout from adding another sidebar
+    if (isAuthPage) {
+        // For auth pages, render without any layout
+        return <>{children}</>;
+    }
+
+    // For regular pages (like events homepage), render without header
     return <>{children}</>;
 };
 

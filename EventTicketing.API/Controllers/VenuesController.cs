@@ -114,5 +114,52 @@ namespace EventTicketing.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        
+
+        // GET: api/venues/{id}/events
+        [HttpGet("{id}/events")]
+        public async Task<ActionResult<List<EventListDto>>> GetVenueEvents(int id)
+        {
+            try
+            {
+                var events = await _eventService.GetEventsByVenueAsync(id);
+                return Ok(events);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/venues/{id}/events/upcoming
+        [HttpGet("{id}/events/upcoming")]
+        public async Task<ActionResult<List<EventListDto>>> GetVenueUpcomingEvents(int id)
+        {
+            try
+            {
+                var events = await _eventService.GetUpcomingEventsByVenueAsync(id);
+                return Ok(events);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // GET: api/venues/{id}/events/past
+        [HttpGet("{id}/events/past")]
+        public async Task<ActionResult<List<EventListDto>>> GetVenuePastEvents(int id)
+        {
+            try
+            {
+                var events = await _eventService.GetPastEventsByVenueAsync(id);
+                return Ok(events);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
