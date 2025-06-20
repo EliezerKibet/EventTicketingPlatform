@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Eliezer%20Kibet%20Rotich/source/repos/Project/EventTicketingPlatform/EventTicketingfrontend/event-ticketing-frontend-nextjs/src/app/organizer/layout.tsx"],"sourcesContent":["// app/organizer/layout.tsx\n'use client';\n\nimport React from 'react';\nimport OrganizerClientLayout from './OrganizerClientLayout';\n\ninterface OrganizerLayoutProps {\n    children: React.ReactNode;\n}\n\nconst OrganizerLayout: React.FC<OrganizerLayoutProps> = ({ children }) => {\n    return (\n        <OrganizerClientLayout>\n            {children}\n        </OrganizerClientLayout>\n    );\n};\n\nexport default OrganizerLayout;"],"names":[],"mappings":"AAAA,2BAA2B;;;;;AAI3B;AAHA;;;AASA,MAAM,kBAAkD,CAAC,EAAE,QAAQ,EAAE;IACjE,qBACI,6LAAC,oJAAA,CAAA,UAAqB;kBACjB;;;;;;AAGb;KANM;uCAQS","debugId":null}}]
+}

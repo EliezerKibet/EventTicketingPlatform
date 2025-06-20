@@ -32,7 +32,12 @@ namespace EventTicketing.API.Data
 
         // Favorites
         public DbSet<UserFavoriteEvent> UserFavoriteEvents { get; set; }
-        public DbSet<UserPreferences> UserPreferences { get; set; }  // ✅ CORRECT
+        public DbSet<UserPreferences> UserPreferences { get; set; }
+
+        //Promo 
+        public DbSet<PromoCode> PromoCodes { get; set; }
+        public DbSet<PromoCodeUsage> PromoCodeUsages { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -177,6 +182,87 @@ namespace EventTicketing.API.Data
             modelBuilder.Entity<Venue>()
                 .Property(v => v.Longitude)
                 .HasColumnType("decimal(18,6)");
+
+            // PromoCode configuration
+            modelBuilder.Entity<PromoCode>(entity =>
+            {
+                entity.HasKey(e => e.PromoCodeId);
+
+                entity.Property(e => e.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Description)
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.Value)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired();
+
+                entity.Property(e => e.MinimumOrderAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.MaximumDiscountAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.HasIndex(e => e.Code)
+                    .IsUnique();
+
+                entity.HasIndex(e => new { e.OrganizerId, e.Code })
+                    .HasDatabaseName("IX_PromoCodes_Organizer_Code");
+
+                // Foreign key relationships
+                entity.HasOne(e => e.Organizer)
+                    .WithMany()
+                    .HasForeignKey(e => e.OrganizerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Event)
+                    .WithMany()
+                    .HasForeignKey(e => e.EventId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // PromoCodeUsage configuration
+            modelBuilder.Entity<PromoCodeUsage>(entity =>
+            {
+                entity.HasKey(e => e.PromoCodeUsageId);
+
+                entity.Property(e => e.DiscountAmount)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired();
+
+                entity.Property(e => e.OrderSubtotal)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired();
+
+                entity.HasIndex(e => new { e.PromoCodeId, e.UsedAt })
+                    .HasDatabaseName("IX_PromoCodeUsages_PromoCode_Date");
+
+                entity.HasIndex(e => new { e.UserId, e.PromoCodeId })
+                    .HasDatabaseName("IX_PromoCodeUsages_User_PromoCode");
+
+                // Foreign key relationships
+                entity.HasOne(e => e.PromoCode)
+                    .WithMany(pc => pc.PromoCodeUsages)
+                    .HasForeignKey(e => e.PromoCodeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Order)
+                    .WithMany()
+                    .HasForeignKey(e => e.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Event)
+                    .WithMany()
+                    .HasForeignKey(e => e.EventId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
         }
     }
 }

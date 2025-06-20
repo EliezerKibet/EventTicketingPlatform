@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Eliezer%20Kibet%20Rotich/source/repos/Project/EventTicketingPlatform/EventTicketingfrontend/event-ticketing-frontend-nextjs/src/app/organizer/layout.tsx"],"sourcesContent":["// app/organizer/layout.tsx\nimport React from 'react';\n\ninterface OrganizerLayoutProps {\n    children: React.ReactNode;\n}\n\n// Minimal layout - the ConditionalLayout already handles the OrganizerClientLayout\nconst OrganizerLayout: React.FC<OrganizerLayoutProps> = ({ children }) => {\n    return <>{children}</>;\n};\n\nexport default OrganizerLayout;"],"names":[],"mappings":"AAAA,2BAA2B;;;;;;AAO3B,mFAAmF;AACnF,MAAM,kBAAkD,CAAC,EAAE,QAAQ,EAAE;IACjE,qBAAO;kBAAG;;AACd;uCAEe","debugId":null}},
+    {"offset": {"line": 25, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Eliezer%20Kibet%20Rotich/source/repos/Project/EventTicketingPlatform/EventTicketingfrontend/event-ticketing-frontend-nextjs/node_modules/next/src/server/route-modules/app-page/vendored/rsc/react-jsx-dev-runtime.ts"],"sourcesContent":["module.exports = require('../../module.compiled').vendored[\n  'react-rsc'\n].ReactJsxDevRuntime\n"],"names":["module","exports","require","vendored","ReactJsxDevRuntime"],"mappings":";AAAAA,OAAOC,OAAO,GAAGC,QAAQ,4HAAyBC,QAAQ,CACxD,YACD,CAACC,kBAAkB","ignoreList":[0],"debugId":null}}]
+}

@@ -245,6 +245,128 @@ namespace EventTicketing.API.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("EventTicketing.API.Models.Entities.PromoCode", b =>
+                {
+                    b.Property<int>("PromoCodeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromoCodeId"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentUsageCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaxUsageCount")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaxUsagePerUser")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("MaximumDiscountAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MinimumOrderAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("OrganizerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("PromoCodeId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("OrganizerId", "Code")
+                        .HasDatabaseName("IX_PromoCodes_Organizer_Code");
+
+                    b.ToTable("PromoCodes");
+                });
+
+            modelBuilder.Entity("EventTicketing.API.Models.Entities.PromoCodeUsage", b =>
+                {
+                    b.Property<int>("PromoCodeUsageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PromoCodeUsageId"));
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("OrderSubtotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PromoCodeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UsedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("PromoCodeUsageId");
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("PromoCodeId", "UsedAt")
+                        .HasDatabaseName("IX_PromoCodeUsages_PromoCode_Date");
+
+                    b.HasIndex("UserId", "PromoCodeId")
+                        .HasDatabaseName("IX_PromoCodeUsages_User_PromoCode");
+
+                    b.ToTable("PromoCodeUsages");
+                });
+
             modelBuilder.Entity("EventTicketing.API.Models.Entities.Ticket", b =>
                 {
                     b.Property<int>("TicketId")
@@ -788,6 +910,59 @@ namespace EventTicketing.API.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("EventTicketing.API.Models.Entities.PromoCode", b =>
+                {
+                    b.HasOne("EventTicketing.API.Models.Entities.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("EventTicketing.API.Models.Entities.User", "Organizer")
+                        .WithMany()
+                        .HasForeignKey("OrganizerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Organizer");
+                });
+
+            modelBuilder.Entity("EventTicketing.API.Models.Entities.PromoCodeUsage", b =>
+                {
+                    b.HasOne("EventTicketing.API.Models.Entities.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EventTicketing.API.Models.Entities.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EventTicketing.API.Models.Entities.PromoCode", "PromoCode")
+                        .WithMany("PromoCodeUsages")
+                        .HasForeignKey("PromoCodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EventTicketing.API.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("PromoCode");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("EventTicketing.API.Models.Entities.Ticket", b =>
                 {
                     b.HasOne("EventTicketing.API.Models.Entities.Event", "Event")
@@ -916,6 +1091,11 @@ namespace EventTicketing.API.Migrations
             modelBuilder.Entity("EventTicketing.API.Models.Entities.Order", b =>
                 {
                     b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("EventTicketing.API.Models.Entities.PromoCode", b =>
+                {
+                    b.Navigation("PromoCodeUsages");
                 });
 
             modelBuilder.Entity("EventTicketing.API.Models.Entities.TicketType", b =>

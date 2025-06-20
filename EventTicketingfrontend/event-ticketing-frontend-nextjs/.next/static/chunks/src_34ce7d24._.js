@@ -1,0 +1,1203 @@
+(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push([typeof document === "object" ? document.currentScript : undefined, {
+
+"[project]/src/lib/api.ts [app-client] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
+{
+/* eslint-disable @typescript-eslint/no-explicit-any */ /* eslint-disable @typescript-eslint/no-unused-vars */ __turbopack_context__.s({
+    "authApi": (()=>authApi),
+    "canCreateTicketTypes": (()=>canCreateTicketTypes),
+    "canEditTicketType": (()=>canEditTicketType),
+    "categoriesApi": (()=>categoriesApi),
+    "default": (()=>__TURBOPACK__default__export__),
+    "eventsApi": (()=>eventsApi),
+    "healthApi": (()=>healthApi),
+    "ordersApi": (()=>ordersApi),
+    "ticketsApi": (()=>ticketsApi),
+    "userApi": (()=>userApi),
+    "venuesApi": (()=>venuesApi)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/build/polyfills/process.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
+;
+// Enhanced API configuration with environment support
+const getApiBaseUrl = ()=>{
+    if ("TURBOPACK compile-time truthy", 1) {
+        return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$build$2f$polyfills$2f$process$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].env.NEXT_PUBLIC_API_URL || 'http://localhost:5251/api';
+    }
+    "TURBOPACK unreachable";
+};
+const userApi = {
+    // Profile management
+    getProfile: async ()=>{
+        try {
+            console.log('👤 Fetching user profile');
+            const response = await api.get('/user/profile');
+            console.log('👤 Successfully loaded user profile');
+            return response.data;
+        } catch (error) {
+            console.error('👤 Error fetching profile:', error.message);
+            throw new Error(`Failed to load profile: ${error.message}`);
+        }
+    },
+    updateProfile: async (profileData)=>{
+        try {
+            console.log('👤 Updating user profile');
+            const response = await api.put('/user/profile', profileData);
+            console.log('👤 Successfully updated user profile');
+            return response.data;
+        } catch (error) {
+            console.error('👤 Error updating profile:', error.message);
+            throw new Error(`Failed to update profile: ${error.message}`);
+        }
+    },
+    changePassword: async (passwordData)=>{
+        try {
+            console.log('👤 Changing password');
+            await api.post('/user/change-password', passwordData);
+            console.log('👤 Successfully changed password');
+        } catch (error) {
+            console.error('👤 Error changing password:', error.message);
+            throw new Error(`Failed to change password: ${error.message}`);
+        }
+    },
+    // Organization management
+    getOrganization: async ()=>{
+        try {
+            console.log('🏢 Fetching organization details');
+            const response = await api.get('/user/organization');
+            console.log('🏢 Successfully loaded organization details');
+            return response.data;
+        } catch (error) {
+            console.error('🏢 Error fetching organization:', error.message);
+            // Return empty object for new organizations
+            return {};
+        }
+    },
+    updateOrganization: async (orgData)=>{
+        try {
+            console.log('🏢 Updating organization details');
+            const response = await api.put('/user/organization', orgData);
+            console.log('🏢 Successfully updated organization details');
+            return response.data;
+        } catch (error) {
+            console.error('🏢 Error updating organization:', error.message);
+            throw new Error(`Failed to update organization: ${error.message}`);
+        }
+    },
+    // Preferences management
+    getPreferences: async ()=>{
+        try {
+            console.log('⚙️ Fetching user preferences');
+            const response = await api.get('/user/preferences');
+            console.log('⚙️ Successfully loaded user preferences');
+            return response.data;
+        } catch (error) {
+            console.error('⚙️ Error fetching preferences:', error.message);
+            // Return default preferences if none exist
+            return {
+                emailNotifications: true,
+                smsNotifications: false,
+                newBookingNotifications: true,
+                cancellationNotifications: true,
+                lowInventoryNotifications: true,
+                dailyReports: false,
+                weeklyReports: true,
+                monthlyReports: true,
+                twoFactorEnabled: false,
+                sessionTimeout: 30,
+                loginNotifications: true,
+                defaultTimeZone: 'America/New_York',
+                defaultEventDuration: 120,
+                defaultTicketSaleStart: 30,
+                defaultRefundPolicy: 'flexible',
+                requireApproval: false,
+                autoPublish: false,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                currency: 'USD',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false
+            };
+        }
+    },
+    updatePreferences: async (preferencesData)=>{
+        try {
+            console.log('⚙️ Updating user preferences');
+            const response = await api.put('/user/preferences', preferencesData);
+            console.log('⚙️ Successfully updated user preferences');
+            return response.data;
+        } catch (error) {
+            console.error('⚙️ Error updating preferences:', error.message);
+            throw new Error(`Failed to update preferences: ${error.message}`);
+        }
+    }
+};
+const API_BASE_URL = getApiBaseUrl();
+const api = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    timeout: 30000
+});
+// Enhanced request interceptor with better error handling
+api.interceptors.request.use((config)=>{
+    if ("TURBOPACK compile-time truthy", 1) {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+    // Log requests in development
+    if ("TURBOPACK compile-time truthy", 1) {
+        console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    }
+    return config;
+});
+// Enhanced response interceptor with better error handling
+api.interceptors.response.use((response)=>{
+    // Handle wrapped responses
+    if (response.data?.success === false) {
+        throw new Error(response.data.message || 'API request failed');
+    }
+    // Extract data from wrapped responses
+    if (response.data?.success === true && response.data?.data !== undefined) {
+        response.data = response.data.data;
+    }
+    if ("TURBOPACK compile-time truthy", 1) {
+        console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    }
+    return response;
+}, (error)=>{
+    const message = error.response?.data?.message || error.message || 'Network error';
+    if ("TURBOPACK compile-time truthy", 1) {
+        console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, message);
+    }
+    if (error.response?.status === 401 && "object" !== 'undefined') {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        // Don't redirect automatically, let components handle this
+        console.warn('Authentication expired. Please log in again.');
+    }
+    // Create a more detailed error
+    const enhancedError = new Error(message);
+    enhancedError.status = error.response?.status;
+    enhancedError.originalError = error;
+    return Promise.reject(enhancedError);
+});
+// Helper functions for data normalization
+const normalizeTicketType = (tt)=>({
+        ticketTypeId: tt.ticketTypeId || tt.TicketTypeId,
+        eventId: tt.eventId || tt.EventId,
+        eventTitle: tt.eventTitle || tt.EventTitle,
+        name: tt.name || tt.Name || '',
+        description: tt.description || tt.Description || '',
+        price: Number(tt.price || tt.Price || 0),
+        quantityAvailable: Number(tt.quantityAvailable || tt.QuantityAvailable || 0),
+        quantitySold: Number(tt.quantitySold || tt.QuantitySold || 0),
+        quantityRemaining: Number(tt.quantityRemaining || tt.QuantityRemaining || 0),
+        isActive: tt.isActive !== undefined ? tt.isActive : tt.IsActive !== undefined ? tt.IsActive : true,
+        isOnSale: tt.isOnSale !== undefined ? tt.isOnSale : tt.IsOnSale !== undefined ? tt.IsOnSale : true,
+        isEventPublished: tt.isEventPublished || tt.IsEventPublished || false,
+        eventStatus: tt.eventStatus || tt.EventStatus || 'Draft',
+        saleStartDate: tt.saleStartDate || tt.SaleStartDate,
+        saleEndDate: tt.saleEndDate || tt.SaleEndDate,
+        minQuantityPerOrder: Number(tt.minQuantityPerOrder || tt.MinQuantityPerOrder || 1),
+        maxQuantityPerOrder: Number(tt.maxQuantityPerOrder || tt.MaxQuantityPerOrder || 10),
+        sortOrder: Number(tt.sortOrder || tt.SortOrder || 0),
+        createdAt: tt.createdAt || tt.CreatedAt,
+        updatedAt: tt.updatedAt || tt.UpdatedAt
+    });
+const canEditTicketType = (ticketType)=>{
+    if (ticketType.quantitySold > 0) {
+        return {
+            canEdit: false,
+            reason: `${ticketType.quantitySold} ticket(s) already sold. Editing locked to preserve purchase data.`
+        };
+    }
+    if (ticketType.isEventPublished) {
+        return {
+            canEdit: false,
+            reason: 'Event is published. Limited editing to preserve sales integrity.'
+        };
+    }
+    return {
+        canEdit: true,
+        reason: 'Safe to edit - no sales yet and event is unpublished.'
+    };
+};
+const canCreateTicketTypes = (event)=>{
+    const totalTicketsSold = event.ticketsSold || 0;
+    if (totalTicketsSold > 0) {
+        return {
+            canCreate: false,
+            reason: `Cannot create new ticket types. ${totalTicketsSold} ticket(s) have already been sold.`
+        };
+    }
+    if (event.isPublished) {
+        return {
+            canCreate: true,
+            reason: 'Event is published - new ticket types will be immediately available for sale.'
+        };
+    }
+    return {
+        canCreate: true,
+        reason: 'Safe to create new ticket types.'
+    };
+};
+const authApi = {
+    login: async (credentials)=>{
+        const response = await api.post('/auth/login', credentials);
+        return response.data;
+    },
+    register: async (userData)=>{
+        const response = await api.post('/auth/register', userData);
+        return response.data;
+    }
+};
+const eventsApi = {
+    // Public endpoints
+    getEvents: async (params)=>{
+        const response = await api.get('/events', {
+            params
+        });
+        return Array.isArray(response.data) ? response.data : [];
+    },
+    getEvent: async (id)=>{
+        const response = await api.get(`/events/${id}`);
+        return response.data;
+    },
+    // Organizer endpoints
+    getMyEvents: async ()=>{
+        const response = await api.get('/events/my-events');
+        return Array.isArray(response.data) ? response.data : [];
+    },
+    createEvent: async (eventData)=>{
+        const response = await api.post('/events', eventData);
+        return response.data;
+    },
+    updateEvent: async (id, eventData)=>{
+        const response = await api.put(`/events/${id}`, eventData);
+        return response.data;
+    },
+    deleteEvent: async (id)=>{
+        const response = await api.delete(`/events/${id}`);
+        return response.status === 204 || response.status === 200;
+    },
+    publishEvent: async (id)=>{
+        await api.post(`/events/${id}/publish`);
+    },
+    unpublishEvent: async (id)=>{
+        await api.post(`/events/${id}/unpublish`);
+    }
+};
+const categoriesApi = {
+    getCategories: async ()=>{
+        const response = await api.get('/categories');
+        return Array.isArray(response.data) ? response.data : [];
+    },
+    getCategory: async (id)=>{
+        const response = await api.get(`/categories/${id}`);
+        return response.data;
+    },
+    createCategory: async (categoryData)=>{
+        const response = await api.post('/categories', categoryData);
+        return response.data;
+    }
+};
+const venuesApi = {
+    getVenues: async (city)=>{
+        const params = city ? {
+            city
+        } : {};
+        const response = await api.get('/venues', {
+            params
+        });
+        return Array.isArray(response.data) ? response.data : [];
+    },
+    getVenue: async (id)=>{
+        const response = await api.get(`/venues/${id}`);
+        return response.data;
+    },
+    createVenue: async (venueData)=>{
+        const response = await api.post('/venues', venueData);
+        return response.data;
+    }
+};
+const ticketsApi = {
+    // Ticket Types - Enhanced with proper error handling and data normalization
+    getEventTicketTypes: async (eventId)=>{
+        try {
+            console.log(`🎫 Fetching ticket types for event ${eventId}`);
+            const response = await api.get(`/tickets/event/${eventId}/ticket-types`);
+            const ticketTypes = Array.isArray(response.data) ? response.data : [];
+            const normalizedTicketTypes = ticketTypes.map(normalizeTicketType);
+            console.log(`🎫 Successfully loaded ${normalizedTicketTypes.length} ticket types`);
+            return normalizedTicketTypes;
+        } catch (error) {
+            console.error('🎫 Error fetching ticket types:', error.message);
+            throw new Error(`Failed to load ticket types: ${error.message}`);
+        }
+    },
+    createTicketType: async (ticketTypeData)=>{
+        try {
+            console.log('🎫 Creating ticket type:', ticketTypeData);
+            const payload = {
+                eventId: Number(ticketTypeData.eventId),
+                name: ticketTypeData.name.trim(),
+                description: ticketTypeData.description?.trim() || null,
+                price: Number(ticketTypeData.price),
+                quantityAvailable: Number(ticketTypeData.quantityAvailable),
+                saleStartDate: ticketTypeData.saleStartDate || null,
+                saleEndDate: ticketTypeData.saleEndDate || null,
+                minQuantityPerOrder: Number(ticketTypeData.minQuantityPerOrder || 1),
+                maxQuantityPerOrder: Number(ticketTypeData.maxQuantityPerOrder || 10),
+                sortOrder: Number(ticketTypeData.sortOrder || 0)
+            };
+            const response = await api.post('/tickets/ticket-types', payload);
+            const normalizedTicketType = normalizeTicketType(response.data);
+            console.log('🎫 Successfully created ticket type:', normalizedTicketType);
+            return normalizedTicketType;
+        } catch (error) {
+            console.error('🎫 Error creating ticket type:', error.message);
+            throw new Error(`Failed to create ticket type: ${error.message}`);
+        }
+    },
+    updateTicketType: async (id, ticketTypeData)=>{
+        try {
+            console.log(`🎫 Updating ticket type ${id}:`, ticketTypeData);
+            // Remove undefined values
+            const payload = Object.fromEntries(Object.entries(ticketTypeData).filter(([_, value])=>value !== undefined));
+            const response = await api.put(`/tickets/ticket-types/${id}`, payload);
+            const normalizedTicketType = normalizeTicketType(response.data);
+            console.log('🎫 Successfully updated ticket type:', normalizedTicketType);
+            return normalizedTicketType;
+        } catch (error) {
+            console.error('🎫 Error updating ticket type:', error.message);
+            throw new Error(`Failed to update ticket type: ${error.message}`);
+        }
+    },
+    deleteTicketType: async (id)=>{
+        try {
+            console.log(`🎫 Deleting ticket type ${id}`);
+            const response = await api.delete(`/tickets/ticket-types/${id}`);
+            console.log('🎫 Successfully deleted ticket type');
+            return response.status === 204 || response.status === 200;
+        } catch (error) {
+            console.error('🎫 Error deleting ticket type:', error.message);
+            throw new Error(`Failed to delete ticket type: ${error.message}`);
+        }
+    },
+    getTicketType: async (id)=>{
+        const response = await api.get(`/tickets/ticket-types/${id}`);
+        return normalizeTicketType(response.data);
+    },
+    // Orders and Purchases
+    calculateOrder: async (purchaseData)=>{
+        const response = await api.post('/tickets/calculate-order', purchaseData);
+        return response.data;
+    },
+    purchaseTickets: async (purchaseData)=>{
+        const response = await api.post('/tickets/purchase', purchaseData);
+        return response.data;
+    },
+    // User tickets
+    getMyTickets: async ()=>{
+        const response = await api.get('/tickets/my-tickets');
+        return Array.isArray(response.data) ? response.data : [];
+    },
+    getTicket: async (id)=>{
+        const response = await api.get(`/tickets/${id}`);
+        return response.data;
+    },
+    // Validation and Check-in
+    validateTicket: async (ticketNumber)=>{
+        const response = await api.post('/tickets/validate', JSON.stringify(ticketNumber), {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.data;
+    },
+    checkInTicket: async (checkInData)=>{
+        const response = await api.post('/tickets/check-in', checkInData);
+        return response.data;
+    }
+};
+const ordersApi = {
+    getMyOrders: async ()=>{
+        const response = await api.get('/orders');
+        return Array.isArray(response.data) ? response.data : [];
+    },
+    getOrder: async (id)=>{
+        const response = await api.get(`/orders/${id}`);
+        return response.data;
+    }
+};
+const healthApi = {
+    checkConnection: async ()=>{
+        try {
+            const response = await api.get('/health');
+            return response.status === 200;
+        } catch  {
+            return false;
+        }
+    },
+    testAuth: async ()=>{
+        try {
+            const response = await api.get('/events/my-events');
+            return response.status === 200;
+        } catch  {
+            return false;
+        }
+    }
+};
+const __TURBOPACK__default__export__ = api;
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
+}
+}}),
+"[project]/src/app/organizer/dashboard/page.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
+{
+/* eslint-disable @typescript-eslint/no-explicit-any */ /* eslint-disable @typescript-eslint/no-unused-vars */ // app/organizer/dashboard/page.tsx
+__turbopack_context__.s({
+    "default": (()=>__TURBOPACK__default__export__)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useAuth$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/useAuth.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/api.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useTheme$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/hooks/useTheme.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$providers$2f$I18nProvider$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/providers/I18nProvider.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Calendar$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/calendar.js [app-client] (ecmascript) <export default as Calendar>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/users.js [app-client] (ecmascript) <export default as Users>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$dollar$2d$sign$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__DollarSign$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/dollar-sign.js [app-client] (ecmascript) <export default as DollarSign>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__TrendingUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trending-up.js [app-client] (ecmascript) <export default as TrendingUp>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$plus$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Plus$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/plus.js [app-client] (ecmascript) <export default as Plus>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$eye$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Eye$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/eye.js [app-client] (ecmascript) <export default as Eye>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$square$2d$pen$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Edit$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/square-pen.js [app-client] (ecmascript) <export default as Edit>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/trash-2.js [app-client] (ecmascript) <export default as Trash2>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowUp$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-up.js [app-client] (ecmascript) <export default as ArrowUp>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowDown$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/arrow-down.js [app-client] (ecmascript) <export default as ArrowDown>");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertCircle$3e$__ = __turbopack_context__.i("[project]/node_modules/lucide-react/dist/esm/icons/circle-alert.js [app-client] (ecmascript) <export default as AlertCircle>");
+;
+var _s = __turbopack_context__.k.signature();
+'use client';
+;
+;
+;
+;
+;
+;
+const OrganizerDashboard = ()=>{
+    _s();
+    const { user, isOrganizer } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useAuth$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"])();
+    const { isDark, isCompact } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useTheme$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useTheme"])();
+    const themeClasses = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useTheme$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useThemeClasses"])();
+    // Use the proper I18n context instead of fallback
+    const { t, formatCurrency } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$providers$2f$I18nProvider$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useI18nContext"])();
+    const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
+    const [events, setEvents] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
+    const [stats, setStats] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
+        totalEvents: 0,
+        publishedEvents: 0,
+        totalTicketsSold: 0,
+        totalRevenue: 0,
+        upcomingEvents: 0
+    });
+    const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])('');
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "OrganizerDashboard.useEffect": ()=>{
+            if (user && isOrganizer) {
+                fetchDashboardData();
+            }
+        }
+    }["OrganizerDashboard.useEffect"], [
+        user,
+        isOrganizer
+    ]);
+    const fetchDashboardData = async ()=>{
+        try {
+            setLoading(true);
+            setError('');
+            const eventsResponse = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$api$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["eventsApi"].getMyEvents();
+            setEvents(eventsResponse);
+            const now = new Date();
+            const totalEvents = eventsResponse.length;
+            const publishedEvents = eventsResponse.filter((event)=>event.isPublished).length;
+            const upcomingEvents = eventsResponse.filter((event)=>new Date(event.startDateTime || event.eventDate) > now && event.isPublished).length;
+            const totalTicketsSold = eventsResponse.reduce((sum, event)=>sum + (event.ticketsSold || 0), 0);
+            const totalRevenue = eventsResponse.reduce((sum, event)=>sum + (event.revenue || 0), 0);
+            setStats({
+                totalEvents,
+                publishedEvents,
+                totalTicketsSold,
+                totalRevenue,
+                upcomingEvents
+            });
+        } catch (error) {
+            console.error('Error fetching dashboard data:', error);
+            setError(t('dashboardError'));
+        } finally{
+            setLoading(false);
+        }
+    };
+    const handlePublishEvent = async (eventId, currentStatus)=>{
+        try {
+            const endpoint = currentStatus ? 'unpublish' : 'publish';
+            const response = await fetch(`http://localhost:5251/api/events/${eventId}/${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.ok) {
+                setEvents(events.map((event)=>event.eventId === eventId ? {
+                        ...event,
+                        isPublished: !currentStatus
+                    } : event));
+                setStats((prev)=>({
+                        ...prev,
+                        publishedEvents: currentStatus ? prev.publishedEvents - 1 : prev.publishedEvents + 1
+                    }));
+            } else {
+                throw new Error('Failed to update event status');
+            }
+        } catch (error) {
+            console.error('Error updating event status:', error);
+            setError('Failed to update event status');
+        }
+    };
+    const handleDeleteEvent = async (eventId)=>{
+        if (!confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+            return;
+        }
+        try {
+            const response = await fetch(`http://localhost:5251/api/events/${eventId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+            if (response.ok) {
+                const deletedEvent = events.find((e)=>e.eventId === eventId);
+                setEvents(events.filter((event)=>event.eventId !== eventId));
+                setStats((prev)=>({
+                        ...prev,
+                        totalEvents: prev.totalEvents - 1,
+                        publishedEvents: deletedEvent?.isPublished ? prev.publishedEvents - 1 : prev.publishedEvents
+                    }));
+            } else {
+                throw new Error('Failed to delete event');
+            }
+        } catch (error) {
+            console.error('Error deleting event:', error);
+            setError('Failed to delete event');
+        }
+    };
+    const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendValue, color = 'blue' })=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: `${themeClasses.themeCard} ${themeClasses.compactCard} rounded-lg shadow-sm border ${themeClasses.themeBorder} theme-transition`,
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "flex items-center justify-between",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex items-center",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: `p-3 rounded-lg ${color === 'blue' ? 'accent-bg' : color === 'green' ? 'bg-green-500' : color === 'purple' ? 'bg-purple-500' : color === 'orange' ? 'bg-orange-500' : 'accent-bg'}`,
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(Icon, {
+                                    className: "h-6 w-6 text-white"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 200,
+                                    columnNumber: 25
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 196,
+                                columnNumber: 21
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: `${isCompact ? 'ml-3' : 'ml-4'}`,
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: `${themeClasses.textSm} font-medium ${themeClasses.themeMutedFg}`,
+                                        children: title
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                        lineNumber: 203,
+                                        columnNumber: 25
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: `${themeClasses.text2Xl} font-bold ${themeClasses.themeFg}`,
+                                        children: value
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                        lineNumber: 204,
+                                        columnNumber: 25
+                                    }, this),
+                                    subtitle && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: `${themeClasses.textSm} ${themeClasses.themeMutedFg}`,
+                                        children: subtitle
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                        lineNumber: 205,
+                                        columnNumber: 38
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 202,
+                                columnNumber: 21
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                        lineNumber: 195,
+                        columnNumber: 17
+                    }, this),
+                    trend && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: `flex items-center ${trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`,
+                        children: [
+                            trend === 'up' ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowUp$3e$__["ArrowUp"], {
+                                className: "h-4 w-4"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 210,
+                                columnNumber: 43
+                            }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$arrow$2d$down$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ArrowDown$3e$__["ArrowDown"], {
+                                className: "h-4 w-4"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 210,
+                                columnNumber: 77
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                className: `${themeClasses.textSm} font-medium ml-1`,
+                                children: trendValue
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 211,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                        lineNumber: 209,
+                        columnNumber: 21
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                lineNumber: 194,
+                columnNumber: 13
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+            lineNumber: 193,
+            columnNumber: 9
+        }, this);
+    const EventCard = ({ event })=>{
+        const formatDateRange = (startDate, endDate)=>{
+            if (!startDate) return 'Date not set';
+            const start = new Date(startDate);
+            if (isNaN(start.getTime())) return 'Invalid date';
+            return start.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        };
+        const startDateTime = event.startDateTime || event.eventDate;
+        const endDateTime = event.endDateTime || event.startDateTime || event.eventDate;
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: `${themeClasses.themeCard} ${themeClasses.compactCard} rounded-lg shadow-sm border ${themeClasses.themeBorder} hover:shadow-md theme-transition`,
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: `flex justify-between items-start ${isCompact ? 'mb-3' : 'mb-4'}`,
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "flex-1",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                    className: `${themeClasses.textLg} font-semibold ${themeClasses.themeFg} ${isCompact ? 'mb-1' : 'mb-2'}`,
+                                    children: event.title
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 237,
+                                    columnNumber: 25
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: `${themeClasses.themeMutedFg} ${themeClasses.textSm} line-clamp-2`,
+                                    children: event.description
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 238,
+                                    columnNumber: 25
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 236,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: `flex flex-col ${isCompact ? 'gap-1' : 'gap-2'} ${isCompact ? 'ml-3' : 'ml-4'}`,
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: `px-3 py-1 rounded-full ${themeClasses.textSm} font-medium ${event.isPublished ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'}`,
+                                    children: event.isPublished ? t('published') : t('draft')
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 241,
+                                    columnNumber: 25
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: `px-3 py-1 rounded-full ${themeClasses.textSm} font-medium ${event.isOnline ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'}`,
+                                    children: event.isOnline ? t('online') : t('inPerson')
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 247,
+                                    columnNumber: 25
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 240,
+                            columnNumber: 21
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                    lineNumber: 235,
+                    columnNumber: 17
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "flex justify-between items-center",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: `flex ${isCompact ? 'gap-1' : 'gap-2'}`,
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: ()=>window.open(`/events/${event.eventId}`, '_blank'),
+                                    className: `flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 theme-transition`,
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$eye$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Eye$3e$__["Eye"], {
+                                            className: "h-4 w-4 mr-1"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                            lineNumber: 262,
+                                            columnNumber: 29
+                                        }, this),
+                                        t('view')
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 258,
+                                    columnNumber: 25
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: ()=>window.location.href = `/organizer/events/${event.eventId}/edit`,
+                                    className: `flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} ${themeClasses.themeMuted} ${themeClasses.themeMutedFg} rounded-lg ${isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} theme-transition`,
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$square$2d$pen$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Edit$3e$__["Edit"], {
+                                            className: "h-4 w-4 mr-1"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                            lineNumber: 269,
+                                            columnNumber: 29
+                                        }, this),
+                                        t('edit')
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 265,
+                                    columnNumber: 25
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 257,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: `flex ${isCompact ? 'gap-1' : 'gap-2'}`,
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: ()=>handlePublishEvent(event.eventId, event.isPublished),
+                                    className: `${themeClasses.compactButton} ${themeClasses.textSm} rounded-lg font-medium theme-transition ${event.isPublished ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:hover:bg-yellow-900/50' : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'}`,
+                                    children: event.isPublished ? t('unpublish') : t('publish')
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 274,
+                                    columnNumber: 25
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: ()=>handleDeleteEvent(event.eventId),
+                                    className: `flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 theme-transition`,
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trash$2d$2$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Trash2$3e$__["Trash2"], {
+                                            className: "h-4 w-4 mr-1"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                            lineNumber: 287,
+                                            columnNumber: 29
+                                        }, this),
+                                        t('delete')
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 283,
+                                    columnNumber: 25
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 273,
+                            columnNumber: 21
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                    lineNumber: 256,
+                    columnNumber: 17
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+            lineNumber: 234,
+            columnNumber: 13
+        }, this);
+    };
+    if (loading) {
+        return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: `${isCompact ? 'p-4' : 'p-8'} min-h-screen ${themeClasses.themeBg}`,
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "max-w-7xl mx-auto",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "flex items-center justify-center py-12",
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "text-center",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "animate-spin rounded-full h-12 w-12 border-b-2 accent-border mx-auto"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 302,
+                                columnNumber: 29
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                className: `mt-4 ${themeClasses.themeMutedFg}`,
+                                children: t('loadingDashboard')
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 303,
+                                columnNumber: 29
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                        lineNumber: 301,
+                        columnNumber: 25
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                    lineNumber: 300,
+                    columnNumber: 21
+                }, this)
+            }, void 0, false, {
+                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                lineNumber: 299,
+                columnNumber: 17
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+            lineNumber: 298,
+            columnNumber: 13
+        }, this);
+    }
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+        className: `${isCompact ? 'p-4' : 'p-6'} min-h-screen ${themeClasses.themeBg} theme-transition`,
+        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "max-w-7xl mx-auto",
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: isCompact ? 'mb-6' : 'mb-8',
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex justify-between items-center",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                                        className: `${themeClasses.text3Xl} font-bold ${themeClasses.themeFg}`,
+                                        children: t('dashboard')
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                        lineNumber: 318,
+                                        columnNumber: 29
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                        className: ` ${themeClasses.themeMutedFg} mt-1`,
+                                        children: t('welcomeBack', {
+                                            name: user?.firstName
+                                        })
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                        lineNumber: 321,
+                                        columnNumber: 29
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 317,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                onClick: ()=>window.location.href = '/organizer/events/create',
+                                className: "btn-accent",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$plus$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Plus$3e$__["Plus"], {
+                                        className: "h-5 w-5 mr-2"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                        lineNumber: 329,
+                                        columnNumber: 29
+                                    }, this),
+                                    t('createEvent')
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 325,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                        lineNumber: 316,
+                        columnNumber: 21
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                    lineNumber: 315,
+                    columnNumber: 17
+                }, this),
+                error && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: `${isCompact ? 'mb-4' : 'mb-6'} p-4 bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800 rounded-lg`,
+                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "flex items-center",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$circle$2d$alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__AlertCircle$3e$__["AlertCircle"], {
+                                className: "w-5 h-5 text-red-600 dark:text-red-400 mr-2"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 339,
+                                columnNumber: 29
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                className: "text-red-600 dark:text-red-400",
+                                children: error
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                lineNumber: 340,
+                                columnNumber: 29
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                        lineNumber: 338,
+                        columnNumber: 25
+                    }, this)
+                }, void 0, false, {
+                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                    lineNumber: 337,
+                    columnNumber: 21
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ${themeClasses.compactGap} ${isCompact ? 'mb-6' : 'mb-8'}`,
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StatCard, {
+                            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Calendar$3e$__["Calendar"],
+                            title: t('totalEvents'),
+                            value: stats.totalEvents,
+                            subtitle: t('publishedCount', {
+                                count: stats.publishedEvents
+                            }),
+                            color: "blue"
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 347,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StatCard, {
+                            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$users$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Users$3e$__["Users"],
+                            title: t('ticketsSold'),
+                            value: stats.totalTicketsSold.toLocaleString(),
+                            color: "green"
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 354,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StatCard, {
+                            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$dollar$2d$sign$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__DollarSign$3e$__["DollarSign"],
+                            title: t('totalRevenue'),
+                            value: formatCurrency(stats.totalRevenue),
+                            color: "purple"
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 360,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StatCard, {
+                            icon: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$trending$2d$up$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__TrendingUp$3e$__["TrendingUp"],
+                            title: t('upcomingEvents'),
+                            value: stats.upcomingEvents,
+                            color: "orange"
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 366,
+                            columnNumber: 21
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                    lineNumber: 346,
+                    columnNumber: 17
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: `flex justify-between items-center ${isCompact ? 'mb-4' : 'mb-6'}`,
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                                    className: `${themeClasses.textXl} font-semibold ${themeClasses.themeFg}`,
+                                    children: t('yourEvents')
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 377,
+                                    columnNumber: 25
+                                }, this),
+                                events.length > 6 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: ()=>window.location.href = '/organizer/events',
+                                    className: "accent-text hover:accent-hover text-sm font-medium theme-transition",
+                                    children: t('viewAllEvents')
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 379,
+                                    columnNumber: 29
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 376,
+                            columnNumber: 21
+                        }, this),
+                        events.length === 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: `text-center ${isCompact ? 'py-8' : 'py-12'} ${themeClasses.themeCard} rounded-lg border ${themeClasses.themeBorder}`,
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$calendar$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Calendar$3e$__["Calendar"], {
+                                    className: `h-12 w-12 ${themeClasses.themeMutedFg} mx-auto ${isCompact ? 'mb-3' : 'mb-4'}`
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 390,
+                                    columnNumber: 29
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                    className: `${themeClasses.textLg} font-medium ${themeClasses.themeFg} ${isCompact ? 'mb-1' : 'mb-2'}`,
+                                    children: t('noEventsYet')
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 391,
+                                    columnNumber: 29
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: `${themeClasses.themeMutedFg} ${isCompact ? 'mb-4' : 'mb-6'}`,
+                                    children: t('createFirstEventPrompt')
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 392,
+                                    columnNumber: 29
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: ()=>window.location.href = '/organizer/events/create',
+                                    className: "btn-accent",
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$lucide$2d$react$2f$dist$2f$esm$2f$icons$2f$plus$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Plus$3e$__["Plus"], {
+                                            className: "h-4 w-4 mr-2"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                            lineNumber: 397,
+                                            columnNumber: 33
+                                        }, this),
+                                        t('createYourFirstEvent')
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 393,
+                                    columnNumber: 29
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 389,
+                            columnNumber: 25
+                        }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: `grid ${themeClasses.compactGap} lg:grid-cols-2`,
+                            children: events.slice(0, 6).map((event)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(EventCard, {
+                                    event: event
+                                }, event.eventId, false, {
+                                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                                    lineNumber: 404,
+                                    columnNumber: 33
+                                }, this))
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                            lineNumber: 402,
+                            columnNumber: 25
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+                    lineNumber: 375,
+                    columnNumber: 17
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+            lineNumber: 313,
+            columnNumber: 13
+        }, this)
+    }, void 0, false, {
+        fileName: "[project]/src/app/organizer/dashboard/page.tsx",
+        lineNumber: 312,
+        columnNumber: 9
+    }, this);
+};
+_s(OrganizerDashboard, "ZnqEnv824UZTjSwmF2RW8gIMM9M=", false, function() {
+    return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useAuth$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useTheme$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useTheme"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$hooks$2f$useTheme$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useThemeClasses"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$providers$2f$I18nProvider$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useI18nContext"]
+    ];
+});
+_c = OrganizerDashboard;
+const __TURBOPACK__default__export__ = OrganizerDashboard;
+var _c;
+__turbopack_context__.k.register(_c, "OrganizerDashboard");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
+}
+}}),
+}]);
+
+//# sourceMappingURL=src_34ce7d24._.js.map

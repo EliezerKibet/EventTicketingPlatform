@@ -1,4 +1,4 @@
-using EventTicketing.API.Data;
+﻿using EventTicketing.API.Data;
 using EventTicketing.API.Models.DTOs;
 using EventTicketing.API.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -9,11 +9,13 @@ namespace EventTicketing.API.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IQrCodeService _qrCodeService;
+        private readonly IPromoCodeService _promoCodeService;
 
-        public TicketService(ApplicationDbContext context, IQrCodeService qrCodeService)
+        public TicketService(ApplicationDbContext context, IQrCodeService qrCodeService, IPromoCodeService promoCodeService)
         {
             _context = context;
             _qrCodeService = qrCodeService;
+            _promoCodeService = promoCodeService;
         }
 
         public async Task<TicketTypeResponseDto> CreateTicketTypeAsync(CreateTicketTypeDto createTicketTypeDto, int organizerId)
@@ -213,9 +215,9 @@ namespace EventTicketing.API.Services
                     ServiceFee = summary.ServiceFee,
                     TotalAmount = summary.TotalAmount,
                     Currency = summary.Currency,
-                    Status = OrderStatus.Completed, // In real app, this would be Pending until payment
+                    Status = OrderStatus.Completed,
                     CreatedAt = DateTime.UtcNow,
-                    CompletedAt = DateTime.UtcNow, // Simulating immediate completion
+                    CompletedAt = DateTime.UtcNow,
                     BillingEmail = purchaseDto.BillingEmail,
                     BillingFirstName = purchaseDto.BillingFirstName,
                     BillingLastName = purchaseDto.BillingLastName,
@@ -274,7 +276,65 @@ namespace EventTicketing.API.Services
                 _context.Tickets.AddRange(tickets);
                 await _context.SaveChangesAsync();
 
+                // 🏷️ RECORD PROMO CODE USAGE INSIDE TRANSACTION (BEFORE COMMIT)
+                if (!string.IsNullOrEmpty(purchaseDto.PromoCode) && summary.DiscountAmount > 0)
+                {
+                    try
+                    {
+                        Console.WriteLine($"🏷️ Recording promo code usage for: {purchaseDto.PromoCode}");
+                        Console.WriteLine($"🏷️ Order ID: {order.OrderId}, Event ID: {purchaseDto.EventId}");
+                        Console.WriteLine($"🏷️ Discount Amount: {summary.DiscountAmount}, Subtotal: {summary.SubTotal}");
+                        Console.WriteLine($"🏷️ Using same context - Hash: {_context.GetHashCode()}");
+
+                        // Find the promo code using the SAME context
+                        var promoCode = await _context.PromoCodes
+                            .FirstOrDefaultAsync(pc => pc.Code.ToUpper() == purchaseDto.PromoCode.ToUpper());
+
+                        if (promoCode == null)
+                        {
+                            Console.WriteLine($"🏷️ ❌ Promo code not found: {purchaseDto.PromoCode}");
+                            throw new Exception("Promo code not found during usage recording");
+                        }
+
+                        Console.WriteLine($"🏷️ Found promo code - ID: {promoCode.PromoCodeId}, Current Usage: {promoCode.CurrentUsageCount}");
+
+                        // Create usage record
+                        var usage = new PromoCodeUsage
+                        {
+                            PromoCodeId = promoCode.PromoCodeId,
+                            OrderId = order.OrderId,
+                            UserId = userId,
+                            EventId = purchaseDto.EventId,
+                            DiscountAmount = summary.DiscountAmount,
+                            OrderSubtotal = summary.SubTotal,
+                            UsedAt = DateTime.UtcNow
+                        };
+
+                        _context.PromoCodeUsages.Add(usage);
+
+                        // Update usage count
+                        promoCode.CurrentUsageCount++;
+
+                        // Save changes within the same transaction
+                        await _context.SaveChangesAsync();
+
+                        Console.WriteLine($"🏷️ ✅ Successfully recorded promo code usage for {purchaseDto.PromoCode}");
+                        Console.WriteLine($"🏷️ New usage count: {promoCode.CurrentUsageCount}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"🏷️ ❌ Failed to record promo code usage: {ex.Message}");
+                        Console.WriteLine($"🏷️ ❌ Stack trace: {ex.StackTrace}");
+
+                        // IMPORTANT: Now we DO want to fail the transaction if promo code recording fails
+                        // since it's part of the same transaction
+                        throw;
+                    }
+                }
+
+                // Commit the transaction (includes order, tickets, AND promo code usage)
                 await transaction.CommitAsync();
+                Console.WriteLine($"🏷️ ✅ Transaction committed successfully");
 
                 // Return order details
                 return await GetOrderByIdAsync(order.OrderId, userId);
@@ -282,6 +342,7 @@ namespace EventTicketing.API.Services
             catch
             {
                 await transaction.RollbackAsync();
+                Console.WriteLine($"🏷️ ❌ Transaction rolled back");
                 throw;
             }
         }
@@ -429,14 +490,17 @@ namespace EventTicketing.API.Services
 
         private async Task<decimal> CalculatePromoCodeDiscountAsync(string promoCode, decimal subTotal, int eventId)
         {
-            // Simplified promo code logic - in real app, you'd have a PromoCode entity
-            if (promoCode.ToUpper() == "EARLY10")
-                return subTotal * 0.10m; // 10% discount
+            if (string.IsNullOrEmpty(promoCode))
+                return 0;
 
-            if (promoCode.ToUpper() == "STUDENT15")
-                return subTotal * 0.15m; // 15% discount
+            // Use the new PromoCodeService for validation and calculation
+            var promoCodeService = new PromoCodeService(_context);
 
-            return 0;
+            // For now, get the current user ID from the context (you may need to pass this as a parameter)
+            // This is a simplified approach - in production, you'd want to properly pass the user ID
+            var userId = 0; // You'll need to pass this properly
+
+            return await promoCodeService.CalculateDiscountAsync(promoCode, eventId, subTotal, userId);
         }
 
         private string GenerateOrderNumber()
