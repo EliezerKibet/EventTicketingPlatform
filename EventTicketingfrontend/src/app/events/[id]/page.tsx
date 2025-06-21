@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -29,6 +30,7 @@ import {
     Globe
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { userApi } from '@/lib/api';
 
 // Types
 interface Event {
@@ -116,10 +118,195 @@ interface SlideImage {
     type: 'event-banner' | 'event-image' | 'venue';
 }
 
-// Hero Slideshow Component
-const EventHeroSlideshow = ({ images, autoPlay = true }: {
+interface UserPreferences {
+    emailNotifications: boolean;
+    sessionTimeout: number;
+    theme: string;
+    language: string;
+    dateFormat: string;
+    timeFormat: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+}
+
+// Enhanced theming system - UNIFIED across all pages
+const getThemeClasses = (preferences: UserPreferences | null) => {
+    const isDarkMode = preferences?.theme === 'dark' ||
+        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    const accentColor = preferences?.accentColor || 'blue';
+    const fontSize = preferences?.fontSize || 'medium';
+    const compactMode = preferences?.compactMode || false;
+
+    // Accent color configurations
+    const accentColors = {
+        blue: {
+            primary: 'bg-blue-600',
+            hover: 'hover:bg-blue-700',
+            light: isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50',
+            text: isDarkMode ? 'text-blue-400' : 'text-blue-600',
+            border: isDarkMode ? 'border-blue-700' : 'border-blue-200',
+            ring: 'focus:ring-blue-500 focus:border-blue-500',
+            gradient: 'from-blue-600 to-blue-700'
+        },
+        purple: {
+            primary: 'bg-purple-600',
+            hover: 'hover:bg-purple-700',
+            light: isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50',
+            text: isDarkMode ? 'text-purple-400' : 'text-purple-600',
+            border: isDarkMode ? 'border-purple-700' : 'border-purple-200',
+            ring: 'focus:ring-purple-500 focus:border-purple-500',
+            gradient: 'from-purple-600 to-purple-700'
+        },
+        green: {
+            primary: 'bg-green-600',
+            hover: 'hover:bg-green-700',
+            light: isDarkMode ? 'bg-green-900/20' : 'bg-green-50',
+            text: isDarkMode ? 'text-green-400' : 'text-green-600',
+            border: isDarkMode ? 'border-green-700' : 'border-green-200',
+            ring: 'focus:ring-green-500 focus:border-green-500',
+            gradient: 'from-green-600 to-green-700'
+        },
+        orange: {
+            primary: 'bg-orange-600',
+            hover: 'hover:bg-orange-700',
+            light: isDarkMode ? 'bg-orange-900/20' : 'bg-orange-50',
+            text: isDarkMode ? 'text-orange-400' : 'text-orange-600',
+            border: isDarkMode ? 'border-orange-700' : 'border-orange-200',
+            ring: 'focus:ring-orange-500 focus:border-orange-500',
+            gradient: 'from-orange-600 to-orange-700'
+        },
+        pink: {
+            primary: 'bg-pink-600',
+            hover: 'hover:bg-pink-700',
+            light: isDarkMode ? 'bg-pink-900/20' : 'bg-pink-50',
+            text: isDarkMode ? 'text-pink-400' : 'text-pink-600',
+            border: isDarkMode ? 'border-pink-700' : 'border-pink-200',
+            ring: 'focus:ring-pink-500 focus:border-pink-500',
+            gradient: 'from-pink-600 to-pink-700'
+        }
+    };
+
+    const currentAccent = accentColors[accentColor as keyof typeof accentColors] || accentColors.blue;
+
+    // Font size configurations
+    const fontSizes = {
+        small: {
+            text: 'text-sm',
+            heading: 'text-lg',
+            title: 'text-xl',
+            subtitle: 'text-xs',
+            button: 'text-sm',
+            label: 'text-xs',
+            hero: 'text-4xl md:text-5xl',
+            section: 'text-2xl md:text-3xl'
+        },
+        medium: {
+            text: 'text-base',
+            heading: 'text-xl',
+            title: 'text-2xl',
+            subtitle: 'text-sm',
+            button: 'text-base',
+            label: 'text-sm',
+            hero: 'text-5xl md:text-6xl',
+            section: 'text-3xl md:text-4xl'
+        },
+        large: {
+            text: 'text-lg',
+            heading: 'text-2xl',
+            title: 'text-3xl',
+            subtitle: 'text-base',
+            button: 'text-lg',
+            label: 'text-base',
+            hero: 'text-6xl md:text-7xl',
+            section: 'text-4xl md:text-5xl'
+        }
+    };
+
+    const currentFont = fontSizes[fontSize as keyof typeof fontSizes] || fontSizes.medium;
+
+    return {
+        // Basic colors
+        background: isDarkMode ? 'bg-gray-900' : 'bg-white',
+        backgroundCard: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
+        backgroundSidebar: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
+        backgroundInput: isDarkMode ? 'bg-gray-700/90' : 'bg-white/90',
+        backgroundHeader: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
+        backgroundFooter: isDarkMode ? 'bg-gray-900' : 'bg-white',
+
+        // Text colors
+        text: isDarkMode ? 'text-gray-100' : 'text-gray-900',
+        textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600',
+        textMuted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+        textHero: isDarkMode ? 'text-white' : 'text-white',
+
+        // Borders
+        border: isDarkMode ? 'border-gray-600' : 'border-gray-300',
+        borderCard: isDarkMode ? 'border-gray-600/30' : 'border-white/30',
+
+        // Effects
+        shadow: isDarkMode ? 'shadow-2xl shadow-black/50' : 'shadow-2xl',
+        hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-white/50',
+
+        // Typography & Layout
+        fontSize: currentFont,
+
+        // Padding/spacing based on compact mode
+        padding: compactMode ? 'p-3' : 'p-6',
+        paddingSmall: compactMode ? 'p-2' : 'p-4',
+        paddingLarge: compactMode ? 'p-4' : 'p-8',
+        paddingSection: compactMode ? 'py-8' : 'py-16',
+
+        // Margins
+        margin: compactMode ? 'mb-3' : 'mb-6',
+        marginSmall: compactMode ? 'mb-2' : 'mb-4',
+        marginLarge: compactMode ? 'mb-4' : 'mb-8',
+        marginSection: compactMode ? 'mb-12' : 'mb-20',
+
+        // Spacing
+        spacing: compactMode ? 'space-y-2' : 'space-y-4',
+        spacingLarge: compactMode ? 'space-y-3' : 'space-y-6',
+
+        // Grid gaps
+        gap: compactMode ? 'gap-3' : 'gap-6',
+
+        // Button sizes
+        buttonPadding: compactMode ? 'px-4 py-2' : 'px-6 py-3',
+        buttonPaddingSmall: compactMode ? 'px-2 py-1' : 'px-3 py-2',
+
+        // Input heights
+        inputHeight: compactMode ? 'h-9' : 'h-11',
+        searchHeight: compactMode ? 'py-3' : 'py-4',
+
+        // Icon sizes
+        iconSize: compactMode ? 'h-4 w-4' : 'h-5 w-5',
+        iconSizeSmall: compactMode ? 'h-3 w-3' : 'h-4 w-4',
+        iconSizeLarge: compactMode ? 'h-6 w-6' : 'h-8 w-8',
+
+        // Accent colors
+        accent: currentAccent.primary,
+        accentHover: currentAccent.hover,
+        accentText: currentAccent.text,
+        accentLight: currentAccent.light,
+        accentBorder: currentAccent.border,
+        accentRing: currentAccent.ring,
+        accentGradient: currentAccent.gradient,
+
+        // State info
+        isDarkMode,
+        accentColor,
+        fontSizeValue: fontSize,
+        compactMode
+    };
+};
+
+// Hero Slideshow Component with theming
+const EventHeroSlideshow = ({ images, autoPlay = true, themeClasses }: {
     images: SlideImage[],
-    autoPlay?: boolean
+    autoPlay?: boolean,
+    themeClasses: any
 }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(autoPlay);
@@ -158,8 +345,8 @@ const EventHeroSlideshow = ({ images, autoPlay = true }: {
 
     if (images.length === 0) {
         return (
-            <div className="h-64 md:h-96 bg-gradient-to-r from-blue-600 to-purple-700 flex items-center justify-center">
-                <Calendar className="h-24 w-24 text-white opacity-50" />
+            <div className={`${themeClasses.compactMode ? 'h-64' : 'h-64 md:h-96'} bg-gradient-to-r ${themeClasses.accentGradient} flex items-center justify-center`}>
+                <Calendar className={`${themeClasses.compactMode ? 'h-16 w-16' : 'h-24 w-24'} text-white opacity-50`} />
             </div>
         );
     }
@@ -168,7 +355,7 @@ const EventHeroSlideshow = ({ images, autoPlay = true }: {
 
     return (
         <>
-            <div className="relative h-64 md:h-96 overflow-hidden group">
+            <div className={`relative ${themeClasses.compactMode ? 'h-64' : 'h-64 md:h-96'} overflow-hidden group`}>
                 {/* Main Image */}
                 <div className="relative w-full h-full">
                     {!imageError.has(currentIndex) ? (
@@ -180,10 +367,10 @@ const EventHeroSlideshow = ({ images, autoPlay = true }: {
                             onError={() => handleImageError(currentIndex)}
                         />
                     ) : (
-                        <div className="w-full h-full bg-gradient-to-r from-blue-600 to-purple-700 flex items-center justify-center">
+                        <div className={`w-full h-full bg-gradient-to-r ${themeClasses.accentGradient} flex items-center justify-center`}>
                             <div className="text-center text-white">
-                                <Image className="h-16 w-16 mx-auto mb-2 opacity-50" />
-                                <p className="text-lg">Image not available</p>
+                                <Image className={`${themeClasses.iconSizeLarge} mx-auto mb-2 opacity-50`} />
+                                <p className={themeClasses.fontSize.text}>Image not available</p>
                             </div>
                         </div>
                     )}
@@ -192,8 +379,8 @@ const EventHeroSlideshow = ({ images, autoPlay = true }: {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
                     {/* Image Type Badge */}
-                    <div className="absolute top-4 left-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${currentImage.type === 'event-banner' ? 'bg-yellow-500' :
+                    <div className={`absolute ${themeClasses.compactMode ? 'top-3 left-3' : 'top-4 left-4'}`}>
+                        <span className={`${themeClasses.buttonPaddingSmall} rounded-full ${themeClasses.fontSize.subtitle} font-medium ${currentImage.type === 'event-banner' ? 'bg-yellow-500' :
                             currentImage.type === 'event-image' ? 'bg-blue-500' : 'bg-green-500'
                             } text-white`}>
                             {currentImage.type === 'event-banner' ? 'Event Banner' :
@@ -203,20 +390,20 @@ const EventHeroSlideshow = ({ images, autoPlay = true }: {
 
                     {/* Controls */}
                     {images.length > 1 && (
-                        <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className={`absolute ${themeClasses.compactMode ? 'top-3 right-3' : 'top-4 right-4'} flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity`}>
                             <button
                                 onClick={togglePlayPause}
-                                className="p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-sm"
+                                className={`${themeClasses.paddingSmall} bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-sm`}
                                 title={isPlaying ? 'Pause slideshow' : 'Play slideshow'}
                             >
-                                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                                {isPlaying ? <Pause className={themeClasses.iconSize} /> : <Play className={themeClasses.iconSize} />}
                             </button>
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-sm"
+                                className={`${themeClasses.paddingSmall} bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-sm`}
                                 title="View full size"
                             >
-                                <ZoomIn className="h-4 w-4" />
+                                <ZoomIn className={themeClasses.iconSize} />
                             </button>
                         </div>
                     )}
@@ -226,29 +413,29 @@ const EventHeroSlideshow = ({ images, autoPlay = true }: {
                         <>
                             <button
                                 onClick={goToPrevious}
-                                className="absolute left-4 top-1/2 transform -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
+                                className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${themeClasses.paddingSmall} bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm`}
                                 title="Previous image"
                             >
-                                <ChevronLeft className="h-5 w-5" />
+                                <ChevronLeft className={themeClasses.iconSizeLarge} />
                             </button>
                             <button
                                 onClick={goToNext}
-                                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
+                                className={`absolute right-4 top-1/2 transform -translate-y-1/2 ${themeClasses.paddingSmall} bg-black/50 hover:bg-black/70 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm`}
                                 title="Next image"
                             >
-                                <ChevronRight className="h-5 w-5" />
+                                <ChevronRight className={themeClasses.iconSizeLarge} />
                             </button>
                         </>
                     )}
 
                     {/* Dot Indicators */}
                     {images.length > 1 && (
-                        <div className="absolute bottom-4 right-4 flex space-x-2">
+                        <div className={`absolute ${themeClasses.compactMode ? 'bottom-3 right-3' : 'bottom-4 right-4'} flex space-x-2`}>
                             {images.map((_, index) => (
                                 <button
                                     key={index}
                                     onClick={() => goToSlide(index)}
-                                    className={`w-2 h-2 rounded-full transition-all ${index === currentIndex
+                                    className={`${themeClasses.compactMode ? 'w-2 h-2' : 'w-2 h-2'} rounded-full transition-all ${index === currentIndex
                                         ? 'bg-white scale-125'
                                         : 'bg-white/50 hover:bg-white/75'
                                         }`}
@@ -279,16 +466,16 @@ const EventHeroSlideshow = ({ images, autoPlay = true }: {
                                 className="max-w-full max-h-full object-contain rounded-lg"
                             />
                         ) : (
-                            <div className="w-96 h-64 bg-gray-600 rounded-lg flex items-center justify-center">
-                                <div className="text-center text-white">
-                                    <Image className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                            <div className={`w-96 h-64 ${themeClasses.backgroundCard} rounded-lg flex items-center justify-center`}>
+                                <div className={`text-center ${themeClasses.text}`}>
+                                    <Image className={`${themeClasses.iconSizeLarge} mx-auto mb-2 opacity-50`} />
                                     <p>Image not available</p>
                                 </div>
                             </div>
                         )}
 
                         <div className="absolute bottom-4 left-4 text-white bg-black/50 rounded-lg p-3 max-w-md backdrop-blur-sm">
-                            <h3 className="text-lg font-bold">{currentImage.title}</h3>
+                            <h3 className={`${themeClasses.fontSize.heading} font-bold`}>{currentImage.title}</h3>
                             <p className="opacity-90 text-sm">{currentImage.subtitle}</p>
                         </div>
                     </div>
@@ -301,7 +488,7 @@ const EventHeroSlideshow = ({ images, autoPlay = true }: {
 export default function EventDetailsPage() {
     const params = useParams();
     const router = useRouter();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const eventId = params.id as string;
 
     const [event, setEvent] = useState<Event | null>(null);
@@ -313,6 +500,9 @@ export default function EventDetailsPage() {
     const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
     const [isLiked, setIsLiked] = useState(false);
     const [slideImages, setSlideImages] = useState<SlideImage[]>([]);
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
+    const themeClasses = getThemeClasses(preferences);
 
     useEffect(() => {
         if (eventId) {
@@ -334,6 +524,69 @@ export default function EventDetailsPage() {
             generateSlideImages();
         }
     }, [venue, event]);
+
+    useEffect(() => {
+        if (user) {
+            loadUserPreferences();
+        } else {
+            // Set default preferences for non-logged in users
+            setPreferences({
+                emailNotifications: true,
+                sessionTimeout: 30,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false
+            });
+        }
+    }, [user]);
+
+    // Apply theme to document body
+    useEffect(() => {
+        if (themeClasses.isDarkMode) {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.body.classList.remove('dark');
+        }
+    }, [themeClasses.isDarkMode]);
+
+    const loadUserPreferences = async () => {
+        try {
+            const prefsData = await userApi.getPreferences();
+            setPreferences({
+                emailNotifications: prefsData.emailNotifications || true,
+                sessionTimeout: prefsData.sessionTimeout || 30,
+                theme: prefsData.theme || 'light',
+                language: prefsData.language || 'en',
+                dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
+                timeFormat: prefsData.timeFormat || '12h',
+                defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
+                accentColor: prefsData.accentColor || 'blue',
+                fontSize: prefsData.fontSize || 'medium',
+                compactMode: prefsData.compactMode || false
+            });
+        } catch (error) {
+            console.log('No preferences found, using defaults');
+            setPreferences({
+                emailNotifications: true,
+                sessionTimeout: 30,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false
+            });
+        }
+    };
 
     const generateSlideImages = () => {
         if (!event) return;
@@ -404,6 +657,15 @@ export default function EventDetailsPage() {
         }
 
         return `http://localhost:5251/${imageUrl}`;
+    };
+
+    const getFullImageUrl = (imageUrl: string | undefined) => {
+        if (!imageUrl) return '';
+        if (imageUrl.startsWith('http')) {
+            return imageUrl;
+        }
+        const backendUrl = 'http://localhost:5251';
+        return backendUrl + imageUrl;
     };
 
     const fetchVenueDetails = async () => {
@@ -605,9 +867,11 @@ export default function EventDetailsPage() {
                     backgroundAttachment: 'fixed'
                 }}
             >
-                <div className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-8 border border-white/30 shadow-2xl">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-6"></div>
-                    <p className="text-gray-600 text-xl">Loading event...</p>
+                <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-2xl ${themeClasses.paddingLarge} ${themeClasses.shadow} border ${themeClasses.borderCard}`}>
+                    <div className="text-center">
+                        <div className={`animate-spin rounded-full ${themeClasses.iconSizeLarge} border-b-2 border-blue-600 mx-auto ${themeClasses.marginSmall}`}></div>
+                        <p className={`${themeClasses.text} ${themeClasses.fontSize.heading}`}>Loading event...</p>
+                    </div>
                 </div>
             </div>
         );
@@ -625,15 +889,17 @@ export default function EventDetailsPage() {
                     backgroundAttachment: 'fixed'
                 }}
             >
-                <div className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-8 border border-white/30 shadow-2xl">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">Event Not Found</h1>
-                    <p className="text-gray-600 mb-8">{error}</p>
-                    <button
-                        onClick={() => router.push('/events')}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                    >
-                        Back to Events
-                    </button>
+                <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-2xl ${themeClasses.paddingLarge} ${themeClasses.shadow} border ${themeClasses.borderCard}`}>
+                    <div className="text-center">
+                        <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Event Not Found</h1>
+                        <p className={`${themeClasses.textSecondary} ${themeClasses.marginLarge}`}>{error}</p>
+                        <button
+                            onClick={() => router.push('/events')}
+                            className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg ${themeClasses.fontSize.button}`}
+                        >
+                            Back to Events
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -651,29 +917,29 @@ export default function EventDetailsPage() {
             }}
         >
             {/* Back Button */}
-            <div className="bg-white/80 backdrop-blur-xl border-b border-white/20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className={`${themeClasses.backgroundHeader} backdrop-blur-xl border-b ${themeClasses.borderCard}`}>
+                <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${themeClasses.searchHeight}`}>
                     <div className="flex items-center justify-between">
                         <button
                             onClick={() => router.back()}
-                            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                            className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}
                         >
-                            <ArrowLeft className="h-5 w-5 mr-2" />
+                            <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
                             Back to Events
                         </button>
 
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={() => setIsLiked(!isLiked)}
-                                className={`p-2 rounded-full transition-colors ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                                className={`${themeClasses.paddingSmall} rounded-full transition-colors ${isLiked ? 'text-red-500' : `${themeClasses.textMuted} hover:text-red-500`}`}
                             >
-                                <Heart className={`h-6 w-6 ${isLiked ? 'fill-current' : ''}`} />
+                                <Heart className={`${themeClasses.iconSize} ${isLiked ? 'fill-current' : ''}`} />
                             </button>
                             <button
                                 onClick={shareEvent}
-                                className="p-2 rounded-full text-gray-400 hover:text-blue-500 transition-colors"
+                                className={`${themeClasses.paddingSmall} rounded-full ${themeClasses.textMuted} hover:${themeClasses.accentText} transition-colors`}
                             >
-                                <Share className="h-6 w-6" />
+                                <Share className={themeClasses.iconSize} />
                             </button>
                         </div>
                     </div>
@@ -683,41 +949,41 @@ export default function EventDetailsPage() {
             {/* Hero Section with Slideshow */}
             <div className="relative">
                 {slideImages.length > 0 ? (
-                    <EventHeroSlideshow images={slideImages} autoPlay={true} />
+                    <EventHeroSlideshow images={slideImages} autoPlay={true} themeClasses={themeClasses} />
                 ) : (
                     // Fallback hero section when no images are available
-                    <div className="h-64 md:h-96 bg-gradient-to-r from-blue-600 to-purple-700 flex items-center justify-center">
-                        <Calendar className="h-24 w-24 text-white opacity-50" />
+                    <div className={`${themeClasses.compactMode ? 'h-64' : 'h-64 md:h-96'} bg-gradient-to-r ${themeClasses.accentGradient} flex items-center justify-center`}>
+                        <Calendar className={`${themeClasses.compactMode ? 'h-16 w-16' : 'h-24 w-24'} text-white opacity-50`} />
                     </div>
                 )}
 
                 {/* Event Title Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${themeClasses.paddingLarge}`}>
                         <div className="text-white">
-                            <div className="flex items-center mb-2">
-                                <span className="px-3 py-1 bg-blue-600/90 text-white text-sm font-medium rounded-full mr-4 backdrop-blur-sm">
+                            <div className={`flex items-center ${themeClasses.marginSmall}`}>
+                                <span className={`${themeClasses.buttonPaddingSmall} ${themeClasses.accent} text-white ${themeClasses.fontSize.subtitle} font-medium rounded-full mr-4 backdrop-blur-sm`}>
                                     {event.categoryName}
                                 </span>
                                 {event.isFeatured && (
                                     <div className="flex items-center">
-                                        <Star className="h-4 w-4 mr-1 fill-current text-yellow-400" />
-                                        <span className="text-sm">Featured</span>
+                                        <Star className={`${themeClasses.iconSize} mr-1 fill-current text-yellow-400`} />
+                                        <span className={themeClasses.fontSize.subtitle}>Featured</span>
                                     </div>
                                 )}
                             </div>
-                            <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">{event.title}</h1>
-                            <div className="flex flex-wrap items-center gap-4 text-lg drop-shadow">
+                            <h1 className={`${themeClasses.fontSize.hero} font-bold ${themeClasses.marginSmall} drop-shadow-lg`}>{event.title}</h1>
+                            <div className={`flex flex-wrap items-center ${themeClasses.gap} ${themeClasses.fontSize.heading} drop-shadow`}>
                                 <div className="flex items-center">
-                                    <Calendar className="h-5 w-5 mr-2" />
+                                    <Calendar className={`${themeClasses.iconSize} mr-2`} />
                                     <span>{formatDate(event.startDateTime)}</span>
                                 </div>
                                 <div className="flex items-center">
-                                    <Clock className="h-5 w-5 mr-2" />
+                                    <Clock className={`${themeClasses.iconSize} mr-2`} />
                                     <span>{formatTime(event.startDateTime)}</span>
                                 </div>
                                 <div className="flex items-center">
-                                    <MapPin className="h-5 w-5 mr-2" />
+                                    <MapPin className={`${themeClasses.iconSize} mr-2`} />
                                     <span>{event.isOnline ? 'Online Event' : `${event.venueName}, ${event.venueCity}`}</span>
                                 </div>
                             </div>
@@ -727,32 +993,32 @@ export default function EventDetailsPage() {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${themeClasses.paddingLarge}`}>
+                <div className={`grid grid-cols-1 lg:grid-cols-3 ${themeClasses.gap}`}>
                     {/* Event Details */}
                     <div className="lg:col-span-2">
-                        <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">About This Event</h2>
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-md rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding} ${themeClasses.marginLarge}`}>
+                            <h2 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>About This Event</h2>
                             <div className="prose max-w-none">
-                                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{event.description}</p>
+                                <p className={`${themeClasses.textSecondary} leading-relaxed whitespace-pre-line ${themeClasses.fontSize.text}`}>{event.description}</p>
                             </div>
 
                             {event.isOnline && event.onlineUrl && (
-                                <div className="mt-6 p-4 bg-blue-50/60 border border-blue-200/40 rounded-xl backdrop-blur-sm">
-                                    <h3 className="text-lg font-semibold text-blue-900 mb-2 flex items-center">
-                                        <Globe className="h-5 w-5 mr-2" />
+                                <div className={`${themeClasses.marginLarge} ${themeClasses.paddingSmall} ${themeClasses.accentLight} border ${themeClasses.accentBorder} rounded-xl backdrop-blur-sm`}>
+                                    <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.accentText} ${themeClasses.marginSmall} flex items-center`}>
+                                        <Globe className={`${themeClasses.iconSize} mr-2`} />
                                         Online Event
                                     </h3>
-                                    <p className="text-blue-800">This event will be held online. Access details will be provided after purchase.</p>
+                                    <p className={`${themeClasses.accentText} ${themeClasses.fontSize.text}`}>This event will be held online. Access details will be provided after purchase.</p>
                                 </div>
                             )}
 
                             {event.tags && (
-                                <div className="mt-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Tags</h3>
-                                    <div className="flex flex-wrap gap-2">
+                                <div className={themeClasses.marginLarge}>
+                                    <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Tags</h3>
+                                    <div className={`flex flex-wrap ${themeClasses.gap}`}>
                                         {event.tags.split(',').map((tag, index) => (
-                                            <span key={index} className="px-3 py-1 bg-gray-100/60 text-gray-800 rounded-full text-sm backdrop-blur-sm border border-gray-200/30">
+                                            <span key={index} className={`${themeClasses.buttonPaddingSmall} ${themeClasses.backgroundInput} ${themeClasses.text} rounded-full ${themeClasses.fontSize.subtitle} backdrop-blur-sm border ${themeClasses.border}`}>
                                                 {tag.trim()}
                                             </span>
                                         ))}
@@ -762,33 +1028,33 @@ export default function EventDetailsPage() {
                         </div>
 
                         {/* Organizer Info */}
-                        <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Event Organizer</h3>
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-md rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding} ${themeClasses.marginLarge}`}>
+                            <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Event Organizer</h3>
                             <div className="flex items-center">
-                                <div className="w-12 h-12 bg-blue-100/80 rounded-full flex items-center justify-center backdrop-blur-sm">
-                                    <Users className="h-6 w-6 text-blue-600" />
+                                <div className={`${themeClasses.iconSizeLarge} ${themeClasses.accentLight} rounded-full flex items-center justify-center backdrop-blur-sm`}>
+                                    <Users className={`${themeClasses.iconSize} ${themeClasses.accentText}`} />
                                 </div>
                                 <div className="ml-4">
-                                    <p className="font-medium text-gray-900">{event.organizerName}</p>
-                                    <p className="text-gray-700">Event Organizer</p>
+                                    <p className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{event.organizerName}</p>
+                                    <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>Event Organizer</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Venue Info */}
                         {venue && !event.isOnline && (
-                            <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Venue Information</h3>
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-md rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding}`}>
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Venue Information</h3>
                                 <div className="flex items-start">
-                                    <div className="w-12 h-12 bg-purple-100/80 rounded-full flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
-                                        <Building className="h-6 w-6 text-purple-600" />
+                                    <div className={`${themeClasses.iconSizeLarge} ${themeClasses.accentLight} rounded-full flex items-center justify-center flex-shrink-0 backdrop-blur-sm`}>
+                                        <Building className={`${themeClasses.iconSize} ${themeClasses.accentText}`} />
                                     </div>
                                     <div className="ml-4 flex-1">
-                                        <p className="font-medium text-gray-900">{venue.name}</p>
-                                        <p className="text-gray-700 mb-2">{venue.address}</p>
-                                        <p className="text-gray-700 mb-2">{venue.city}, {venue.state} {venue.zipCode}</p>
-                                        <div className="flex items-center text-sm text-gray-600 mb-2">
-                                            <Users className="h-4 w-4 mr-1" />
+                                        <p className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{venue.name}</p>
+                                        <p className={`${themeClasses.textSecondary} ${themeClasses.marginSmall} ${themeClasses.fontSize.text}`}>{venue.address}</p>
+                                        <p className={`${themeClasses.textSecondary} ${themeClasses.marginSmall} ${themeClasses.fontSize.text}`}>{venue.city}, {venue.state} {venue.zipCode}</p>
+                                        <div className={`flex items-center ${themeClasses.fontSize.subtitle} ${themeClasses.textMuted} ${themeClasses.marginSmall}`}>
+                                            <Users className={`${themeClasses.iconSizeSmall} mr-1`} />
                                             <span>Capacity: {venue.capacity.toLocaleString()}</span>
                                         </div>
                                         {venue.website && (
@@ -796,9 +1062,9 @@ export default function EventDetailsPage() {
                                                 href={venue.website}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                                className={`inline-flex items-center ${themeClasses.accentText} hover:${themeClasses.accentHover} ${themeClasses.fontSize.subtitle} font-medium`}
                                             >
-                                                <Globe className="h-4 w-4 mr-1" />
+                                                <Globe className={`${themeClasses.iconSizeSmall} mr-1`} />
                                                 Visit Website
                                             </a>
                                         )}
@@ -810,20 +1076,20 @@ export default function EventDetailsPage() {
 
                     {/* Ticket Purchase Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white/75 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 p-6 sticky top-4">
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-md rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding} sticky top-4`}>
                             {/* Cart Summary at top if items exist */}
                             {cart.length > 0 && (
-                                <div className="mb-6 p-4 bg-green-50/70 border border-green-200/40 rounded-xl backdrop-blur-sm">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <h4 className="font-semibold text-green-900 flex items-center">
-                                            <ShoppingCart className="h-4 w-4 mr-2" />
+                                <div className={`${themeClasses.marginLarge} ${themeClasses.paddingSmall} bg-green-50/70 border border-green-200/40 rounded-xl backdrop-blur-sm`}>
+                                    <div className={`flex items-center justify-between ${themeClasses.marginSmall}`}>
+                                        <h4 className={`font-semibold text-green-900 flex items-center ${themeClasses.fontSize.text}`}>
+                                            <ShoppingCart className={`${themeClasses.iconSizeSmall} mr-2`} />
                                             In Your Cart
                                         </h4>
-                                        <span className="text-sm text-green-800">{getTotalItems()} items</span>
+                                        <span className={`${themeClasses.fontSize.subtitle} text-green-800`}>{getTotalItems()} items</span>
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className={themeClasses.spacing}>
                                         {cart.map((item) => (
-                                            <div key={item.ticketTypeId} className="flex justify-between items-center text-sm">
+                                            <div key={item.ticketTypeId} className={`flex justify-between items-center ${themeClasses.fontSize.subtitle}`}>
                                                 <span className="text-green-800">{item.name} x{item.quantity}</span>
                                                 <div className="flex items-center space-x-2">
                                                     <span className="font-semibold text-green-900">${(item.price * item.quantity).toFixed(2)}</span>
@@ -845,68 +1111,68 @@ export default function EventDetailsPage() {
                                 </div>
                             )}
 
-                            <h3 className="text-xl font-bold text-gray-900 mb-4">Get Tickets</h3>
+                            <h3 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Get Tickets</h3>
 
                             {/* Event Stats */}
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="text-center p-3 bg-blue-50/70 rounded-xl backdrop-blur-sm border border-blue-100/40">
-                                    <p className="text-2xl font-bold text-blue-600">{event.ticketsSold}</p>
-                                    <p className="text-sm text-gray-700">Tickets Sold</p>
+                            <div className={`grid grid-cols-2 ${themeClasses.gap} ${themeClasses.marginLarge}`}>
+                                <div className={`text-center ${themeClasses.paddingSmall} ${themeClasses.accentLight} rounded-xl backdrop-blur-sm border ${themeClasses.accentBorder}`}>
+                                    <p className={`${themeClasses.fontSize.title} font-bold ${themeClasses.accentText}`}>{event.ticketsSold}</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Tickets Sold</p>
                                 </div>
-                                <div className="text-center p-3 bg-green-50/70 rounded-xl backdrop-blur-sm border border-green-100/40">
-                                    <p className="text-2xl font-bold text-green-600">{event.availableTickets}</p>
-                                    <p className="text-sm text-gray-700">Available</p>
+                                <div className={`text-center ${themeClasses.paddingSmall} bg-green-50/70 rounded-xl backdrop-blur-sm border border-green-100/40`}>
+                                    <p className={`${themeClasses.fontSize.title} font-bold text-green-600`}>{event.availableTickets}</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Available</p>
                                 </div>
                             </div>
 
                             {/* Ticket Types */}
-                            <div className="space-y-4">
+                            <div className={themeClasses.spacing}>
                                 {ticketTypes.length === 0 ? (
-                                    <div className="text-center py-8">
-                                        <p className="text-gray-700">No tickets available yet</p>
+                                    <div className={`text-center ${themeClasses.paddingLarge}`}>
+                                        <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>No tickets available yet</p>
                                     </div>
                                 ) : (
                                     ticketTypes.map((ticketType) => (
-                                        <div key={ticketType.ticketTypeId} className="border border-gray-200/40 rounded-xl p-4 bg-white/40 backdrop-blur-sm">
-                                            <div className="flex justify-between items-start mb-2">
+                                        <div key={ticketType.ticketTypeId} className={`border ${themeClasses.border} rounded-xl ${themeClasses.paddingSmall} ${themeClasses.backgroundInput} backdrop-blur-sm`}>
+                                            <div className={`flex justify-between items-start ${themeClasses.marginSmall}`}>
                                                 <div className="flex-1">
-                                                    <h4 className="font-semibold text-gray-900">{ticketType.name}</h4>
+                                                    <h4 className={`font-semibold ${themeClasses.text} ${themeClasses.fontSize.text}`}>{ticketType.name}</h4>
                                                     {ticketType.description && (
-                                                        <p className="text-sm text-gray-700 mt-1">{ticketType.description}</p>
+                                                        <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-1`}>{ticketType.description}</p>
                                                     )}
                                                 </div>
-                                                <p className="text-lg font-bold text-gray-900 ml-4">
+                                                <p className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ml-4`}>
                                                     ${ticketType.price.toFixed(2)}
                                                 </p>
                                             </div>
 
-                                            <div className="flex justify-between items-center text-sm text-gray-700 mb-3">
+                                            <div className={`flex justify-between items-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} ${themeClasses.marginSmall}`}>
                                                 <span>{ticketType.quantityRemaining} remaining</span>
                                                 <span>Max {ticketType.maxQuantityPerOrder} per order</span>
                                             </div>
 
                                             {ticketType.isOnSale && ticketType.quantityRemaining > 0 ? (
-                                                <div className="space-y-3">
+                                                <div className={themeClasses.spacing}>
                                                     {/* Quantity Selector */}
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-sm font-medium text-gray-800">Quantity:</span>
+                                                        <span className={`${themeClasses.fontSize.subtitle} font-medium ${themeClasses.text}`}>Quantity:</span>
                                                         <div className="flex items-center space-x-2">
                                                             <button
                                                                 onClick={() => updateQuantity(ticketType.ticketTypeId, -1)}
                                                                 disabled={quantities[ticketType.ticketTypeId] === 0}
-                                                                className="w-8 h-8 border border-gray-300/60 rounded flex items-center justify-center text-gray-600 hover:bg-gray-50/80 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                                                                className={`${themeClasses.iconSizeLarge} border ${themeClasses.border} rounded flex items-center justify-center ${themeClasses.textMuted} ${themeClasses.hover} disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm`}
                                                             >
-                                                                <Minus className="h-4 w-4" />
+                                                                <Minus className={themeClasses.iconSizeSmall} />
                                                             </button>
-                                                            <span className="w-8 text-center font-medium text-gray-900">
+                                                            <span className={`w-8 text-center font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
                                                                 {quantities[ticketType.ticketTypeId] || 0}
                                                             </span>
                                                             <button
                                                                 onClick={() => updateQuantity(ticketType.ticketTypeId, 1)}
                                                                 disabled={quantities[ticketType.ticketTypeId] >= Math.min(ticketType.maxQuantityPerOrder, ticketType.quantityRemaining)}
-                                                                className="w-8 h-8 border border-gray-300/60 rounded flex items-center justify-center text-gray-600 hover:bg-gray-50/80 disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm"
+                                                                className={`${themeClasses.iconSizeLarge} border ${themeClasses.border} rounded flex items-center justify-center ${themeClasses.textMuted} ${themeClasses.hover} disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm`}
                                                             >
-                                                                <Plus className="h-4 w-4" />
+                                                                <Plus className={themeClasses.iconSizeSmall} />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -915,16 +1181,16 @@ export default function EventDetailsPage() {
                                                     <button
                                                         onClick={() => addToCart(ticketType)}
                                                         disabled={quantities[ticketType.ticketTypeId] === 0}
-                                                        className="w-full bg-blue-600/90 hover:bg-blue-700 disabled:bg-gray-300/70 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center backdrop-blur-sm"
+                                                        className={`w-full ${themeClasses.accent} ${themeClasses.accentHover} disabled:bg-gray-300/70 disabled:cursor-not-allowed text-white font-semibold ${themeClasses.buttonPadding} rounded-lg transition-colors duration-200 flex items-center justify-center backdrop-blur-sm ${themeClasses.fontSize.text}`}
                                                     >
-                                                        <ShoppingCart className="h-4 w-4 mr-2" />
+                                                        <ShoppingCart className={`${themeClasses.iconSizeSmall} mr-2`} />
                                                         Add to Cart
                                                     </button>
                                                 </div>
                                             ) : (
                                                 <button
                                                     disabled
-                                                    className="w-full bg-gray-300/70 text-gray-500 py-2 px-4 rounded-lg cursor-not-allowed backdrop-blur-sm"
+                                                    className={`w-full bg-gray-300/70 ${themeClasses.textMuted} ${themeClasses.buttonPadding} rounded-lg cursor-not-allowed backdrop-blur-sm ${themeClasses.fontSize.text}`}
                                                 >
                                                     {ticketType.quantityRemaining === 0 ? 'Sold Out' : 'Not Available'}
                                                 </button>
@@ -936,15 +1202,15 @@ export default function EventDetailsPage() {
 
                             {/* Purchase Button */}
                             {cart.length > 0 && (
-                                <div className="mt-6 pt-6 border-t border-gray-200/40">
+                                <div className={`${themeClasses.marginLarge} pt-6 border-t ${themeClasses.border}`}>
                                     <button
                                         onClick={handlePurchase}
-                                        className="w-full bg-gradient-to-r from-green-600/90 to-green-700/90 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center text-lg transform hover:scale-105 backdrop-blur-sm"
+                                        className={`w-full bg-gradient-to-r from-green-600/90 to-green-700/90 hover:from-green-700 hover:to-green-800 text-white font-bold ${themeClasses.buttonPadding} rounded-xl transition-all duration-200 flex items-center justify-center ${themeClasses.fontSize.heading} transform hover:scale-105 backdrop-blur-sm`}
                                     >
-                                        <ShoppingCart className="h-5 w-5 mr-2" />
+                                        <ShoppingCart className={`${themeClasses.iconSize} mr-2`} />
                                         Proceed to Checkout
                                     </button>
-                                    <p className="text-sm text-gray-700 text-center mt-2">
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} text-center mt-2`}>
                                         Total: ${getTotalPrice().toFixed(2)} ({getTotalItems()} tickets)
                                     </p>
                                 </div>

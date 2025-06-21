@@ -24,6 +24,7 @@ import {
     ArrowLeft
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { userApi } from '@/lib/api';
 
 interface TicketData {
     ticketId: number;
@@ -45,36 +46,236 @@ interface TicketData {
     venueAddress: string;
 }
 
-interface Event {
-    eventId: number;
-    title: string;
-    description: string;
-    bannerImageUrl?: string;
-    imageUrl?: string;
-    startDateTime: string;
-    endDateTime: string;
-    venueName: string;
-    venueCity: string;
-    isOnline: boolean;
+interface UserPreferences {
+    emailNotifications: boolean;
+    sessionTimeout: number;
+    theme: string;
+    language: string;
+    dateFormat: string;
+    timeFormat: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
 }
+
+const getThemeClasses = (preferences: UserPreferences | null) => {
+    const isDarkMode = preferences?.theme === 'dark' ||
+        (preferences?.theme === 'auto' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    const accentColor = preferences?.accentColor || 'blue';
+    const fontSize = preferences?.fontSize || 'medium';
+    const compactMode = preferences?.compactMode || false;
+
+    // Accent color configurations
+    const accentColors = {
+        blue: {
+            primary: 'bg-blue-600',
+            hover: 'hover:bg-blue-700',
+            light: isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50',
+            text: isDarkMode ? 'text-blue-400' : 'text-blue-600',
+            border: isDarkMode ? 'border-blue-700' : 'border-blue-200',
+            ring: 'focus:ring-blue-500 focus:border-blue-500'
+        },
+        purple: {
+            primary: 'bg-purple-600',
+            hover: 'hover:bg-purple-700',
+            light: isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50',
+            text: isDarkMode ? 'text-purple-400' : 'text-purple-600',
+            border: isDarkMode ? 'border-purple-700' : 'border-purple-200',
+            ring: 'focus:ring-purple-500 focus:border-purple-500'
+        },
+        green: {
+            primary: 'bg-green-600',
+            hover: 'hover:bg-green-700',
+            light: isDarkMode ? 'bg-green-900/20' : 'bg-green-50',
+            text: isDarkMode ? 'text-green-400' : 'text-green-600',
+            border: isDarkMode ? 'border-green-700' : 'border-green-200',
+            ring: 'focus:ring-green-500 focus:border-green-500'
+        },
+        orange: {
+            primary: 'bg-orange-600',
+            hover: 'hover:bg-orange-700',
+            light: isDarkMode ? 'bg-orange-900/20' : 'bg-orange-50',
+            text: isDarkMode ? 'text-orange-400' : 'text-orange-600',
+            border: isDarkMode ? 'border-orange-700' : 'border-orange-200',
+            ring: 'focus:ring-orange-500 focus:border-orange-500'
+        },
+        pink: {
+            primary: 'bg-pink-600',
+            hover: 'hover:bg-pink-700',
+            light: isDarkMode ? 'bg-pink-900/20' : 'bg-pink-50',
+            text: isDarkMode ? 'text-pink-400' : 'text-pink-600',
+            border: isDarkMode ? 'border-pink-700' : 'border-pink-200',
+            ring: 'focus:ring-pink-500 focus:border-pink-500'
+        }
+    };
+
+    const currentAccent = accentColors[accentColor as keyof typeof accentColors] || accentColors.blue;
+
+    // Font size configurations - Updated with professional typography classes
+    const fontSizes = {
+        small: {
+            text: 'text-body-small',
+            heading: 'text-heading-3',
+            title: 'text-heading-1',
+            subtitle: 'text-caption',
+            button: 'text-button',
+            label: 'form-label',
+            display: 'text-display'
+        },
+        medium: {
+            text: 'text-body',
+            heading: 'text-heading-2',
+            title: 'text-display',
+            subtitle: 'text-body-small',
+            button: 'text-button',
+            label: 'form-label',
+            display: 'text-display-large'
+        },
+        large: {
+            text: 'text-body-large',
+            heading: 'text-heading-1',
+            title: 'text-display-large',
+            subtitle: 'text-body',
+            button: 'text-button',
+            label: 'form-label',
+            display: 'text-display-large'
+        }
+    };
+
+    const currentFont = fontSizes[fontSize as keyof typeof fontSizes] || fontSizes.medium;
+
+    return {
+        // Basic colors
+        background: isDarkMode ? 'bg-gray-900' : 'bg-white',
+        backgroundCard: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
+        backgroundInput: isDarkMode ? 'bg-gray-700/90' : 'bg-white/90',
+        backgroundOverlay: isDarkMode ? 'bg-black/40' : 'bg-black/20',
+
+        // Text colors
+        text: isDarkMode ? 'text-gray-100' : 'text-gray-900',
+        textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600',
+        textMuted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+
+        // Borders
+        border: isDarkMode ? 'border-gray-600' : 'border-gray-300',
+        borderCard: isDarkMode ? 'border-gray-600/30' : 'border-white/30',
+
+        // Effects
+        shadow: isDarkMode ? 'shadow-2xl shadow-black/50' : 'shadow-2xl',
+        hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-white/50',
+
+        // Typography & Layout
+        fontSize: currentFont,
+
+        // Padding/spacing based on compact mode
+        padding: compactMode ? 'p-3' : 'p-6',
+        paddingSmall: compactMode ? 'p-2' : 'p-4',
+        paddingLarge: compactMode ? 'p-4' : 'p-8',
+
+        // Margins
+        margin: compactMode ? 'mb-3' : 'mb-6',
+        marginSmall: compactMode ? 'mb-2' : 'mb-4',
+        marginLarge: compactMode ? 'mb-4' : 'mb-8',
+
+        // Spacing between elements
+        spacing: compactMode ? 'space-y-2' : 'space-y-4',
+        gap: compactMode ? 'gap-2' : 'gap-4',
+
+        // Button sizes
+        buttonPadding: compactMode ? 'px-4 py-2' : 'px-6 py-3',
+        buttonPaddingSmall: compactMode ? 'px-2 py-1' : 'px-3 py-2',
+
+        // Input heights
+        inputHeight: compactMode ? 'h-9' : 'h-11',
+
+        // Icon sizes
+        iconSize: compactMode ? 'h-4 w-4' : 'h-5 w-5',
+        iconSizeSmall: compactMode ? 'h-3 w-3' : 'h-4 w-4',
+        iconSizeLarge: compactMode ? 'h-6 w-6' : 'h-8 w-8',
+
+        // Accent colors
+        accent: currentAccent.primary,
+        accentHover: currentAccent.hover,
+        accentText: currentAccent.text,
+        accentLight: currentAccent.light,
+        accentBorder: currentAccent.border,
+        accentRing: currentAccent.ring,
+
+        // State info
+        isDarkMode,
+        accentColor,
+        fontSizeValue: fontSize,
+        compactMode
+    };
+};
 
 export default function MyTicketsPage() {
     const router = useRouter();
     const [tickets, setTickets] = useState<TicketData[]>([]);
     const [filteredTickets, setFilteredTickets] = useState<TicketData[]>([]);
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [dateFilter, setDateFilter] = useState('all');
     const [expandedTicket, setExpandedTicket] = useState<number | null>(null);
 
+    const themeClasses = getThemeClasses(preferences);
+
     useEffect(() => {
-        fetchTickets();
+        Promise.all([fetchTickets(), loadUserPreferences()]);
     }, []);
 
     useEffect(() => {
         filterTickets();
     }, [tickets, searchQuery, statusFilter, dateFilter]);
+
+    // Apply theme to document body
+    useEffect(() => {
+        if (preferences) {
+            if (themeClasses.isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
+        }
+    }, [preferences, themeClasses.isDarkMode]);
+
+    const loadUserPreferences = async () => {
+        try {
+            const prefsData = await userApi.getPreferences();
+            setPreferences({
+                emailNotifications: prefsData.emailNotifications || true,
+                sessionTimeout: prefsData.sessionTimeout || 30,
+                theme: prefsData.theme || 'light',
+                language: prefsData.language || 'en',
+                dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
+                timeFormat: prefsData.timeFormat || '12h',
+                defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
+                accentColor: prefsData.accentColor || 'blue',
+                fontSize: prefsData.fontSize || 'medium',
+                compactMode: prefsData.compactMode || false
+            });
+        } catch (error) {
+            console.log('No preferences found, using defaults');
+            setPreferences({
+                emailNotifications: true,
+                sessionTimeout: 30,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false
+            });
+        }
+    };
 
     const fetchTickets = async () => {
         try {
@@ -131,13 +332,13 @@ export default function MyTicketsPage() {
     const getStatusIcon = (status: string) => {
         switch (status.toLowerCase()) {
             case 'valid':
-                return <CheckCircle className="h-4 w-4 text-green-500" />;
+                return <CheckCircle className={`${themeClasses.iconSize} text-green-500`} />;
             case 'used':
-                return <CheckCircle className="h-4 w-4 text-blue-500" />;
+                return <CheckCircle className={`${themeClasses.iconSize} text-blue-500`} />;
             case 'cancelled':
-                return <XCircle className="h-4 w-4 text-red-500" />;
+                return <XCircle className={`${themeClasses.iconSize} text-red-500`} />;
             default:
-                return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+                return <AlertCircle className={`${themeClasses.iconSize} text-yellow-500`} />;
         }
     };
 
@@ -155,19 +356,36 @@ export default function MyTicketsPage() {
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            weekday: 'short',
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+        const date = new Date(dateString);
+        const format = preferences?.dateFormat || 'MM/dd/yyyy';
+
+        switch (format) {
+            case 'dd/MM/yyyy':
+                return date.toLocaleDateString('en-GB');
+            case 'yyyy-MM-dd':
+                return date.toISOString().split('T')[0];
+            default:
+                return date.toLocaleDateString('en-US');
+        }
     };
 
     const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
-        });
+        const date = new Date(dateString);
+        const format = preferences?.timeFormat || '12h';
+
+        if (format === '24h') {
+            return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        } else {
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
     };
 
     const isEventUpcoming = (eventDate: string) => {
@@ -200,16 +418,14 @@ export default function MyTicketsPage() {
     };
 
     const generateQRCode = (ticket: TicketData) => {
-        // In a real app, this would generate a proper QR code
-        // For now, we'll just show a placeholder
         return (
-            <div className="w-16 h-16 bg-gray-100 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                <QrCode className="h-8 w-8 text-gray-400" />
+            <div className={`${themeClasses.compactMode ? 'w-12 h-12' : 'w-16 h-16'} ${themeClasses.backgroundInput} border-2 border-dashed ${themeClasses.border} rounded flex items-center justify-center`}>
+                <QrCode className={`${themeClasses.compactMode ? 'h-6 w-6' : 'h-8 w-8'} ${themeClasses.textMuted}`} />
             </div>
         );
     };
 
-    if (loading) {
+    if (loading || !preferences) {
         return (
             <div
                 className="min-h-screen flex items-center justify-center"
@@ -221,11 +437,10 @@ export default function MyTicketsPage() {
                     backgroundAttachment: 'fixed'
                 }}
             >
-                {/* Glass overlay for loading */}
-                <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/30">
+                <div className={`${themeClasses?.backgroundCard || 'bg-white/80'} backdrop-blur-xl rounded-2xl ${themeClasses?.paddingLarge || 'p-8'} ${themeClasses?.shadow || 'shadow-2xl'} border ${themeClasses?.borderCard || 'border-white/30'}`}>
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                        <p className="mt-4 text-gray-600">Loading your tickets...</p>
+                        <div className={`animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto ${themeClasses?.marginSmall || 'mb-4'}`}></div>
+                        <p className={`${themeClasses?.fontSize?.text || 'text-base'} ${themeClasses?.textSecondary || 'text-gray-600'}`}>Loading your tickets...</p>
                     </div>
                 </div>
             </div>
@@ -243,35 +458,34 @@ export default function MyTicketsPage() {
                 backgroundAttachment: 'fixed'
             }}
         >
-            {/* Glass overlay for the entire page */}
-            <div className="min-h-screen bg-black/20 backdrop-blur-[2px]">
+            <div className={`min-h-screen ${themeClasses.backgroundOverlay} backdrop-blur-[2px]`}>
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Header with glass effect */}
-                    <div className="mb-8 bg-white/80 backdrop-blur-xl rounded-2xl p-6 border border-white/30 shadow-lg">
+                    <div className={`${themeClasses.marginLarge} ${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.padding} border ${themeClasses.borderCard} ${themeClasses.shadow}`}>
                         <button
                             onClick={() => router.back()}
-                            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+                            className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} ${themeClasses.marginSmall} transition-colors ${themeClasses.fontSize.text}`}
                         >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
                             Back to Events
                         </button>
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Tickets</h1>
-                        <p className="text-gray-600">View and manage all your event tickets</p>
+                        <h1 className={`${themeClasses.fontSize.display} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>My Tickets</h1>
+                        <p className={`${themeClasses.fontSize.text} text-subtle`}>View and manage all your event tickets</p>
                     </div>
 
                     {/* Filters with glass effect */}
-                    <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6 mb-6">
-                        <div className="flex flex-col sm:flex-row gap-4">
+                    <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding} ${themeClasses.marginLarge}`}>
+                        <div className={`flex flex-col sm:flex-row ${themeClasses.gap}`}>
                             {/* Search */}
                             <div className="flex-1">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${themeClasses.iconSize} ${themeClasses.textMuted}`} />
                                     <input
                                         type="text"
                                         placeholder="Search tickets..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                                        className={`w-full pl-10 pr-4 py-2 border ${themeClasses.border} rounded-lg ${themeClasses.accentRing} ${themeClasses.backgroundInput} backdrop-blur-sm ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                     />
                                 </div>
                             </div>
@@ -280,7 +494,7 @@ export default function MyTicketsPage() {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                                className={`${themeClasses.buttonPadding} border ${themeClasses.border} rounded-lg ${themeClasses.accentRing} ${themeClasses.backgroundInput} backdrop-blur-sm ${themeClasses.text} ${themeClasses.fontSize.text}`}
                             >
                                 <option value="all">All Status</option>
                                 <option value="valid">Valid</option>
@@ -292,7 +506,7 @@ export default function MyTicketsPage() {
                             <select
                                 value={dateFilter}
                                 onChange={(e) => setDateFilter(e.target.value)}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                                className={`${themeClasses.buttonPadding} border ${themeClasses.border} rounded-lg ${themeClasses.accentRing} ${themeClasses.backgroundInput} backdrop-blur-sm ${themeClasses.text} ${themeClasses.fontSize.text}`}
                             >
                                 <option value="all">All Events</option>
                                 <option value="upcoming">Upcoming</option>
@@ -302,35 +516,35 @@ export default function MyTicketsPage() {
                     </div>
 
                     {/* Tickets Summary with glass effect */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6">
+                    <div className={`grid grid-cols-1 md:grid-cols-3 ${themeClasses.gap} ${themeClasses.marginLarge}`}>
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding}`}>
                             <div className="flex items-center">
-                                <Ticket className="h-8 w-8 text-blue-500 mr-3" />
+                                <Ticket className={`${themeClasses.iconSizeLarge} ${themeClasses.accentText} mr-3`} />
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900">{tickets.length}</p>
-                                    <p className="text-sm text-gray-600">Total Tickets</p>
+                                    <p className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>{tickets.length}</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Total Tickets</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6">
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding}`}>
                             <div className="flex items-center">
-                                <Calendar className="h-8 w-8 text-green-500 mr-3" />
+                                <Calendar className={`${themeClasses.iconSizeLarge} text-green-500 mr-3`} />
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                    <p className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
                                         {tickets.filter(t => isEventUpcoming(t.eventStartDateTime)).length}
                                     </p>
-                                    <p className="text-sm text-gray-600">Upcoming Events</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Upcoming Events</p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6">
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding}`}>
                             <div className="flex items-center">
-                                <CheckCircle className="h-8 w-8 text-purple-500 mr-3" />
+                                <CheckCircle className={`${themeClasses.iconSizeLarge} text-purple-500 mr-3`} />
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                    <p className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
                                         {tickets.filter(t => t.status.toLowerCase() === 'used').length}
                                     </p>
-                                    <p className="text-sm text-gray-600">Events Attended</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Events Attended</p>
                                 </div>
                             </div>
                         </div>
@@ -338,10 +552,10 @@ export default function MyTicketsPage() {
 
                     {/* Tickets List */}
                     {filteredTickets.length === 0 ? (
-                        <div className="text-center py-12 bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30">
-                            <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
-                            <p className="text-gray-600 mb-4">
+                        <div className={`text-center py-12 ${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard}`}>
+                            <Ticket className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
+                            <h3 className={`card-title`}>No tickets found</h3>
+                            <p className={`card-description mb-4`}>
                                 {tickets.length === 0
                                     ? "You haven't purchased any tickets yet."
                                     : "No tickets match your current filters."
@@ -349,7 +563,7 @@ export default function MyTicketsPage() {
                             </p>
                             <Link
                                 href="/events"
-                                className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                                className={`inline-flex items-center ${themeClasses.accent} ${themeClasses.accentHover} text-white px-6 py-3 rounded-lg font-semibold transition-colors`}
                             >
                                 Browse Events
                             </Link>
@@ -359,14 +573,14 @@ export default function MyTicketsPage() {
                             {filteredTickets.map((ticket) => (
                                 <div
                                     key={ticket.ticketId}
-                                    className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 overflow-hidden hover:shadow-xl transition-all duration-300"
+                                    className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} overflow-hidden hover:shadow-xl transition-all duration-300`}
                                 >
                                     {/* Ticket Header */}
                                     <div className="p-6">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
-                                                <div className="flex items-center space-x-3 mb-2">
-                                                    <h3 className="text-lg font-semibold text-gray-900">
+                                                <div className="flex items-center flex-wrap gap-3 mb-2">
+                                                    <h3 className={`card-title`}>
                                                         {ticket.eventTitle}
                                                     </h3>
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
@@ -380,7 +594,7 @@ export default function MyTicketsPage() {
                                                     )}
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-gray-600">
+                                                <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 text-body-small text-subtle`}>
                                                     <div className="flex items-center">
                                                         <Calendar className="h-4 w-4 mr-2" />
                                                         <span>{formatDate(ticket.eventStartDateTime)}</span>
@@ -396,13 +610,13 @@ export default function MyTicketsPage() {
                                                 </div>
 
                                                 <div className="mt-3 flex items-center space-x-4 text-sm">
-                                                    <span className="font-medium text-gray-900">
+                                                    <span className={`font-medium ${themeClasses.text}`}>
                                                         {ticket.ticketTypeName}
                                                     </span>
-                                                    <span className="text-gray-600">
+                                                    <span className={themeClasses.textSecondary}>
                                                         ${ticket.pricePaid.toFixed(2)}
                                                     </span>
-                                                    <span className="text-gray-500 font-mono text-xs">
+                                                    <span className={`${themeClasses.textMuted} font-mono text-xs`}>
                                                         {ticket.ticketNumber}
                                                     </span>
                                                 </div>
@@ -413,7 +627,7 @@ export default function MyTicketsPage() {
                                                 <div className="flex flex-col space-y-2">
                                                     <button
                                                         onClick={() => downloadTicket(ticket.ticketId)}
-                                                        className="flex items-center px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                                        className={`flex items-center px-3 py-2 text-sm ${themeClasses.accent} ${themeClasses.accentHover} text-white rounded-lg transition-colors`}
                                                     >
                                                         <Download className="h-4 w-4 mr-1" />
                                                         Download
@@ -422,7 +636,7 @@ export default function MyTicketsPage() {
                                                         onClick={() => setExpandedTicket(
                                                             expandedTicket === ticket.ticketId ? null : ticket.ticketId
                                                         )}
-                                                        className="flex items-center px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                                                        className={`flex items-center px-3 py-2 text-sm ${themeClasses.backgroundInput} ${themeClasses.hover} ${themeClasses.text} rounded-lg transition-colors border ${themeClasses.border}`}
                                                     >
                                                         {expandedTicket === ticket.ticketId ? (
                                                             <ChevronUp className="h-4 w-4 mr-1" />
@@ -438,63 +652,63 @@ export default function MyTicketsPage() {
 
                                     {/* Expanded Details */}
                                     {expandedTicket === ticket.ticketId && (
-                                        <div className="border-t border-gray-200 bg-gray-50/80 backdrop-blur-xl p-6">
+                                        <div className={`border-t ${themeClasses.border} ${themeClasses.backgroundInput} backdrop-blur-xl p-6`}>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 {/* Attendee Information */}
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                                                    <h4 className={`font-medium ${themeClasses.text} mb-3 flex items-center`}>
                                                         <User className="h-4 w-4 mr-2" />
                                                         Attendee Information
                                                     </h4>
                                                     <div className="space-y-2 text-sm">
                                                         <div>
-                                                            <span className="text-gray-600">Name:</span>
-                                                            <span className="ml-2 font-medium">
+                                                            <span className={themeClasses.textSecondary}>Name:</span>
+                                                            <span className={`ml-2 font-medium ${themeClasses.text}`}>
                                                                 {ticket.attendeeFirstName} {ticket.attendeeLastName}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center">
-                                                            <Mail className="h-4 w-4 text-gray-400 mr-1" />
-                                                            <span className="text-gray-600">Email:</span>
-                                                            <span className="ml-2">{ticket.attendeeEmail}</span>
+                                                            <Mail className={`h-4 w-4 ${themeClasses.textMuted} mr-1`} />
+                                                            <span className={themeClasses.textSecondary}>Email:</span>
+                                                            <span className={`ml-2 ${themeClasses.text}`}>{ticket.attendeeEmail}</span>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Event Information */}
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                                                    <h4 className={`font-medium ${themeClasses.text} mb-3 flex items-center`}>
                                                         <MapPin className="h-4 w-4 mr-2" />
                                                         Event Location
                                                     </h4>
                                                     <div className="space-y-2 text-sm">
                                                         <div>
-                                                            <span className="text-gray-600">Venue:</span>
-                                                            <span className="ml-2 font-medium">{ticket.venueName}</span>
+                                                            <span className={themeClasses.textSecondary}>Venue:</span>
+                                                            <span className={`ml-2 font-medium ${themeClasses.text}`}>{ticket.venueName}</span>
                                                         </div>
                                                         <div>
-                                                            <span className="text-gray-600">Address:</span>
-                                                            <span className="ml-2">{ticket.venueAddress}</span>
+                                                            <span className={themeClasses.textSecondary}>Address:</span>
+                                                            <span className={`ml-2 ${themeClasses.text}`}>{ticket.venueAddress}</span>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Purchase Information */}
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-3">Purchase Details</h4>
+                                                    <h4 className={`font-medium ${themeClasses.text} mb-3`}>Purchase Details</h4>
                                                     <div className="space-y-2 text-sm">
                                                         <div>
-                                                            <span className="text-gray-600">Purchase Date:</span>
-                                                            <span className="ml-2">{formatDate(ticket.purchaseDate)}</span>
+                                                            <span className={themeClasses.textSecondary}>Purchase Date:</span>
+                                                            <span className={`ml-2 ${themeClasses.text}`}>{formatDate(ticket.purchaseDate)}</span>
                                                         </div>
                                                         <div>
-                                                            <span className="text-gray-600">Price Paid:</span>
-                                                            <span className="ml-2 font-medium">${ticket.pricePaid.toFixed(2)}</span>
+                                                            <span className={themeClasses.textSecondary}>Price Paid:</span>
+                                                            <span className={`ml-2 font-medium ${themeClasses.text}`}>${ticket.pricePaid.toFixed(2)}</span>
                                                         </div>
                                                         {ticket.checkInDate && (
                                                             <div>
-                                                                <span className="text-gray-600">Check-in Date:</span>
-                                                                <span className="ml-2">{formatDate(ticket.checkInDate)}</span>
+                                                                <span className={themeClasses.textSecondary}>Check-in Date:</span>
+                                                                <span className={`ml-2 ${themeClasses.text}`}>{formatDate(ticket.checkInDate)}</span>
                                                             </div>
                                                         )}
                                                     </div>
@@ -502,11 +716,11 @@ export default function MyTicketsPage() {
 
                                                 {/* Actions */}
                                                 <div>
-                                                    <h4 className="font-medium text-gray-900 mb-3">Actions</h4>
+                                                    <h4 className={`font-medium ${themeClasses.text} mb-3`}>Actions</h4>
                                                     <div className="space-y-2">
                                                         <Link
                                                             href={`/events/${ticket.eventId}`}
-                                                            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                                                            className={`inline-flex items-center text-sm ${themeClasses.accentText} ${themeClasses.accentHover}`}
                                                         >
                                                             <ExternalLink className="h-4 w-4 mr-1" />
                                                             View Event Details

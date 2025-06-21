@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { ArrowLeft, CreditCard, User, Mail, Phone, Lock, ShoppingCart, Check, X, AlertCircle } from 'lucide-react';
-import { promoCodesApi } from '@/lib/api'; // Import your promo codes API
+import { promoCodesApi, userApi } from '@/lib/api'; // Import user API for preferences
 
 interface TicketType {
     ticketTypeId: number;
@@ -42,6 +42,188 @@ interface PromoCodeValidation {
     promoCode?: any;
 }
 
+interface UserPreferences {
+    emailNotifications: boolean;
+    sessionTimeout: number;
+    theme: string;
+    language: string;
+    dateFormat: string;
+    timeFormat: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+}
+
+// Enhanced theme system from profile page
+const getThemeClasses = (preferences: UserPreferences | null) => {
+    const isDarkMode = preferences?.theme === 'dark' ||
+        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    const accentColor = preferences?.accentColor || 'blue';
+    const fontSize = preferences?.fontSize || 'medium';
+    const compactMode = preferences?.compactMode || false;
+
+    // Accent color configurations
+    const accentColors = {
+        blue: {
+            primary: 'bg-blue-600',
+            hover: 'hover:bg-blue-700',
+            light: isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50',
+            text: isDarkMode ? 'text-blue-400' : 'text-blue-600',
+            border: isDarkMode ? 'border-blue-700' : 'border-blue-200',
+            ring: 'focus:ring-blue-500 focus:border-blue-500'
+        },
+        purple: {
+            primary: 'bg-purple-600',
+            hover: 'hover:bg-purple-700',
+            light: isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50',
+            text: isDarkMode ? 'text-purple-400' : 'text-purple-600',
+            border: isDarkMode ? 'border-purple-700' : 'border-purple-200',
+            ring: 'focus:ring-purple-500 focus:border-purple-500'
+        },
+        green: {
+            primary: 'bg-green-600',
+            hover: 'hover:bg-green-700',
+            light: isDarkMode ? 'bg-green-900/20' : 'bg-green-50',
+            text: isDarkMode ? 'text-green-400' : 'text-green-600',
+            border: isDarkMode ? 'border-green-700' : 'border-green-200',
+            ring: 'focus:ring-green-500 focus:border-green-500'
+        },
+        orange: {
+            primary: 'bg-orange-600',
+            hover: 'hover:bg-orange-700',
+            light: isDarkMode ? 'bg-orange-900/20' : 'bg-orange-50',
+            text: isDarkMode ? 'text-orange-400' : 'text-orange-600',
+            border: isDarkMode ? 'border-orange-700' : 'border-orange-200',
+            ring: 'focus:ring-orange-500 focus:border-orange-500'
+        },
+        pink: {
+            primary: 'bg-pink-600',
+            hover: 'hover:bg-pink-700',
+            light: isDarkMode ? 'bg-pink-900/20' : 'bg-pink-50',
+            text: isDarkMode ? 'text-pink-400' : 'text-pink-600',
+            border: isDarkMode ? 'border-pink-700' : 'border-pink-200',
+            ring: 'focus:ring-pink-500 focus:border-pink-500'
+        }
+    };
+
+    const currentAccent = accentColors[accentColor as keyof typeof accentColors] || accentColors.blue;
+
+    // Font size configurations
+    const fontSizes = {
+        small: {
+            text: 'text-sm',
+            heading: 'text-lg',
+            title: 'text-xl',
+            subtitle: 'text-xs',
+            button: 'text-sm',
+            label: 'text-xs'
+        },
+        medium: {
+            text: 'text-base',
+            heading: 'text-xl',
+            title: 'text-2xl',
+            subtitle: 'text-sm',
+            button: 'text-base',
+            label: 'text-sm'
+        },
+        large: {
+            text: 'text-lg',
+            heading: 'text-2xl',
+            title: 'text-3xl',
+            subtitle: 'text-base',
+            button: 'text-lg',
+            label: 'text-base'
+        }
+    };
+
+    const currentFont = fontSizes[fontSize as keyof typeof fontSizes] || fontSizes.medium;
+
+    return {
+        // Basic colors
+        background: isDarkMode ? 'bg-gray-900' : 'bg-white',
+        backgroundCard: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
+        backgroundSidebar: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
+        backgroundInput: isDarkMode ? 'bg-gray-700/90' : 'bg-white/90',
+        backgroundDisabled: isDarkMode ? 'bg-gray-600' : 'bg-gray-50',
+        backgroundSuccess: isDarkMode ? 'bg-green-900/90' : 'bg-green-50/90',
+        backgroundError: isDarkMode ? 'bg-red-900/90' : 'bg-red-50/90',
+        backgroundSecure: isDarkMode ? 'bg-green-900/80' : 'bg-green-50/80',
+
+        // Text colors
+        text: isDarkMode ? 'text-gray-100' : 'text-gray-900',
+        textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600',
+        textDisabled: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+        textSuccess: isDarkMode ? 'text-green-300' : 'text-green-600',
+        textError: isDarkMode ? 'text-red-300' : 'text-red-600',
+        textSecure: isDarkMode ? 'text-green-300' : 'text-green-900',
+
+        // Borders
+        border: isDarkMode ? 'border-gray-600' : 'border-gray-300',
+        borderCard: isDarkMode ? 'border-gray-600/30' : 'border-white/30',
+        borderSuccess: isDarkMode ? 'border-green-700' : 'border-green-200',
+        borderError: isDarkMode ? 'border-red-700' : 'border-red-200',
+        borderSecure: isDarkMode ? 'border-green-700' : 'border-green-200',
+
+        // Effects
+        shadow: isDarkMode ? 'shadow-2xl shadow-black/50' : 'shadow-2xl',
+        hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-white/50',
+        hoverRed: isDarkMode ? 'hover:bg-red-900/50' : 'hover:bg-red-50',
+
+        // Form elements
+        label: isDarkMode ? 'text-gray-300' : 'text-gray-700',
+        placeholder: isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500',
+
+        // Typography & Layout - Enhanced for all elements
+        fontSize: currentFont,
+
+        // Padding/spacing based on compact mode
+        padding: compactMode ? 'p-3' : 'p-6',
+        paddingSmall: compactMode ? 'p-2' : 'p-4',
+        paddingLarge: compactMode ? 'p-4' : 'p-8',
+
+        // Margins
+        margin: compactMode ? 'mb-3' : 'mb-6',
+        marginSmall: compactMode ? 'mb-2' : 'mb-4',
+        marginLarge: compactMode ? 'mb-4' : 'mb-8',
+
+        // Spacing between elements
+        spacing: compactMode ? 'space-y-2' : 'space-y-4',
+        spacingLarge: compactMode ? 'space-y-3' : 'space-y-6',
+
+        // Grid gaps
+        gap: compactMode ? 'gap-2' : 'gap-4',
+        gapLarge: compactMode ? 'gap-3' : 'gap-6',
+
+        // Button sizes
+        buttonPadding: compactMode ? 'px-4 py-2' : 'px-6 py-3',
+        buttonPaddingSmall: compactMode ? 'px-2 py-1' : 'px-3 py-2',
+
+        // Input heights
+        inputHeight: compactMode ? 'h-9' : 'h-11',
+
+        // Icon sizes
+        iconSize: compactMode ? 'h-4 w-4' : 'h-5 w-5',
+        iconSizeSmall: compactMode ? 'h-3 w-3' : 'h-4 w-4',
+        iconSizeLarge: compactMode ? 'h-6 w-6' : 'h-8 w-8',
+
+        // Accent colors (dynamic and complete)
+        accent: currentAccent.primary,
+        accentHover: currentAccent.hover,
+        accentText: currentAccent.text,
+        accentLight: currentAccent.light,
+        accentBorder: currentAccent.border,
+        accentRing: currentAccent.ring,
+
+        // State info
+        isDarkMode,
+        accentColor,
+        fontSizeValue: fontSize,
+        compactMode
+    };
+};
+
 export default function CheckoutPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -55,6 +237,7 @@ export default function CheckoutPage() {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
     const [error, setError] = useState('');
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
 
     // Promo code state
     const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -75,6 +258,8 @@ export default function CheckoutPage() {
         attendees: [] as Array<{ firstName: string, lastName: string, email: string }>
     });
 
+    const themeClasses = getThemeClasses(preferences);
+
     useEffect(() => {
         if (!isAuthenticated) {
             router.push('/login');
@@ -86,8 +271,57 @@ export default function CheckoutPage() {
             return;
         }
 
+        loadUserPreferences();
         fetchEventData();
     }, [eventId, isAuthenticated]);
+
+    // Apply theme to document body
+    useEffect(() => {
+        if (preferences) {
+            const isDarkMode = preferences.theme === 'dark' ||
+                (preferences.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
+        }
+    }, [preferences]);
+
+    const loadUserPreferences = async () => {
+        try {
+            const prefsData = await userApi.getPreferences();
+            setPreferences({
+                emailNotifications: prefsData.emailNotifications || true,
+                sessionTimeout: prefsData.sessionTimeout || 30,
+                theme: prefsData.theme || 'light',
+                language: prefsData.language || 'en',
+                dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
+                timeFormat: prefsData.timeFormat || '12h',
+                defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
+                accentColor: prefsData.accentColor || 'blue',
+                fontSize: prefsData.fontSize || 'medium',
+                compactMode: prefsData.compactMode || false
+            });
+        } catch (error) {
+            // Use defaults if preferences can't be loaded
+            setPreferences({
+                emailNotifications: true,
+                sessionTimeout: 30,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false
+            });
+        }
+    };
 
     const getImageUrl = (imageUrl?: string) => {
         if (!imageUrl || imageUrl === 'NULL' || imageUrl.trim() === '') return null;
@@ -193,7 +427,6 @@ export default function CheckoutPage() {
             console.log('🔍 Formatted Discount:', validation.formattedDiscount);
             console.log('🔍 Message:', validation.message);
 
-            // Check if discountAmount is actually a number
             const discountAsNumber = Number(validation.discountAmount);
             console.log('🔍 Discount as Number:', discountAsNumber);
             console.log('🔍 Is discount NaN?', isNaN(discountAsNumber));
@@ -212,7 +445,6 @@ export default function CheckoutPage() {
                 setPromoCodeInput('');
                 setPromoCodeError('');
 
-                // Debug the applied promo code state
                 console.log('🔍 Applied promo code state will be:', validation);
             } else {
                 console.log('🔍 ❌ Promo code is invalid:', validation.message);
@@ -275,7 +507,6 @@ export default function CheckoutPage() {
         return summary;
     };
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setProcessing(true);
@@ -330,21 +561,21 @@ export default function CheckoutPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
+                <div className={`animate-spin rounded-full ${themeClasses.iconSizeLarge} border-b-2 ${themeClasses.accentText.replace('text-', 'border-')}`}></div>
             </div>
         );
     }
 
     if (!event || cart.length === 0) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
-                    <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h1>
+                    <ShoppingCart className={`${themeClasses.iconSizeLarge} ${themeClasses.textSecondary} mx-auto ${themeClasses.marginSmall}`} />
+                    <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Your cart is empty</h1>
                     <button
                         onClick={() => router.push('/events')}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                        className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg ${themeClasses.fontSize.button}`}
                     >
                         Browse Events
                     </button>
@@ -372,128 +603,102 @@ export default function CheckoutPage() {
             {/* Content */}
             <div className="relative z-10" style={{ transform: 'scaleX(-1)' }}>
                 {/* Header */}
-                <div className="bg-white bg-opacity-95 backdrop-blur-sm shadow-sm border-b border-gray-200">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div className={`${themeClasses.backgroundCard} backdrop-blur-sm shadow-sm border-b ${themeClasses.borderCard}`}>
+                    <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${themeClasses.paddingSmall}`}>
                         <button
                             onClick={() => router.back()}
-                            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+                            className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} ${themeClasses.marginSmall} transition-colors ${themeClasses.fontSize.text}`}
                         >
-                            <ArrowLeft className="h-5 w-5 mr-2" />
+                            <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
                             Back to Event
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-900">Complete Your Purchase</h1>
-                        <p className="text-gray-600">{event.title}</p>
+                        <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>Complete Your Purchase</h1>
+                        <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>{event.title}</p>
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <form onSubmit={handleSubmit} className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${themeClasses.paddingLarge}`}>
+                    <div className={`grid grid-cols-1 lg:grid-cols-3 ${themeClasses.gapLarge}`}>
                         {/* Main Form */}
-                        <div className="lg:col-span-2 space-y-6">
+                        <div className={`lg:col-span-2 ${themeClasses.spacingLarge}`}>
                             {error && (
-                                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+                                <div className={`${themeClasses.backgroundError} border ${themeClasses.borderError} ${themeClasses.textError} ${themeClasses.paddingSmall} rounded-md ${themeClasses.fontSize.text}`}>
                                     {error}
                                 </div>
                             )}
 
                             {/* Billing Information */}
-                            <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
-                                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                                    <User className="h-5 w-5 mr-2" />
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
+                                <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall} flex items-center`}>
+                                    <User className={`${themeClasses.iconSize} mr-2`} />
                                     Billing Information
                                 </h2>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap}`}>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
                                             First Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.billingFirstName}
-                                            onChange={(e) => updateBillingInfo('billingFirstName', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Last Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={formData.billingLastName}
-                                            onChange={(e) => updateBillingInfo('billingLastName', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                                        />
-                                    </div>
-
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Email Address
                                         </label>
                                         <input
                                             type="email"
                                             required
                                             value={formData.billingEmail}
                                             onChange={(e) => updateBillingInfo('billingEmail', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                            className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                         />
                                     </div>
 
                                     <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
                                             Address (Optional)
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.billingAddress}
                                             onChange={(e) => updateBillingInfo('billingAddress', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                            className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
                                             City (Optional)
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.billingCity}
                                             onChange={(e) => updateBillingInfo('billingCity', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                            className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
                                             Zip Code (Optional)
                                         </label>
                                         <input
                                             type="text"
                                             value={formData.billingZipCode}
                                             onChange={(e) => updateBillingInfo('billingZipCode', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                            className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             {/* Attendee Information */}
-                            <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
-                                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
+                                <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                     Attendee Information
                                 </h2>
 
-                                <div className="space-y-4">
+                                <div className={themeClasses.spacing}>
                                     {formData.attendees.map((attendee, index) => (
-                                        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white bg-opacity-50">
-                                            <h3 className="font-medium text-gray-900 mb-3">Attendee {index + 1}</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div key={index} className={`border ${themeClasses.border} rounded-lg ${themeClasses.paddingSmall} ${themeClasses.backgroundInput}`}>
+                                            <h3 className={`font-medium ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.text}`}>Attendee {index + 1}</h3>
+                                            <div className={`grid grid-cols-1 md:grid-cols-3 ${themeClasses.gap}`}>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
                                                         First Name
                                                     </label>
                                                     <input
@@ -501,12 +706,12 @@ export default function CheckoutPage() {
                                                         required
                                                         value={attendee.firstName}
                                                         onChange={(e) => updateAttendee(index, 'firstName', e.target.value)}
-                                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                        className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                                     />
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
                                                         Last Name
                                                     </label>
                                                     <input
@@ -514,12 +719,12 @@ export default function CheckoutPage() {
                                                         required
                                                         value={attendee.lastName}
                                                         onChange={(e) => updateAttendee(index, 'lastName', e.target.value)}
-                                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                        className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                                     />
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
                                                         Email
                                                     </label>
                                                     <input
@@ -527,7 +732,7 @@ export default function CheckoutPage() {
                                                         required
                                                         value={attendee.email}
                                                         onChange={(e) => updateAttendee(index, 'email', e.target.value)}
-                                                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                        className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                                     />
                                                 </div>
                                             </div>
@@ -537,22 +742,22 @@ export default function CheckoutPage() {
                             </div>
 
                             {/* Enhanced Promo Code Section */}
-                            <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6">
-                                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
+                                <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                     Promo Code
                                 </h2>
 
                                 {/* Applied Promo Code Display */}
                                 {appliedPromoCode?.isValid && (
-                                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                    <div className={`${themeClasses.marginSmall} ${themeClasses.paddingSmall} ${themeClasses.backgroundSuccess} border ${themeClasses.borderSuccess} rounded-lg`}>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center">
-                                                <Check className="h-5 w-5 text-green-600 mr-2" />
+                                                <Check className={`${themeClasses.iconSize} ${themeClasses.textSuccess} mr-2`} />
                                                 <div>
-                                                    <p className="text-sm font-medium text-green-800">
+                                                    <p className={`${themeClasses.fontSize.text} font-medium ${themeClasses.textSuccess}`}>
                                                         Promo code applied: <span className="font-mono">{formData.promoCode}</span>
                                                     </p>
-                                                    <p className="text-sm text-green-600">
+                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSuccess}`}>
                                                         You save {appliedPromoCode.formattedDiscount}!
                                                     </p>
                                                 </div>
@@ -560,9 +765,9 @@ export default function CheckoutPage() {
                                             <button
                                                 type="button"
                                                 onClick={handleRemovePromoCode}
-                                                className="text-green-600 hover:text-green-800 transition-colors"
+                                                className={`${themeClasses.textSuccess} ${themeClasses.hover} transition-colors`}
                                             >
-                                                <X className="h-5 w-5" />
+                                                <X className={`${themeClasses.iconSize}`} />
                                             </button>
                                         </div>
                                     </div>
@@ -570,14 +775,14 @@ export default function CheckoutPage() {
 
                                 {/* Promo Code Input */}
                                 {!appliedPromoCode?.isValid && (
-                                    <div className="space-y-3">
-                                        <div className="flex gap-4">
+                                    <div className={themeClasses.spacing}>
+                                        <div className={`flex ${themeClasses.gap}`}>
                                             <input
                                                 type="text"
                                                 placeholder="Enter promo code"
                                                 value={promoCodeInput}
                                                 onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                                                className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white font-mono"
+                                                className={`flex-1 border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight} font-mono`}
                                                 onKeyPress={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
@@ -589,10 +794,10 @@ export default function CheckoutPage() {
                                                 type="button"
                                                 onClick={handleApplyPromoCode}
                                                 disabled={!promoCodeInput.trim() || promoCodeValidating}
-                                                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                                className={`${themeClasses.buttonPadding} ${themeClasses.accent} ${themeClasses.accentHover} text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${themeClasses.fontSize.button}`}
                                             >
                                                 {promoCodeValidating ? (
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                                    <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white`}></div>
                                                 ) : (
                                                     'Apply'
                                                 )}
@@ -601,14 +806,14 @@ export default function CheckoutPage() {
 
                                         {/* Error Message */}
                                         {promoCodeError && (
-                                            <div className="flex items-center text-red-600 text-sm">
-                                                <AlertCircle className="h-4 w-4 mr-2" />
+                                            <div className={`flex items-center ${themeClasses.textError} ${themeClasses.fontSize.text}`}>
+                                                <AlertCircle className={`${themeClasses.iconSizeSmall} mr-2`} />
                                                 {promoCodeError}
                                             </div>
                                         )}
 
                                         {/* Help Text */}
-                                        <p className="text-sm text-gray-600">
+                                        <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
                                             Have a promo code? Enter it above to apply your discount.
                                         </p>
                                     </div>
@@ -618,13 +823,13 @@ export default function CheckoutPage() {
 
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white bg-opacity-95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 p-6 sticky top-4">
-                                <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Summary</h2>
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding} sticky top-4`}>
+                                <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Order Summary</h2>
 
                                 {/* Event Info */}
-                                <div className="mb-4 pb-4 border-b border-gray-200">
-                                    <h3 className="font-medium text-gray-900">{event.title}</h3>
-                                    <p className="text-sm text-gray-600">
+                                <div className={`${themeClasses.marginSmall} ${themeClasses.paddingSmall} border-b ${themeClasses.border}`}>
+                                    <h3 className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{event.title}</h3>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
                                         {new Date(event.startDateTime).toLocaleDateString('en-US', {
                                             weekday: 'short',
                                             month: 'short',
@@ -635,14 +840,14 @@ export default function CheckoutPage() {
                                 </div>
 
                                 {/* Cart Items */}
-                                <div className="space-y-3 mb-4">
+                                <div className={`${themeClasses.spacing} ${themeClasses.marginSmall}`}>
                                     {cart.map((item) => (
                                         <div key={item.ticketTypeId} className="flex justify-between">
                                             <div>
-                                                <p className="font-medium text-gray-900">{item.name}</p>
-                                                <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                                                <p className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{item.name}</p>
+                                                <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Qty: {item.quantity}</p>
                                             </div>
-                                            <p className="font-medium text-gray-900">
+                                            <p className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
                                                 ${(item.price * item.quantity).toFixed(2)}
                                             </p>
                                         </div>
@@ -650,36 +855,36 @@ export default function CheckoutPage() {
                                 </div>
 
                                 {/* Price Breakdown */}
-                                <div className="border-t border-gray-200 pt-4 space-y-2">
+                                <div className={`border-t ${themeClasses.border} ${themeClasses.paddingSmall} ${themeClasses.spacing}`}>
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Subtotal</span>
-                                        <span className="text-gray-900">${orderSummary.subtotal.toFixed(2)}</span>
+                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>Subtotal</span>
+                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>${orderSummary.subtotal.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Service Fee</span>
-                                        <span className="text-gray-900">${orderSummary.serviceFee.toFixed(2)}</span>
+                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>Service Fee</span>
+                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>${orderSummary.serviceFee.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Tax</span>
-                                        <span className="text-gray-900">${orderSummary.tax.toFixed(2)}</span>
+                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>Tax</span>
+                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>${orderSummary.tax.toFixed(2)}</span>
                                     </div>
                                     {orderSummary.discount > 0 && (
-                                        <div className="flex justify-between text-green-600 font-medium">
+                                        <div className={`flex justify-between ${themeClasses.textSuccess} font-medium`}>
                                             <span className="flex items-center">
-                                                <Check className="h-4 w-4 mr-1" />
+                                                <Check className={`${themeClasses.iconSizeSmall} mr-1`} />
                                                 Promo Discount
                                             </span>
                                             <span>-${orderSummary.discount.toFixed(2)}</span>
                                         </div>
                                     )}
-                                    <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-lg">
-                                        <span>Total</span>
-                                        <span>${orderSummary.total.toFixed(2)}</span>
+                                    <div className={`border-t ${themeClasses.border} pt-2 flex justify-between font-bold ${themeClasses.fontSize.heading}`}>
+                                        <span className={themeClasses.text}>Total</span>
+                                        <span className={themeClasses.text}>${orderSummary.total.toFixed(2)}</span>
                                     </div>
 
                                     {/* Savings Display */}
                                     {orderSummary.discount > 0 && (
-                                        <div className="text-center text-green-600 text-sm font-medium">
+                                        <div className={`text-center ${themeClasses.textSuccess} ${themeClasses.fontSize.text} font-medium`}>
                                             🎉 You saved ${orderSummary.discount.toFixed(2)}!
                                         </div>
                                     )}
@@ -689,23 +894,23 @@ export default function CheckoutPage() {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full mt-6 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center shadow-lg"
+                                    className={`w-full mt-6 ${themeClasses.accent} ${themeClasses.accentHover} disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold ${themeClasses.buttonPadding} rounded-lg transition-colors duration-200 flex items-center justify-center ${themeClasses.shadow} ${themeClasses.fontSize.button}`}
                                 >
                                     {processing ? (
                                         <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-2`}></div>
                                             Processing...
                                         </>
                                     ) : (
                                         <>
-                                            <CreditCard className="h-5 w-5 mr-2" />
+                                            <CreditCard className={`${themeClasses.iconSize} mr-2`} />
                                             Complete Purchase
                                         </>
                                     )}
                                 </button>
 
-                                <div className="mt-4 flex items-center justify-center text-sm text-gray-600">
-                                    <Lock className="h-4 w-4 mr-1" />
+                                <div className={`mt-4 flex items-center justify-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
+                                    <Lock className={`${themeClasses.iconSizeSmall} mr-1`} />
                                     Secure checkout powered by EventHub
                                 </div>
                             </div>

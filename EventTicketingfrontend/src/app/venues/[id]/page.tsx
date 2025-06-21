@@ -25,11 +25,13 @@ import {
     Navigation,
     Info,
     CheckCircle,
+    XCircle,
     Award,
     Zap,
     Image as ImageIcon
 } from 'lucide-react';
 import Link from 'next/link';
+import { userApi } from '@/lib/api';
 
 // Interfaces based on your database structure
 interface Venue {
@@ -66,6 +68,164 @@ interface VenueEvent {
     isPublished: boolean;
 }
 
+interface UserPreferences {
+    emailNotifications: boolean;
+    sessionTimeout: number;
+    theme: string;
+    language: string;
+    dateFormat: string;
+    timeFormat: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+}
+
+const getThemeClasses = (preferences: UserPreferences | null) => {
+    const isDarkMode = preferences?.theme === 'dark' ||
+        (preferences?.theme === 'auto' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    const accentColor = preferences?.accentColor || 'blue';
+    const fontSize = preferences?.fontSize || 'medium';
+    const compactMode = preferences?.compactMode || false;
+
+    // Accent color configurations
+    const accentColors = {
+        blue: {
+            primary: 'bg-blue-600',
+            hover: 'hover:bg-blue-700',
+            light: isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50',
+            text: isDarkMode ? 'text-blue-400' : 'text-blue-600',
+            border: isDarkMode ? 'border-blue-700' : 'border-blue-200',
+        },
+        purple: {
+            primary: 'bg-purple-600',
+            hover: 'hover:bg-purple-700',
+            light: isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50',
+            text: isDarkMode ? 'text-purple-400' : 'text-purple-600',
+            border: isDarkMode ? 'border-purple-700' : 'border-purple-200',
+        },
+        green: {
+            primary: 'bg-green-600',
+            hover: 'hover:bg-green-700',
+            light: isDarkMode ? 'bg-green-900/20' : 'bg-green-50',
+            text: isDarkMode ? 'text-green-400' : 'text-green-600',
+            border: isDarkMode ? 'border-green-700' : 'border-green-200',
+        },
+        orange: {
+            primary: 'bg-orange-600',
+            hover: 'hover:bg-orange-700',
+            light: isDarkMode ? 'bg-orange-900/20' : 'bg-orange-50',
+            text: isDarkMode ? 'text-orange-400' : 'text-orange-600',
+            border: isDarkMode ? 'border-orange-700' : 'border-orange-200',
+        },
+        pink: {
+            primary: 'bg-pink-600',
+            hover: 'hover:bg-pink-700',
+            light: isDarkMode ? 'bg-pink-900/20' : 'bg-pink-50',
+            text: isDarkMode ? 'text-pink-400' : 'text-pink-600',
+            border: isDarkMode ? 'border-pink-700' : 'border-pink-200',
+        }
+    };
+
+    const currentAccent = accentColors[accentColor as keyof typeof accentColors] || accentColors.blue;
+
+    // Font size configurations - Updated with professional typography classes
+    const fontSizes = {
+        small: {
+            text: 'text-body-small',
+            heading: 'text-heading-3',
+            title: 'text-heading-1',
+            subtitle: 'text-caption',
+            button: 'text-button',
+            label: 'form-label',
+            display: 'text-display',
+            metric: 'text-lg'
+        },
+        medium: {
+            text: 'text-body',
+            heading: 'text-heading-2',
+            title: 'text-display',
+            subtitle: 'text-body-small',
+            button: 'text-button',
+            label: 'form-label',
+            display: 'text-display-large',
+            metric: 'text-metric'
+        },
+        large: {
+            text: 'text-body-large',
+            heading: 'text-heading-1',
+            title: 'text-display-large',
+            subtitle: 'text-body',
+            button: 'text-button',
+            label: 'form-label',
+            display: 'text-display-large',
+            metric: 'text-metric'
+        }
+    };
+
+    const currentFont = fontSizes[fontSize as keyof typeof fontSizes] || fontSizes.medium;
+
+    return {
+        // Basic colors
+        background: isDarkMode ? 'bg-gray-900' : 'bg-white',
+        backgroundCard: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
+        backgroundHeader: isDarkMode ? 'bg-gray-800' : 'bg-white',
+
+        // Text colors
+        text: isDarkMode ? 'text-gray-100' : 'text-gray-900',
+        textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600',
+        textMuted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+        textLight: 'text-white',
+
+        // Borders
+        border: isDarkMode ? 'border-gray-600' : 'border-gray-200',
+        borderCard: isDarkMode ? 'border-gray-600/30' : 'border-white/20',
+
+        // Effects
+        shadow: isDarkMode ? 'shadow-2xl shadow-black/50' : 'shadow-lg',
+        hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50',
+
+        // Typography & Layout
+        fontSize: currentFont,
+
+        // Padding/spacing based on compact mode
+        padding: compactMode ? 'p-4' : 'p-6',
+        paddingSmall: compactMode ? 'p-2' : 'p-4',
+        paddingLarge: compactMode ? 'p-6' : 'p-8',
+
+        // Margins
+        margin: compactMode ? 'mb-4' : 'mb-6',
+        marginSmall: compactMode ? 'mb-2' : 'mb-4',
+        marginLarge: compactMode ? 'mb-6' : 'mb-8',
+
+        // Spacing between elements
+        spacing: compactMode ? 'space-y-4' : 'space-y-6',
+        gap: compactMode ? 'gap-4' : 'gap-6',
+
+        // Button sizes
+        buttonPadding: compactMode ? 'px-4 py-2' : 'px-6 py-3',
+
+        // Icon sizes
+        iconSize: compactMode ? 'h-4 w-4' : 'h-5 w-5',
+        iconSizeSmall: compactMode ? 'h-3 w-3' : 'h-4 w-4',
+        iconSizeLarge: compactMode ? 'h-12 w-12' : 'h-16 w-16',
+
+        // Accent colors
+        accent: currentAccent.primary,
+        accentHover: currentAccent.hover,
+        accentText: currentAccent.text,
+        accentLight: currentAccent.light,
+        accentBorder: currentAccent.border,
+
+        // State info
+        isDarkMode,
+        accentColor,
+        fontSizeValue: fontSize,
+        compactMode
+    };
+};
+
 export default function VenueDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -73,16 +233,65 @@ export default function VenueDetailPage() {
 
     const [venue, setVenue] = useState<Venue | null>(null);
     const [events, setEvents] = useState<VenueEvent[]>([]);
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
     const [loading, setLoading] = useState(true);
     const [imageError, setImageError] = useState(false);
     const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'location'>('overview');
 
+    const themeClasses = getThemeClasses(preferences);
+
     useEffect(() => {
+        Promise.all([loadUserPreferences()]);
         if (venueId) {
             fetchVenueDetails();
             fetchVenueEvents();
         }
     }, [venueId]);
+
+    // Apply theme to document body
+    useEffect(() => {
+        if (preferences) {
+            if (themeClasses.isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
+        }
+    }, [preferences, themeClasses.isDarkMode]);
+
+    const loadUserPreferences = async () => {
+        try {
+            const prefsData = await userApi.getPreferences();
+            setPreferences({
+                emailNotifications: prefsData.emailNotifications || true,
+                sessionTimeout: prefsData.sessionTimeout || 30,
+                theme: prefsData.theme || 'light',
+                language: prefsData.language || 'en',
+                dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
+                timeFormat: prefsData.timeFormat || '12h',
+                defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
+                accentColor: prefsData.accentColor || 'blue',
+                fontSize: prefsData.fontSize || 'medium',
+                compactMode: prefsData.compactMode || false
+            });
+        } catch (error) {
+            console.log('No preferences found, using defaults');
+            setPreferences({
+                emailNotifications: true,
+                sessionTimeout: 30,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false
+            });
+        }
+    };
 
     const fetchVenueDetails = async () => {
         try {
@@ -100,12 +309,6 @@ export default function VenueDetailPage() {
         }
     };
 
-    // Replace your fetchVenueEvents function with this improved version:
-
-    // Add this enhanced debugging to your fetchVenueEvents function:
-
-    // Replace your fetchVenueEvents function with this venue name matching version:
-
     const fetchVenueEvents = async () => {
         try {
             const response = await fetch(`http://localhost:5251/api/venues/${venueId}/events`);
@@ -118,66 +321,71 @@ export default function VenueDetailPage() {
         }
     };
 
-    // Also add this debug function to check what data you're getting:
-    const debugVenueData = () => {
-        console.log('🏢 Current venue data:', venue);
-        console.log('🎫 Current events data:', events);
-        console.log('🎯 Venue ID from params:', venueId);
-        console.log('🎯 Venue ID type:', typeof venueId);
-        console.log('🔢 Parsed venue ID:', parseInt(venueId));
-    };
-
-    // Add this useEffect to debug when data changes:
-    useEffect(() => {
-        if (venue && events) {
-            debugVenueData();
-        }
-    }, [venue, events, venueId]);
-
     const getImageUrl = (imageUrl?: string) => {
-        console.log('🖼️ DEBUG - Original imageUrl from API:', imageUrl); // Debug log
-
-        if (!imageUrl) {
-            console.log('🖼️ DEBUG - No imageUrl provided, returning null');
-            return null;
-        }
+        if (!imageUrl) return null;
 
         let finalUrl: string;
 
-        // Handle full URLs
         if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
             finalUrl = imageUrl;
-            console.log('🖼️ DEBUG - Using full URL:', finalUrl);
             return finalUrl;
         }
 
-        // Handle relative paths from your LocalImageStorageService
         if (imageUrl.startsWith('/')) {
             finalUrl = `http://localhost:5251${imageUrl}`;
-            console.log('🖼️ DEBUG - Using relative path with leading slash:', finalUrl);
             return finalUrl;
         }
 
-        // Handle paths without leading slash
         finalUrl = `http://localhost:5251/${imageUrl}`;
-        console.log('🖼️ DEBUG - Using path without leading slash:', finalUrl);
         return finalUrl;
     };
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        const date = new Date(dateString);
+        const format = preferences?.dateFormat || 'MM/dd/yyyy';
+
+        switch (format) {
+            case 'dd/MM/yyyy':
+                return date.toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            case 'yyyy-MM-dd':
+                return date.toLocaleDateString('sv-SE', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            default:
+                return date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+        }
     };
 
     const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
-        });
+        const date = new Date(dateString);
+        const format = preferences?.timeFormat || '12h';
+
+        if (format === '24h') {
+            return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        } else {
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
     };
 
     const shareVenue = async () => {
@@ -206,12 +414,12 @@ export default function VenueDetailPage() {
         }
     };
 
-    if (loading) {
+    if (loading || !preferences) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses?.background || 'bg-gray-50'} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-6"></div>
-                    <p className="text-gray-600 text-xl">Loading venue details...</p>
+                    <p className={`${themeClasses?.fontSize?.text || 'text-xl'} ${themeClasses?.textSecondary || 'text-gray-600'}`}>Loading venue details...</p>
                 </div>
             </div>
         );
@@ -219,14 +427,14 @@ export default function VenueDetailPage() {
 
     if (!venue) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
-                    <Building className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Venue Not Found</h1>
-                    <p className="text-gray-600 mb-6">The venue you're looking for doesn't exist.</p>
+                    <Building className={`h-16 w-16 ${themeClasses.textMuted} mx-auto mb-4`} />
+                    <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} mb-2`}>Venue Not Found</h1>
+                    <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} mb-6`}>The venue you're looking for doesn't exist.</p>
                     <Link
                         href="/"
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
+                        className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg transition-colors ${themeClasses.fontSize.button}`}
                     >
                         Back to Events
                     </Link>
@@ -247,25 +455,25 @@ export default function VenueDetailPage() {
             radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
             radial-gradient(circle at 40% 80%, rgba(120, 119, 198, 0.2) 0%, transparent 50%)
     `
-            }}>
+        }}>
 
             {/* Header */}
-            <div className="bg-white shadow-sm border-b">
-                <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4">
+            <div className={`${themeClasses.backgroundHeader} shadow-sm border-b ${themeClasses.border}`}>
+                <div className={`max-w-7xl mx-auto px-6 lg:px-8 ${themeClasses.paddingSmall}`}>
                     <div className="flex items-center justify-between">
                         <button
                             onClick={() => router.back()}
-                            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                            className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}
                         >
-                            <ArrowLeft className="h-5 w-5 mr-2" />
+                            <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
                             Back
                         </button>
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={shareVenue}
-                                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                                className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}
                             >
-                                <Share className="h-5 w-5 mr-2" />
+                                <Share className={`${themeClasses.iconSize} mr-2`} />
                                 Share
                             </button>
                         </div>
@@ -288,19 +496,6 @@ export default function VenueDetailPage() {
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 console.error('❌ IMAGE LOAD FAILED:', target.src);
-                                console.error('❌ ERROR EVENT:', e);
-
-                                // Test if the image URL is accessible
-                                fetch(target.src)
-                                    .then(response => {
-                                        console.log('🔍 FETCH TEST - Status:', response.status);
-                                        console.log('🔍 FETCH TEST - OK:', response.ok);
-                                        console.log('🔍 FETCH TEST - Headers:', [...response.headers.entries()]);
-                                    })
-                                    .catch(error => {
-                                        console.error('🔍 FETCH TEST - Failed:', error);
-                                    });
-
                                 target.style.display = 'none';
                                 setImageError(true);
                             }}
@@ -311,27 +506,26 @@ export default function VenueDetailPage() {
                         </div>
                     )}
 
-                    {/* ONLY the bottom gradient for text readability - much more transparent */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-20"></div>
                 </div>
 
-                {/* Venue Info Overlay - positioned ABOVE everything with z-30 */}
+                {/* Venue Info Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-30">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-end justify-between">
                             <div className="text-white">
-                                <h1 className="text-4xl md:text-5xl font-bold mb-2 drop-shadow-lg">{venue.name}</h1>
-                                <div className="flex items-center space-x-4 text-lg">
+                                <h1 className={`${themeClasses.fontSize.display} font-bold mb-2 drop-shadow-lg`}>{venue.name}</h1>
+                                <div className={`flex items-center space-x-4 ${themeClasses.fontSize.heading}`}>
                                     <div className="flex items-center">
-                                        <MapPin className="h-5 w-5 mr-1" />
+                                        <MapPin className={`${themeClasses.iconSize} mr-1`} />
                                         {venue.city}, {venue.state}
                                     </div>
                                     <div className="flex items-center">
-                                        <Users className="h-5 w-5 mr-1" />
+                                        <Users className={`${themeClasses.iconSize} mr-1`} />
                                         {venue.capacity.toLocaleString()} capacity
                                     </div>
                                     <div className="flex items-center">
-                                        <Calendar className="h-5 w-5 mr-1" />
+                                        <Calendar className={`${themeClasses.iconSize} mr-1`} />
                                         {venue.eventCount} events hosted
                                     </div>
                                 </div>
@@ -340,18 +534,18 @@ export default function VenueDetailPage() {
                             {/* Quick Stats */}
                             <div className="hidden md:flex space-x-6">
                                 <div className="text-center text-white">
-                                    <div className="text-2xl font-bold drop-shadow-lg">{upcomingEvents.length}</div>
-                                    <div className="text-sm opacity-80">Upcoming Events</div>
+                                    <div className={`${themeClasses.fontSize.metric} font-bold drop-shadow-lg`}>{upcomingEvents.length}</div>
+                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>Upcoming Events</div>
                                 </div>
                                 <div className="text-center text-white">
-                                    <div className="text-2xl font-bold drop-shadow-lg">{venue.eventCount}</div>
-                                    <div className="text-sm opacity-80">Total Events</div>
+                                    <div className={`${themeClasses.fontSize.metric} font-bold drop-shadow-lg`}>{venue.eventCount}</div>
+                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>Total Events</div>
                                 </div>
                                 <div className="text-center text-white">
-                                    <div className="text-2xl font-bold drop-shadow-lg">
+                                    <div className={`${themeClasses.fontSize.metric} font-bold drop-shadow-lg`}>
                                         {(venue.capacity / 1000).toFixed(0)}K
                                     </div>
-                                    <div className="text-sm opacity-80">Capacity</div>
+                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>Capacity</div>
                                 </div>
                             </div>
                         </div>
@@ -360,32 +554,32 @@ export default function VenueDetailPage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="bg-white border-b">
+            <div className={`${themeClasses.backgroundHeader} border-b ${themeClasses.border}`}>
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     <nav className="flex space-x-8">
                         <button
                             onClick={() => setActiveTab('overview')}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            className={`py-4 px-1 border-b-2 font-medium ${themeClasses.fontSize.label} ${activeTab === 'overview'
+                                ? `${themeClasses.accentBorder} ${themeClasses.accentText}`
+                                : `border-transparent ${themeClasses.textMuted} hover:${themeClasses.textSecondary}`
                                 }`}
                         >
                             Overview
                         </button>
                         <button
                             onClick={() => setActiveTab('events')}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'events'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            className={`py-4 px-1 border-b-2 font-medium ${themeClasses.fontSize.label} ${activeTab === 'events'
+                                ? `${themeClasses.accentBorder} ${themeClasses.accentText}`
+                                : `border-transparent ${themeClasses.textMuted} hover:${themeClasses.textSecondary}`
                                 }`}
                         >
                             Events ({upcomingEvents.length})
                         </button>
                         <button
                             onClick={() => setActiveTab('location')}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'location'
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            className={`py-4 px-1 border-b-2 font-medium ${themeClasses.fontSize.label} ${activeTab === 'location'
+                                ? `${themeClasses.accentBorder} ${themeClasses.accentText}`
+                                : `border-transparent ${themeClasses.textMuted} hover:${themeClasses.textSecondary}`
                                 }`}
                         >
                             Location & Contact
@@ -395,53 +589,165 @@ export default function VenueDetailPage() {
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+            <div className={`max-w-7xl mx-auto px-6 lg:px-8 ${themeClasses.paddingLarge}`}>
                 {activeTab === 'overview' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className={`grid grid-cols-1 lg:grid-cols-3 ${themeClasses.gap}`}>
                         {/* Main Content */}
-                        <div className="lg:col-span-2 space-y-8">
+                        <div className={`lg:col-span-2 ${themeClasses.spacing}`}>
                             {/* Description */}
-                            <div className="bg-white rounded-lg shadow-sm p-6">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-4">About This Venue</h2>
-                                <p className="text-gray-700 leading-relaxed">{venue.description}</p>
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
+                                <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>About This Venue</h2>
+                                <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} leading-relaxed`}>{venue.description}</p>
                             </div>
 
-                            {/* Key Features */}
-                            <div className="bg-white rounded-lg shadow-sm p-6">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Venue Features</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="flex items-center p-4 bg-blue-50 rounded-lg">
-                                        <Users className="h-8 w-8 text-blue-600 mr-3" />
-                                        <div>
-                                            <div className="font-semibold text-gray-900">Capacity</div>
-                                            <div className="text-gray-600">{venue.capacity.toLocaleString()} people</div>
-                                        </div>
-                                    </div>
+                            {/* Enhanced Venue Features */}
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard} overflow-hidden relative`}>
+                                {/* Background Pattern */}
+                                <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
+                                    <Building className="w-full h-full text-gray-400" />
+                                </div>
 
-                                    <div className="flex items-center p-4 bg-green-50 rounded-lg">
-                                        <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
-                                        <div>
-                                            <div className="font-semibold text-gray-900">Status</div>
-                                            <div className="text-gray-600">
-                                                {venue.isActive ? 'Active & Available' : 'Currently Inactive'}
+                                <div className="relative z-10">
+                                    <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginSmall} flex items-center`}>
+                                        <Star className={`${themeClasses.iconSize} ${themeClasses.accentText} mr-3`} />
+                                        Venue Features
+                                    </h2>
+
+                                    <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap}`}>
+                                        {/* Capacity Card */}
+                                        <div className={`group relative overflow-hidden rounded-xl border-2 ${themeClasses.accentBorder} ${themeClasses.accentLight} p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
+                                            <div className="absolute top-0 right-0 w-16 h-16 opacity-10">
+                                                <Users className="w-full h-full text-current" />
+                                            </div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <Users className={`h-10 w-10 ${themeClasses.accentText} group-hover:scale-110 transition-transform duration-300`} />
+                                                    <span className={`px-2 py-1 ${themeClasses.accentText} bg-white/50 rounded-full text-xs font-bold`}>
+                                                        MAX
+                                                    </span>
+                                                </div>
+                                                <div className={`font-bold ${themeClasses.text} text-xl mb-1`}>
+                                                    {venue.capacity.toLocaleString()}
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.text} ${themeClasses.accentText} font-medium`}>
+                                                    People Capacity
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-2`}>
+                                                    {venue.capacity > 10000 ? 'Large Scale Events' : venue.capacity > 5000 ? 'Medium Scale Events' : 'Intimate Events'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Status Card */}
+                                        <div className={`group relative overflow-hidden rounded-xl border-2 ${venue.isActive ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
+                                            <div className="absolute top-0 right-0 w-16 h-16 opacity-10">
+                                                <CheckCircle className="w-full h-full text-current" />
+                                            </div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    {venue.isActive ? (
+                                                        <CheckCircle className="h-10 w-10 text-green-600 group-hover:scale-110 transition-transform duration-300" />
+                                                    ) : (
+                                                        <XCircle className="h-10 w-10 text-red-600 group-hover:scale-110 transition-transform duration-300" />
+                                                    )}
+                                                    <span className={`px-2 py-1 ${venue.isActive ? 'text-green-700 bg-green-200' : 'text-red-700 bg-red-200'} rounded-full text-xs font-bold`}>
+                                                        {venue.isActive ? 'LIVE' : 'OFF'}
+                                                    </span>
+                                                </div>
+                                                <div className={`font-bold ${themeClasses.text} text-xl mb-1`}>
+                                                    {venue.isActive ? 'Active' : 'Inactive'}
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.text} ${venue.isActive ? 'text-green-700' : 'text-red-700'} font-medium`}>
+                                                    Venue Status
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-2`}>
+                                                    {venue.isActive ? 'Available for bookings' : 'Currently unavailable'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Experience Card */}
+                                        <div className={`group relative overflow-hidden rounded-xl border-2 border-purple-200 bg-purple-50 p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
+                                            <div className="absolute top-0 right-0 w-16 h-16 opacity-10">
+                                                <Award className="w-full h-full text-current" />
+                                            </div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <Award className="h-10 w-10 text-purple-600 group-hover:scale-110 transition-transform duration-300" />
+                                                    <span className="px-2 py-1 text-purple-700 bg-purple-200 rounded-full text-xs font-bold">
+                                                        {venue.eventCount > 50 ? 'PRO' : venue.eventCount > 10 ? 'EXP' : 'NEW'}
+                                                    </span>
+                                                </div>
+                                                <div className={`font-bold ${themeClasses.text} text-xl mb-1`}>
+                                                    {venue.eventCount}
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.text} text-purple-700 font-medium`}>
+                                                    Events Hosted
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-2`}>
+                                                    {venue.eventCount > 50 ? 'Premier venue with extensive experience' :
+                                                        venue.eventCount > 10 ? 'Experienced event hosting' :
+                                                            'Growing event portfolio'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Rating/Reputation Card */}
+                                        <div className={`group relative overflow-hidden rounded-xl border-2 border-orange-200 bg-orange-50 p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}>
+                                            <div className="absolute top-0 right-0 w-16 h-16 opacity-10">
+                                                <Zap className="w-full h-full text-current" />
+                                            </div>
+                                            <div className="relative z-10">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <Zap className="h-10 w-10 text-orange-600 group-hover:scale-110 transition-transform duration-300" />
+                                                    <div className="flex">
+                                                        {[...Array(venue.eventCount > 20 ? 5 : venue.eventCount > 10 ? 4 : 3)].map((_, i) => (
+                                                            <Star key={i} className="h-3 w-3 text-orange-400 fill-current" />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className={`font-bold ${themeClasses.text} text-xl mb-1`}>
+                                                    {venue.eventCount > 20 ? 'Premier' : venue.eventCount > 10 ? 'Popular' : 'Rising'}
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.text} text-orange-700 font-medium`}>
+                                                    Venue Rating
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-2`}>
+                                                    {venue.eventCount > 20 ? 'Top-tier venue choice' :
+                                                        venue.eventCount > 10 ? 'Trusted by event organizers' :
+                                                            'Quality venue option'}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center p-4 bg-purple-50 rounded-lg">
-                                        <Award className="h-8 w-8 text-purple-600 mr-3" />
-                                        <div>
-                                            <div className="font-semibold text-gray-900">Experience</div>
-                                            <div className="text-gray-600">{venue.eventCount} events hosted</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center p-4 bg-orange-50 rounded-lg">
-                                        <Zap className="h-8 w-8 text-orange-600 mr-3" />
-                                        <div>
-                                            <div className="font-semibold text-gray-900">Rating</div>
-                                            <div className="text-gray-600">
-                                                {venue.eventCount > 10 ? 'Premier Venue' : 'Popular Choice'}
+                                    {/* Additional Venue Stats */}
+                                    <div className={`mt-6 p-4 rounded-lg ${themeClasses.backgroundCard} border ${themeClasses.border}`}>
+                                        <h3 className={`${themeClasses.fontSize.label} font-semibold ${themeClasses.text} mb-3`}>Quick Facts</h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="text-center">
+                                                <div className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.accentText}`}>
+                                                    {Math.round(venue.capacity / 1000)}K
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Capacity</div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.accentText}`}>
+                                                    {venue.eventCount}
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Events</div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.accentText}`}>
+                                                    {venue.city}
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Location</div>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className={`${themeClasses.fontSize.heading} font-bold ${venue.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {venue.isActive ? 'Open' : 'Closed'}
+                                                </div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Status</div>
                                             </div>
                                         </div>
                                     </div>
@@ -450,40 +756,40 @@ export default function VenueDetailPage() {
                         </div>
 
                         {/* Sidebar */}
-                        <div className="space-y-6">
+                        <div className={themeClasses.spacing}>
                             {/* Contact Card */}
-                            <div className="bg-white rounded-lg shadow-sm p-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Contact Information</h3>
                                 <div className="space-y-3">
                                     <div className="flex items-center">
-                                        <Mail className="h-5 w-5 text-gray-400 mr-3" />
+                                        <Mail className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                         <a
                                             href={`mailto:${venue.contactEmail}`}
-                                            className="text-blue-600 hover:text-blue-800"
+                                            className={`${themeClasses.accentText} ${themeClasses.accentHover} ${themeClasses.fontSize.text}`}
                                         >
                                             {venue.contactEmail}
                                         </a>
                                     </div>
                                     <div className="flex items-center">
-                                        <Phone className="h-5 w-5 text-gray-400 mr-3" />
+                                        <Phone className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                         <a
                                             href={`tel:${venue.contactPhone}`}
-                                            className="text-blue-600 hover:text-blue-800"
+                                            className={`${themeClasses.accentText} ${themeClasses.accentHover} ${themeClasses.fontSize.text}`}
                                         >
                                             {venue.contactPhone}
                                         </a>
                                     </div>
                                     {venue.website && (
                                         <div className="flex items-center">
-                                            <Globe className="h-5 w-5 text-gray-400 mr-3" />
+                                            <Globe className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                             <a
                                                 href={venue.website}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-800 flex items-center"
+                                                className={`${themeClasses.accentText} ${themeClasses.accentHover} flex items-center ${themeClasses.fontSize.text}`}
                                             >
                                                 Visit Website
-                                                <ExternalLink className="h-4 w-4 ml-1" />
+                                                <ExternalLink className={`${themeClasses.iconSizeSmall} ml-1`} />
                                             </a>
                                         </div>
                                     )}
@@ -491,20 +797,20 @@ export default function VenueDetailPage() {
                             </div>
 
                             {/* Location Card */}
-                            <div className="bg-white rounded-lg shadow-sm p-6">
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Location</h3>
-                                <div className="space-y-2 mb-4">
-                                    <div className="text-gray-700">{venue.address}</div>
-                                    <div className="text-gray-700">
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Location</h3>
+                                <div className={`space-y-2 ${themeClasses.marginSmall}`}>
+                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>{venue.address}</div>
+                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
                                         {venue.city}, {venue.state} {venue.zipCode}
                                     </div>
-                                    <div className="text-gray-700">{venue.country}</div>
+                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>{venue.country}</div>
                                 </div>
                                 <button
                                     onClick={openMap}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center transition-colors"
+                                    className={`w-full ${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg flex items-center justify-center transition-colors ${themeClasses.fontSize.button}`}
                                 >
-                                    <Navigation className="h-4 w-4 mr-2" />
+                                    <Navigation className={`${themeClasses.iconSizeSmall} mr-2`} />
                                     View on Map
                                 </button>
                             </div>
@@ -513,71 +819,85 @@ export default function VenueDetailPage() {
                 )}
 
                 {activeTab === 'events' && (
-                    <div className="space-y-8">
-                        {/* Events Summary - Simplified */}
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Events at {venue.name}</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                    <div className="text-3xl font-bold text-blue-600">{upcomingEvents.length}</div>
-                                    <div className="text-gray-600">Upcoming Events</div>
+                    <div className={themeClasses.spacing}>
+                        {/* Events Summary */}
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.padding} border ${themeClasses.borderCard}`}>
+                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Events at {venue.name}</h2>
+                            <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap}`}>
+                                <div className={`text-center ${themeClasses.paddingSmall} ${themeClasses.accentLight} rounded-lg`}>
+                                    <div className={`${themeClasses.fontSize.metric} font-bold ${themeClasses.accentText}`}>{upcomingEvents.length}</div>
+                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>Upcoming Events</div>
                                 </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg">
-                                    <div className="text-3xl font-bold text-green-600">{pastEvents.length}</div>
-                                    <div className="text-gray-600">Past Events</div>
+                                <div className={`text-center ${themeClasses.paddingSmall} bg-green-50 rounded-lg`}>
+                                    <div className={`${themeClasses.fontSize.metric} font-bold text-green-600`}>{pastEvents.length}</div>
+                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>Past Events</div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Upcoming Events */}
                         {upcomingEvents.length > 0 ? (
-                            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900">
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.padding} border ${themeClasses.borderCard}`}>
+                                <div className={`flex items-center justify-between ${themeClasses.marginLarge}`}>
+                                    <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
                                         Upcoming Events ({upcomingEvents.length})
                                     </h2>
-                                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                                    <span className={`px-3 py-1 bg-green-100 text-green-800 ${themeClasses.fontSize.subtitle} font-medium rounded-full`}>
                                         Available Now
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${themeClasses.gap}`}>
                                     {upcomingEvents
                                         .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime())
                                         .map((event) => (
-                                            <EnhancedEventCard key={event.eventId} event={event} isUpcoming={true} />
+                                            <EnhancedEventCard
+                                                key={event.eventId}
+                                                event={event}
+                                                isUpcoming={true}
+                                                preferences={preferences}
+                                                formatDate={formatDate}
+                                                formatTime={formatTime}
+                                            />
                                         ))}
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-8 border border-white/20 text-center">
-                                <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Upcoming Events</h3>
-                                <p className="text-gray-600">This venue doesn't have any scheduled upcoming events.</p>
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.paddingLarge} border ${themeClasses.borderCard} text-center`}>
+                                <Calendar className={`${themeClasses.iconSizeLarge} ${themeClasses.textMuted} mx-auto ${themeClasses.marginSmall}`} />
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>No Upcoming Events</h3>
+                                <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>This venue doesn't have any scheduled upcoming events.</p>
                             </div>
                         )}
 
                         {/* Past Events */}
                         {pastEvents.length > 0 && (
-                            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900">
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.padding} border ${themeClasses.borderCard}`}>
+                                <div className={`flex items-center justify-between ${themeClasses.marginLarge}`}>
+                                    <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
                                         Past Events ({pastEvents.length})
                                     </h2>
-                                    <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">
+                                    <span className={`px-3 py-1 bg-gray-100 text-gray-600 ${themeClasses.fontSize.subtitle} font-medium rounded-full`}>
                                         Event History
                                     </span>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${themeClasses.gap}`}>
                                     {pastEvents
                                         .sort((a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime())
                                         .slice(0, 6)
                                         .map((event) => (
-                                            <EnhancedEventCard key={event.eventId} event={event} isUpcoming={false} />
+                                            <EnhancedEventCard
+                                                key={event.eventId}
+                                                event={event}
+                                                isUpcoming={false}
+                                                preferences={preferences}
+                                                formatDate={formatDate}
+                                                formatTime={formatTime}
+                                            />
                                         ))}
                                 </div>
                                 {pastEvents.length > 6 && (
                                     <div className="text-center mt-6">
-                                        <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors">
+                                        <button className={`${themeClasses.buttonPadding} ${themeClasses.backgroundCard} ${themeClasses.hover} ${themeClasses.text} rounded-lg transition-colors ${themeClasses.fontSize.button}`}>
                                             View All {pastEvents.length} Past Events
                                         </button>
                                     </div>
@@ -587,13 +907,13 @@ export default function VenueDetailPage() {
 
                         {/* No Events At All */}
                         {events.length === 0 && (
-                            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-12 border border-white/20 text-center">
-                                <Building className="h-20 w-20 text-gray-400 mx-auto mb-6" />
-                                <h3 className="text-2xl font-semibold text-gray-900 mb-4">No Events Yet</h3>
-                                <p className="text-gray-600 text-lg mb-6">
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.paddingLarge} border ${themeClasses.borderCard} text-center`}>
+                                <Building className={`h-20 w-20 ${themeClasses.textMuted} mx-auto ${themeClasses.marginLarge}`} />
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>No Events Yet</h3>
+                                <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} ${themeClasses.marginLarge}`}>
                                     This venue hasn't hosted any events yet, but that could change soon!
                                 </p>
-                                <div className="space-y-2 text-sm text-gray-500">
+                                <div className={`space-y-2 ${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>
                                     <p>• Check back later for upcoming events</p>
                                     <p>• Contact the venue for booking information</p>
                                     <p>• Follow our updates for new announcements</p>
@@ -604,13 +924,13 @@ export default function VenueDetailPage() {
                 )}
 
                 {activeTab === 'location' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Address & Directions</h2>
+                    <div className={`grid grid-cols-1 lg:grid-cols-2 ${themeClasses.gap}`}>
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
+                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginLarge}`}>Address & Directions</h2>
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className="font-semibold text-gray-900 mb-2">Full Address</h3>
-                                    <div className="text-gray-700">
+                                    <h3 className={`font-semibold ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.label}`}>Full Address</h3>
+                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
                                         <div>{venue.address}</div>
                                         <div>{venue.city}, {venue.state} {venue.zipCode}</div>
                                         <div>{venue.country}</div>
@@ -619,8 +939,8 @@ export default function VenueDetailPage() {
 
                                 {venue.latitude && venue.longitude && (
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 mb-2">Coordinates</h3>
-                                        <div className="text-gray-700">
+                                        <h3 className={`font-semibold ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.label}`}>Coordinates</h3>
+                                        <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
                                             Lat: {venue.latitude}, Lng: {venue.longitude}
                                         </div>
                                     </div>
@@ -628,40 +948,40 @@ export default function VenueDetailPage() {
 
                                 <button
                                     onClick={openMap}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center justify-center transition-colors"
+                                    className={`w-full ${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg flex items-center justify-center transition-colors ${themeClasses.fontSize.button}`}
                                 >
-                                    <Navigation className="h-5 w-5 mr-2" />
+                                    <Navigation className={`${themeClasses.iconSize} mr-2`} />
                                     Get Directions
                                 </button>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-lg shadow-sm p-6">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h2>
-                            <div className="space-y-6">
+                        <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
+                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginLarge}`}>Contact Information</h2>
+                            <div className={themeClasses.spacing}>
                                 <div>
-                                    <h3 className="font-semibold text-gray-900 mb-3">Get in Touch</h3>
+                                    <h3 className={`font-semibold ${themeClasses.text} mb-3 ${themeClasses.fontSize.label}`}>Get in Touch</h3>
                                     <div className="space-y-3">
-                                        <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                            <Mail className="h-5 w-5 text-gray-400 mr-3" />
+                                        <div className={`flex items-center p-3 ${themeClasses.backgroundCard} rounded-lg`}>
+                                            <Mail className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                             <div>
-                                                <div className="text-sm text-gray-500">Email</div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Email</div>
                                                 <a
                                                     href={`mailto:${venue.contactEmail}`}
-                                                    className="text-blue-600 hover:text-blue-800 font-medium"
+                                                    className={`${themeClasses.accentText} ${themeClasses.accentHover} font-medium ${themeClasses.fontSize.text}`}
                                                 >
                                                     {venue.contactEmail}
                                                 </a>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                            <Phone className="h-5 w-5 text-gray-400 mr-3" />
+                                        <div className={`flex items-center p-3 ${themeClasses.backgroundCard} rounded-lg`}>
+                                            <Phone className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                             <div>
-                                                <div className="text-sm text-gray-500">Phone</div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Phone</div>
                                                 <a
                                                     href={`tel:${venue.contactPhone}`}
-                                                    className="text-blue-600 hover:text-blue-800 font-medium"
+                                                    className={`${themeClasses.accentText} ${themeClasses.accentHover} font-medium ${themeClasses.fontSize.text}`}
                                                 >
                                                     {venue.contactPhone}
                                                 </a>
@@ -669,18 +989,18 @@ export default function VenueDetailPage() {
                                         </div>
 
                                         {venue.website && (
-                                            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                                <Globe className="h-5 w-5 text-gray-400 mr-3" />
+                                            <div className={`flex items-center p-3 ${themeClasses.backgroundCard} rounded-lg`}>
+                                                <Globe className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                                 <div>
-                                                    <div className="text-sm text-gray-500">Website</div>
+                                                    <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Website</div>
                                                     <a
                                                         href={venue.website}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
+                                                        className={`${themeClasses.accentText} ${themeClasses.accentHover} font-medium flex items-center ${themeClasses.fontSize.text}`}
                                                     >
                                                         Visit Website
-                                                        <ExternalLink className="h-4 w-4 ml-1" />
+                                                        <ExternalLink className={`${themeClasses.iconSizeSmall} ml-1`} />
                                                     </a>
                                                 </div>
                                             </div>
@@ -697,7 +1017,21 @@ export default function VenueDetailPage() {
 }
 
 
-function EnhancedEventCard({ event, isUpcoming }: { event: VenueEvent; isUpcoming: boolean }) {
+function EnhancedEventCard({
+    event,
+    isUpcoming,
+    preferences,
+    formatDate,
+    formatTime
+}: {
+    event: VenueEvent;
+    isUpcoming: boolean;
+    preferences: UserPreferences | null;
+    formatDate: (dateString: string) => string;
+    formatTime: (dateString: string) => string;
+}) {
+    const themeClasses = getThemeClasses(preferences);
+
     const getImageUrl = (imageUrl?: string) => {
         if (!imageUrl) return null;
         if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
@@ -709,18 +1043,11 @@ function EnhancedEventCard({ event, isUpcoming }: { event: VenueEvent; isUpcomin
         return `http://localhost:5251/${imageUrl}`;
     };
 
-    const formatDate = (dateString: string) => {
+    const formatShortDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric'
-        });
-    };
-
-    const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
         });
     };
 
@@ -747,7 +1074,7 @@ function EnhancedEventCard({ event, isUpcoming }: { event: VenueEvent; isUpcomin
     return (
         <Link
             href={`/events/${event.eventId}`}
-            className={`block bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-2 border border-gray-100 ${!isUpcoming ? 'opacity-90 hover:opacity-100' : ''
+            className={`block ${themeClasses.backgroundCard} rounded-xl ${themeClasses.shadow} overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-2 border ${themeClasses.borderCard} ${!isUpcoming ? 'opacity-90 hover:opacity-100' : ''
                 }`}
         >
             <div className="relative h-48 bg-gradient-to-r from-blue-400 to-purple-500">
@@ -772,16 +1099,16 @@ function EnhancedEventCard({ event, isUpcoming }: { event: VenueEvent; isUpcomin
                 <div className="absolute top-3 left-3">
                     {isUpcoming ? (
                         daysUntil <= 7 ? (
-                            <span className="px-3 py-1 bg-red-500/90 text-white text-xs font-bold rounded-full backdrop-blur-sm">
+                            <span className={`px-3 py-1 bg-red-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
                                 {daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days left`}
                             </span>
                         ) : (
-                            <span className="px-3 py-1 bg-green-500/90 text-white text-xs font-bold rounded-full backdrop-blur-sm">
+                            <span className={`px-3 py-1 bg-green-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
                                 Upcoming
                             </span>
                         )
                     ) : (
-                        <span className="px-3 py-1 bg-gray-500/90 text-white text-xs font-medium rounded-full backdrop-blur-sm">
+                        <span className={`px-3 py-1 bg-gray-500/90 text-white ${themeClasses.fontSize.subtitle} font-medium rounded-full backdrop-blur-sm`}>
                             {daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`}
                         </span>
                     )}
@@ -790,10 +1117,10 @@ function EnhancedEventCard({ event, isUpcoming }: { event: VenueEvent; isUpcomin
                 {/* Date Badge */}
                 <div className="absolute bottom-3 left-3">
                     <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2">
-                        <div className="text-lg font-bold text-gray-900">
-                            {formatDate(event.startDateTime)}
+                        <div className={`${themeClasses.fontSize.heading} font-bold text-gray-900`}>
+                            {formatShortDate(event.startDateTime)}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className={`${themeClasses.fontSize.subtitle} text-gray-600`}>
                             {formatTime(event.startDateTime)}
                         </div>
                     </div>
@@ -803,15 +1130,15 @@ function EnhancedEventCard({ event, isUpcoming }: { event: VenueEvent; isUpcomin
                 {isUpcoming && (
                     <div className="absolute top-3 right-3">
                         {event.availableTickets === 0 ? (
-                            <span className="px-2 py-1 bg-red-500/90 text-white text-xs font-bold rounded-full backdrop-blur-sm">
+                            <span className={`px-2 py-1 bg-red-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
                                 Sold Out
                             </span>
                         ) : event.availableTickets < 50 ? (
-                            <span className="px-2 py-1 bg-orange-500/90 text-white text-xs font-bold rounded-full backdrop-blur-sm">
+                            <span className={`px-2 py-1 bg-orange-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
                                 Almost Full
                             </span>
                         ) : (
-                            <span className="px-2 py-1 bg-blue-500/90 text-white text-xs font-medium rounded-full backdrop-blur-sm">
+                            <span className={`px-2 py-1 bg-blue-500/90 text-white ${themeClasses.fontSize.subtitle} font-medium rounded-full backdrop-blur-sm`}>
                                 Available
                             </span>
                         )}
@@ -821,146 +1148,37 @@ function EnhancedEventCard({ event, isUpcoming }: { event: VenueEvent; isUpcomin
 
             <div className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                    <span className={`px-3 py-1 ${themeClasses.accentLight} ${themeClasses.accentText} ${themeClasses.fontSize.subtitle} font-medium rounded-full`}>
                         {event.categoryName}
                     </span>
                     {isUpcoming && (
-                        <span className="text-xs text-gray-500">
+                        <span className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>
                             {event.ticketsSold} sold
                         </span>
                     )}
                 </div>
 
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 text-lg">
+                <h3 className={`font-semibold ${themeClasses.text} mb-2 line-clamp-2 ${themeClasses.fontSize.heading}`}>
                     {event.title}
                 </h3>
 
-                <div className="text-sm text-gray-600 mb-3">
+                <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} mb-3`}>
                     By {event.organizerName}
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <span className="text-gray-700 font-medium">
+                    <span className={`${themeClasses.text} font-medium ${themeClasses.fontSize.text}`}>
                         From ${event.basePrice}
                     </span>
                     {isUpcoming ? (
-                        <span className="text-green-600 text-sm font-medium">
+                        <span className={`text-green-600 ${themeClasses.fontSize.subtitle} font-medium`}>
                             {event.availableTickets} tickets left
                         </span>
                     ) : (
-                        <span className="text-gray-500 text-sm">
+                        <span className={`${themeClasses.textMuted} ${themeClasses.fontSize.subtitle}`}>
                             {event.ticketsSold} attendees
                         </span>
                     )}
-                </div>
-
-            </div>
-        </Link>
-    );
-}
-
-// Event Card Component
-function EventCard({ event, isPast = false }: { event: VenueEvent; isPast?: boolean }) {
-    const getImageUrl = (imageUrl?: string) => {
-        if (!imageUrl) return null;
-
-        // Handle full URLs
-        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-            return imageUrl;
-        }
-
-        // Handle relative paths from your LocalImageStorageService
-        if (imageUrl.startsWith('/')) {
-            return `http://localhost:5251${imageUrl}`;
-        }
-
-        // Handle paths without leading slash
-        return `http://localhost:5251/${imageUrl}`;
-    };
-
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-        });
-    };
-
-    const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
-        });
-    };
-
-    const imageUrl = getImageUrl(event.imageUrl);
-
-    return (
-        <Link
-            href={`/events/${event.eventId}`}
-            className={`block bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-1 ${isPast ? 'opacity-75' : ''
-                }`}
-        >
-            <div className="relative h-48 bg-gradient-to-r from-blue-400 to-purple-500">
-                {imageUrl ? (
-                    <img
-                        src={imageUrl}
-                        alt={event.title}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                        }}
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <Calendar className="h-12 w-12 text-white opacity-50" />
-                    </div>
-                )}
-
-                {isPast && (
-                    <div className="absolute top-3 left-3">
-                        <span className="px-2 py-1 bg-gray-500 text-white text-xs font-medium rounded-full">
-                            Past Event
-                        </span>
-                    </div>
-                )}
-
-                <div className="absolute bottom-3 left-3">
-                    <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2">
-                        <div className="text-lg font-bold text-gray-900">
-                            {formatDate(event.startDateTime)}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                            {formatTime(event.startDateTime)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="p-4">
-                <div className="mb-2">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                        {event.categoryName}
-                    </span>
-                </div>
-
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {event.title}
-                </h3>
-
-                <div className="text-sm text-gray-600 mb-2">
-                    By {event.organizerName}
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">
-                        From ${event.basePrice}
-                    </span>
-                    <span className="text-gray-500">
-                        {event.availableTickets} tickets left
-                    </span>
                 </div>
             </div>
         </Link>

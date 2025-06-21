@@ -1,6 +1,7 @@
+﻿/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// app/profile/page.tsx - Enhanced version with full backend integration
+// app/profile/page.tsx - Attendee-focused profile page
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,16 +13,13 @@ import {
     Mail,
     Phone,
     Lock,
-    MapPin,
     Calendar,
     Bell,
     Shield,
     Trash2,
     Save,
-    Edit,
     Camera,
     ArrowLeft,
-    CreditCard,
     Download,
     Eye,
     EyeOff,
@@ -29,12 +27,10 @@ import {
     X,
     CheckCircle,
     AlertCircle,
-    Building2,
-    Globe,
     Clock
 } from 'lucide-react';
 
-interface UserProfile {
+interface AttendeeProfile {
     userId: number;
     firstName: string;
     lastName: string;
@@ -48,48 +44,24 @@ interface UserProfile {
     lastLoginAt?: string;
     status: string;
     bio?: string;
-    website?: string;
     timeZone?: string;
     isOrganizer: boolean;
     roles: string[];
 }
 
-interface UserOrganization {
-    companyName?: string;
-    businessLicense?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-}
-
-interface UserPreferences {
+interface AttendeePreferences {
+    // Essential preferences for event attendees (matching backend UserPreferences)
     emailNotifications: boolean;
-    smsNotifications: boolean;
-    newBookingNotifications: boolean;
-    cancellationNotifications: boolean;
-    lowInventoryNotifications: boolean;
-    dailyReports: boolean;
-    weeklyReports: boolean;
-    monthlyReports: boolean;
-    twoFactorEnabled: boolean;
     sessionTimeout: number;
-    loginNotifications: boolean;
-    defaultTimeZone?: string;
-    defaultEventDuration: number;
-    defaultTicketSaleStart: number;
-    defaultRefundPolicy?: string;
-    requireApproval: boolean;
-    autoPublish: boolean;
     theme: string;
     language: string;
     dateFormat: string;
     timeFormat: string;
-    currency: string;
-    accentColor: string;
-    fontSize: string;
-    compactMode: boolean;
+    defaultTimeZone?: string;
+
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
 }
 
 interface PasswordChange {
@@ -97,7 +69,177 @@ interface PasswordChange {
     newPassword: string;
 }
 
-export default function ProfilePage() {
+
+
+const getThemeClasses = (preferences: AttendeePreferences | null) => {
+    const isDarkMode = preferences?.theme === 'dark' ||
+        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    const accentColor = preferences?.accentColor || 'blue';
+    const fontSize = preferences?.fontSize || 'medium';
+    const compactMode = preferences?.compactMode || false;
+
+    // Accent color configurations
+    const accentColors = {
+        blue: {
+            primary: 'bg-blue-600',
+            hover: 'hover:bg-blue-700',
+            light: isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50',
+            text: isDarkMode ? 'text-blue-400' : 'text-blue-600',
+            border: isDarkMode ? 'border-blue-700' : 'border-blue-200',
+            ring: 'focus:ring-blue-500 focus:border-blue-500'
+        },
+        purple: {
+            primary: 'bg-purple-600',
+            hover: 'hover:bg-purple-700',
+            light: isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50',
+            text: isDarkMode ? 'text-purple-400' : 'text-purple-600',
+            border: isDarkMode ? 'border-purple-700' : 'border-purple-200',
+            ring: 'focus:ring-purple-500 focus:border-purple-500'
+        },
+        green: {
+            primary: 'bg-green-600',
+            hover: 'hover:bg-green-700',
+            light: isDarkMode ? 'bg-green-900/20' : 'bg-green-50',
+            text: isDarkMode ? 'text-green-400' : 'text-green-600',
+            border: isDarkMode ? 'border-green-700' : 'border-green-200',
+            ring: 'focus:ring-green-500 focus:border-green-500'
+        },
+        orange: {
+            primary: 'bg-orange-600',
+            hover: 'hover:bg-orange-700',
+            light: isDarkMode ? 'bg-orange-900/20' : 'bg-orange-50',
+            text: isDarkMode ? 'text-orange-400' : 'text-orange-600',
+            border: isDarkMode ? 'border-orange-700' : 'border-orange-200',
+            ring: 'focus:ring-orange-500 focus:border-orange-500'
+        },
+        pink: {
+            primary: 'bg-pink-600',
+            hover: 'hover:bg-pink-700',
+            light: isDarkMode ? 'bg-pink-900/20' : 'bg-pink-50',
+            text: isDarkMode ? 'text-pink-400' : 'text-pink-600',
+            border: isDarkMode ? 'border-pink-700' : 'border-pink-200',
+            ring: 'focus:ring-pink-500 focus:border-pink-500'
+        }
+    };
+
+    const currentAccent = accentColors[accentColor as keyof typeof accentColors] || accentColors.blue;
+
+    // Font size configurations
+    const fontSizes = {
+        small: {
+            text: 'text-sm',
+            heading: 'text-lg',
+            title: 'text-xl',
+            subtitle: 'text-xs',
+            button: 'text-sm',
+            label: 'text-xs'
+        },
+        medium: {
+            text: 'text-base',
+            heading: 'text-xl',
+            title: 'text-2xl',
+            subtitle: 'text-sm',
+            button: 'text-base',
+            label: 'text-sm'
+        },
+        large: {
+            text: 'text-lg',
+            heading: 'text-2xl',
+            title: 'text-3xl',
+            subtitle: 'text-base',
+            button: 'text-lg',
+            label: 'text-base'
+        }
+    };
+
+    const currentFont = fontSizes[fontSize as keyof typeof fontSizes] || fontSizes.medium;
+
+    return {
+        // Basic colors
+        background: isDarkMode ? 'bg-gray-900' : 'bg-white',
+        backgroundCard: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
+        backgroundSidebar: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
+        backgroundInput: isDarkMode ? 'bg-gray-700/90' : 'bg-white/90',
+        backgroundDisabled: isDarkMode ? 'bg-gray-600' : 'bg-gray-50',
+        backgroundSuccess: isDarkMode ? 'bg-green-900/90' : 'bg-green-50/90',
+        backgroundError: isDarkMode ? 'bg-red-900/90' : 'bg-red-50/90',
+        backgroundSecure: isDarkMode ? 'bg-green-900/80' : 'bg-green-50/80',
+
+        // Text colors
+        text: isDarkMode ? 'text-gray-100' : 'text-gray-900',
+        textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600',
+        textDisabled: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+        textSuccess: isDarkMode ? 'text-green-300' : 'text-green-600',
+        textError: isDarkMode ? 'text-red-300' : 'text-red-600',
+        textSecure: isDarkMode ? 'text-green-300' : 'text-green-900',
+
+        // Borders
+        border: isDarkMode ? 'border-gray-600' : 'border-gray-300',
+        borderCard: isDarkMode ? 'border-gray-600/30' : 'border-white/30',
+        borderSuccess: isDarkMode ? 'border-green-700' : 'border-green-200',
+        borderError: isDarkMode ? 'border-red-700' : 'border-red-200',
+        borderSecure: isDarkMode ? 'border-green-700' : 'border-green-200',
+
+        // Effects
+        shadow: isDarkMode ? 'shadow-2xl shadow-black/50' : 'shadow-2xl',
+        hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-white/50',
+        hoverRed: isDarkMode ? 'hover:bg-red-900/50' : 'hover:bg-red-50',
+
+        // Form elements
+        label: isDarkMode ? 'text-gray-300' : 'text-gray-700',
+        placeholder: isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500',
+
+        // Typography & Layout - Enhanced for all elements
+        fontSize: currentFont,
+
+        // Padding/spacing based on compact mode
+        padding: compactMode ? 'p-3' : 'p-6',
+        paddingSmall: compactMode ? 'p-2' : 'p-4',
+        paddingLarge: compactMode ? 'p-4' : 'p-8',
+
+        // Margins
+        margin: compactMode ? 'mb-3' : 'mb-6',
+        marginSmall: compactMode ? 'mb-2' : 'mb-4',
+        marginLarge: compactMode ? 'mb-4' : 'mb-8',
+
+        // Spacing between elements
+        spacing: compactMode ? 'space-y-2' : 'space-y-4',
+        spacingLarge: compactMode ? 'space-y-3' : 'space-y-6',
+
+        // Grid gaps
+        gap: compactMode ? 'gap-2' : 'gap-4',
+        gapLarge: compactMode ? 'gap-3' : 'gap-6',
+
+        // Button sizes
+        buttonPadding: compactMode ? 'px-4 py-2' : 'px-6 py-3',
+        buttonPaddingSmall: compactMode ? 'px-2 py-1' : 'px-3 py-2',
+
+        // Input heights
+        inputHeight: compactMode ? 'h-9' : 'h-11',
+
+        // Icon sizes
+        iconSize: compactMode ? 'h-4 w-4' : 'h-5 w-5',
+        iconSizeSmall: compactMode ? 'h-3 w-3' : 'h-4 w-4',
+        iconSizeLarge: compactMode ? 'h-6 w-6' : 'h-8 w-8',
+
+        // Accent colors (dynamic and complete)
+        accent: currentAccent.primary,
+        accentHover: currentAccent.hover,
+        accentText: currentAccent.text,
+        accentLight: currentAccent.light,
+        accentBorder: currentAccent.border,
+        accentRing: currentAccent.ring,
+
+        // State info
+        isDarkMode,
+        accentColor,
+        fontSizeValue: fontSize,
+        compactMode
+    };
+};
+
+export default function AttendeeProfilePage() {
     const { user, logout, isAuthenticated } = useAuth();
     const router = useRouter();
 
@@ -105,9 +247,8 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('profile');
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [organization, setOrganization] = useState<UserOrganization>({});
-    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+    const [profile, setProfile] = useState<AttendeeProfile | null>(null);
+    const [preferences, setPreferences] = useState<AttendeePreferences | null>(null);
     const [passwordData, setPasswordData] = useState<PasswordChange>({
         currentPassword: '',
         newPassword: ''
@@ -124,6 +265,9 @@ export default function ProfilePage() {
     const [profileImagePreview, setProfileImagePreview] = useState<string>('');
     const [uploadingImage, setUploadingImage] = useState(false);
 
+   
+    const themeClasses = getThemeClasses(preferences);
+
     useEffect(() => {
         if (!isAuthenticated) {
             router.push('/login');
@@ -132,53 +276,95 @@ export default function ProfilePage() {
         loadUserData();
     }, [isAuthenticated]);
 
+    const getFullImageUrl = (imageUrl: string | undefined) => {
+        if (!imageUrl) return '';
+        if (imageUrl.startsWith('http')) {
+            return imageUrl;
+        }
+        const backendUrl = 'http://localhost:5251';
+        return backendUrl + imageUrl;
+    };
+
+    // Helper function to format date for input field
+    const formatDateForInput = (dateString: string | undefined | null) => {
+        if (!dateString) return '';
+
+        try {
+            // Handle ISO date format from backend (e.g., "2025-06-06T00:00:00")
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '';
+
+            // Extract just the date part in YYYY-MM-DD format
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return '';
+        }
+    };
+
+    // Theme system
+    const isDarkMode = preferences?.theme === 'dark' ||
+        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+
+
+    // Apply theme to document body
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.body.classList.remove('dark');
+        }
+    }, [isDarkMode]);
+
     const loadUserData = async () => {
         try {
             setLoading(true);
 
             // Load profile data
             const profileData = await userApi.getProfile();
-            setProfile(profileData);
 
-            // Load organization data if user is organizer
+            // Check if user is an organizer - redirect them to organizer profile
             if (profileData.isOrganizer) {
-                try {
-                    const orgData = await userApi.getOrganization();
-                    setOrganization(orgData);
-                } catch (orgError) {
-                    console.log('No organization data found');
-                }
+                router.push('/profile/organizer');
+                return;
             }
 
-            // Load preferences
+            setProfile(profileData);
+
+            // Load attendee-specific preferences WITH ENHANCED APPEARANCE OPTIONS
             try {
                 const prefsData = await userApi.getPreferences();
-                setPreferences(prefsData);
+                setPreferences({
+                    emailNotifications: prefsData.emailNotifications || true,
+                    sessionTimeout: prefsData.sessionTimeout || 30,
+                    theme: prefsData.theme || 'light',
+                    language: prefsData.language || 'en',
+                    dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
+                    timeFormat: prefsData.timeFormat || '12h',
+                    defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
+                    // ADD THESE NEW APPEARANCE PREFERENCES:
+                    accentColor: prefsData.accentColor || 'blue',
+                    fontSize: prefsData.fontSize || 'medium',
+                    compactMode: prefsData.compactMode || false
+                });
             } catch (prefsError) {
                 console.log('No preferences found, using defaults');
                 setPreferences({
                     emailNotifications: true,
-                    smsNotifications: false,
-                    newBookingNotifications: true,
-                    cancellationNotifications: true,
-                    lowInventoryNotifications: true,
-                    dailyReports: false,
-                    weeklyReports: true,
-                    monthlyReports: true,
-                    twoFactorEnabled: false,
                     sessionTimeout: 30,
-                    loginNotifications: true,
-                    defaultTimeZone: 'UTC',
-                    defaultEventDuration: 120,
-                    defaultTicketSaleStart: 30,
-                    defaultRefundPolicy: 'flexible',
-                    requireApproval: false,
-                    autoPublish: false,
                     theme: 'light',
                     language: 'en',
                     dateFormat: 'MM/dd/yyyy',
                     timeFormat: '12h',
-                    currency: 'USD',
+                    defaultTimeZone: 'UTC',
+                    // DEFAULT APPEARANCE PREFERENCES:
                     accentColor: 'blue',
                     fontSize: 'medium',
                     compactMode: false
@@ -202,7 +388,6 @@ export default function ProfilePage() {
 
             setProfileImageFile(file);
 
-            // Create preview
             const reader = new FileReader();
             reader.onload = () => {
                 setProfileImagePreview(reader.result as string);
@@ -220,9 +405,13 @@ export default function ProfilePage() {
 
             await imageApi.uploadUserProfileImage(profileImageFile);
 
-            // Reload profile to get updated image URL
             const updatedProfile = await userApi.getProfile();
             setProfile(updatedProfile);
+
+            const { refreshUser } = useAuth();
+            if (refreshUser) {
+                await refreshUser();
+            }
 
             setProfileImageFile(null);
             setProfileImagePreview('');
@@ -242,7 +431,6 @@ export default function ProfilePage() {
 
             await imageApi.deleteUserProfileImage();
 
-            // Reload profile to get updated data
             const updatedProfile = await userApi.getProfile();
             setProfile(updatedProfile);
 
@@ -270,7 +458,6 @@ export default function ProfilePage() {
                 phoneNumber: profile.phoneNumber,
                 dateOfBirth: profile.dateOfBirth,
                 bio: profile.bio,
-                website: profile.website,
                 timeZone: profile.timeZone
             };
 
@@ -281,24 +468,6 @@ export default function ProfilePage() {
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
             setError('Failed to update profile: ' + error.message);
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const updateOrganization = async () => {
-        try {
-            setSaving(true);
-            setError('');
-            setSuccess('');
-
-            const updatedOrg = await userApi.updateOrganization(organization);
-            setOrganization(updatedOrg);
-
-            setSuccess('Organization details updated successfully!');
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (error: any) {
-            setError('Failed to update organization: ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -341,8 +510,37 @@ export default function ProfilePage() {
             setError('');
             setSuccess('');
 
-            const updatedPrefs = await userApi.updatePreferences(preferences);
-            setPreferences(updatedPrefs);
+            // Convert attendee preferences to full preferences format for API
+            const fullPreferences = {
+                emailNotifications: preferences.emailNotifications,
+                smsNotifications: false,
+                newBookingNotifications: true,
+                cancellationNotifications: true,
+                lowInventoryNotifications: false,
+                dailyReports: false,
+                weeklyReports: false,
+                monthlyReports: false,
+                twoFactorEnabled: false,
+                sessionTimeout: preferences.sessionTimeout,
+                loginNotifications: false,
+                defaultTimeZone: preferences.defaultTimeZone || 'UTC',
+                defaultEventDuration: 120,
+                defaultTicketSaleStart: 30,
+                defaultRefundPolicy: 'flexible',
+                requireApproval: false,
+                autoPublish: false,
+                theme: preferences.theme,
+                language: preferences.language,
+                dateFormat: preferences.dateFormat,
+                timeFormat: preferences.timeFormat,
+                currency: 'USD',
+                // ADD THESE NEW APPEARANCE PREFERENCES:
+                accentColor: preferences.accentColor || 'blue',
+                fontSize: preferences.fontSize || 'medium',
+                compactMode: preferences.compactMode ?? false
+            };
+
+            await userApi.updatePreferences(fullPreferences);
 
             setSuccess('Preferences updated successfully!');
             setTimeout(() => setSuccess(''), 3000);
@@ -366,9 +564,6 @@ export default function ProfilePage() {
 
         try {
             setSaving(true);
-            // Note: You'll need to add this endpoint to your backend
-            // await userApi.deleteAccount();
-
             logout();
             router.push('/');
         } catch (error: any) {
@@ -382,7 +577,6 @@ export default function ProfilePage() {
         try {
             const dataToExport = {
                 profile: profile,
-                organization: organization,
                 preferences: preferences,
                 downloadDate: new Date().toISOString()
             };
@@ -407,7 +601,7 @@ export default function ProfilePage() {
     if (loading) {
         return (
             <div
-                className="min-h-screen flex items-center justify-center"
+                className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : ''}`}
                 style={{
                     backgroundImage: 'url("/images/bg/background.jpg")',
                     backgroundSize: 'cover',
@@ -416,10 +610,10 @@ export default function ProfilePage() {
                     backgroundAttachment: 'fixed'
                 }}
             >
-                <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/30">
+                <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.paddingLarge} ${themeClasses.shadow} border ${themeClasses.borderCard}`}>
                     <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-4">Loading Profile...</h1>
+                        <div className={`animate-spin rounded-full ${themeClasses.iconSizeLarge} border-b-2 border-blue-600 mx-auto ${themeClasses.marginSmall}`}></div>
+                        <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Loading Profile...</h1>
                     </div>
                 </div>
             </div>
@@ -428,12 +622,12 @@ export default function ProfilePage() {
 
     if (!profile) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">Profile not found</h1>
+                    <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Profile not found</h1>
                     <button
                         onClick={() => router.push('/')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
+                        className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg ${themeClasses.fontSize.button}`}
                     >
                         Go Home
                     </button>
@@ -442,16 +636,12 @@ export default function ProfilePage() {
         );
     }
 
+    // Attendee-focused tabs
     const tabs = [
-        { id: 'profile', label: 'Profile Info', icon: User },
+        { id: 'profile', label: 'My Info', icon: User },
         { id: 'security', label: 'Security', icon: Shield },
-        { id: 'notifications', label: 'Preferences', icon: Bell }
+        { id: 'preferences', label: 'Event Settings', icon: Bell }
     ];
-
-    // Add organization tab for organizers
-    if (profile.isOrganizer) {
-        tabs.splice(1, 0, { id: 'organization', label: 'Organization', icon: Building2 });
-    }
 
     return (
         <div
@@ -466,75 +656,83 @@ export default function ProfilePage() {
         >
             <div className="min-h-screen bg-black/20 backdrop-blur-[2px]">
                 {/* Header */}
-                <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/30">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div className={`${themeClasses.backgroundSidebar} backdrop-blur-xl shadow-lg border-b ${themeClasses.borderCard}`}>
+                    <div className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${themeClasses.paddingSmall}`}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
                                 <button
                                     onClick={() => router.back()}
-                                    className="flex items-center text-gray-600 hover:text-gray-900 mr-4 transition-colors"
+                                    className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} mr-4 transition-colors ${themeClasses.fontSize.text}`}
                                 >
-                                    <ArrowLeft className="h-5 w-5 mr-2" />
+                                    <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
                                     Back
                                 </button>
-                                <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+                                <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>My Profile</h1>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <span className="text-sm text-gray-600">
+                                <span className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
                                     {profile.firstName} {profile.lastName}
                                 </span>
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                                <div className={`${themeClasses.iconSizeLarge} ${themeClasses.accentLight} rounded-full flex items-center justify-center overflow-hidden border-2 ${themeClasses.accentBorder}`}>
                                     {profile.profileImageUrl ? (
                                         <img
-                                            src={profile.profileImageUrl}
-                                            alt="Profile"
+                                            src={getFullImageUrl(profile.profileImageUrl)}
+                                            alt={`${profile.firstName} ${profile.lastName}`}
                                             className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.style.display = 'none';
+                                                const fallback = target.nextElementSibling as HTMLElement;
+                                                if (fallback) {
+                                                    fallback.style.display = 'block';
+                                                }
+                                            }}
                                         />
-                                    ) : (
-                                        <User className="h-4 w-4 text-blue-600" />
-                                    )}
+                                    ) : null}
+                                    <User className={`${themeClasses.iconSize} ${themeClasses.accentText} ${profile.profileImageUrl ? 'hidden' : 'block'}`} />
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className={`grid grid-cols-1 lg:grid-cols-4 ${themeClasses.gap}`}>
+
                         {/* Sidebar Navigation */}
                         <div className="lg:col-span-1">
-                            <nav className="space-y-2 bg-white/80 backdrop-blur-xl rounded-2xl p-4 shadow-lg border border-white/30">
+                            <nav className={`${themeClasses.spacing} ${themeClasses.backgroundSidebar} backdrop-blur-xl rounded-2xl ${themeClasses.padding} shadow-lg border ${themeClasses.borderCard}`}>
                                 {tabs.map((tab) => {
                                     const Icon = tab.icon;
                                     return (
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
-                                            className={`w-full flex items-center px-4 py-3 text-left rounded-xl transition-all duration-200 ${activeTab === tab.id
-                                                    ? 'bg-blue-600 text-white shadow-lg'
-                                                    : 'text-gray-600 hover:bg-white/50'
+                                            className={`w-full flex items-center ${themeClasses.paddingSmall} text-left rounded-xl transition-all duration-200 ${themeClasses.fontSize.text} ${activeTab === tab.id
+                                                    ? `${themeClasses.accent} text-white shadow-lg`
+                                                    : `${themeClasses.textSecondary} ${themeClasses.hover}`
                                                 }`}
                                         >
-                                            <Icon className="h-5 w-5 mr-3" />
+                                            <Icon className={`${themeClasses.iconSize} mr-3`} />
                                             {tab.label}
                                         </button>
                                     );
                                 })}
 
                                 {/* Quick Actions */}
-                                <div className="pt-4 border-t border-gray-200 mt-4">
+                                <div className={`pt-4 border-t ${themeClasses.border} mt-4`}>
                                     <button
                                         onClick={downloadData}
-                                        className="w-full flex items-center px-4 py-3 text-left rounded-xl text-gray-600 hover:bg-white/50 transition-all duration-200"
+                                        className={`w-full flex items-center ${themeClasses.paddingSmall} text-left rounded-xl ${themeClasses.textSecondary} ${themeClasses.hover} transition-all duration-200 ${themeClasses.fontSize.text}`}
                                     >
-                                        <Download className="h-5 w-5 mr-3" />
-                                        Download Data
+                                        <Download className={`${themeClasses.iconSize} mr-3`} />
+                                        Download My Data
                                     </button>
                                     <button
                                         onClick={deleteAccount}
-                                        className="w-full flex items-center px-4 py-3 text-left rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200"
+                                        className={`w-full flex items-center ${themeClasses.paddingSmall} text-left rounded-xl text-red-600 ${themeClasses.hoverRed} transition-all duration-200 ${themeClasses.fontSize.text}`}
                                     >
-                                        <Trash2 className="h-5 w-5 mr-3" />
+                                        <Trash2 className={`${themeClasses.iconSize} mr-3`} />
                                         Delete Account
                                     </button>
                                 </div>
@@ -545,41 +743,48 @@ export default function ProfilePage() {
                         <div className="lg:col-span-3">
                             {/* Success/Error Messages */}
                             {success && (
-                                <div className="mb-6 bg-green-50/90 backdrop-blur-sm border border-green-200 text-green-600 px-4 py-3 rounded-xl flex items-center">
-                                    <CheckCircle className="h-5 w-5 mr-2" />
+                                <div className={`mb-6 ${themeClasses.backgroundSuccess} backdrop-blur-sm border ${themeClasses.borderSuccess} ${themeClasses.textSuccess} px-4 py-3 rounded-xl flex items-center`}>
+                                    <CheckCircle className={`${themeClasses.iconSize} mr-2`} />
                                     {success}
                                 </div>
                             )}
                             {error && (
-                                <div className="mb-6 bg-red-50/90 backdrop-blur-sm border border-red-200 text-red-600 px-4 py-3 rounded-xl flex items-center">
-                                    <AlertCircle className="h-5 w-5 mr-2" />
+                                <div className={`mb-6 ${themeClasses.backgroundError} backdrop-blur-sm border ${themeClasses.borderError} ${themeClasses.textError} px-4 py-3 rounded-xl flex items-center`}>
+                                    <AlertCircle className={`${themeClasses.iconSize} mr-2`} />
                                     {error}
                                 </div>
                             )}
 
                             {/* Profile Info Tab */}
                             {activeTab === 'profile' && (
-                                <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6">
-                                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Profile Information</h2>
+                                <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
+                                    <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} ${themeClasses.margin}`}>Personal Information</h2>
 
                                     {/* Profile Picture */}
                                     <div className="flex items-center mb-6">
-                                        <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mr-4 overflow-hidden">
+                                        <div className={`${themeClasses.compactMode ? 'w-16 h-16' : 'w-20 h-20'} ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full flex items-center justify-center mr-4 overflow-hidden border-4 ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}>
                                             {profileImagePreview ? (
                                                 <img
                                                     src={profileImagePreview}
                                                     alt="Preview"
-                                                    className="w-20 h-20 rounded-full object-cover"
+                                                    className="w-full h-full object-cover"
                                                 />
                                             ) : profile.profileImageUrl ? (
                                                 <img
-                                                    src={profile.profileImageUrl}
-                                                    alt="Profile"
-                                                    className="w-20 h-20 rounded-full object-cover"
+                                                    src={getFullImageUrl(profile.profileImageUrl)}
+                                                    alt={`${profile.firstName} ${profile.lastName}`}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.style.display = 'none';
+                                                        const fallbackIcon = target.parentElement?.querySelector('.fallback-icon') as HTMLElement;
+                                                        if (fallbackIcon) {
+                                                            fallbackIcon.style.display = 'block';
+                                                        }
+                                                    }}
                                                 />
-                                            ) : (
-                                                <User className="h-10 w-10 text-gray-400" />
-                                            )}
+                                            ) : null}
+                                            <User className={`${themeClasses.compactMode ? 'h-8 w-8' : 'h-10 w-10'} ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} fallback-icon ${profile.profileImageUrl && !profileImagePreview ? 'hidden' : ''}`} />
                                         </div>
                                         <div className="flex flex-col space-y-2">
                                             <input
@@ -591,9 +796,9 @@ export default function ProfilePage() {
                                             />
                                             <label
                                                 htmlFor="profile-image-upload"
-                                                className="flex items-center text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                className={`flex items-center ${themeClasses.accentText} ${themeClasses.accentHover} cursor-pointer ${themeClasses.fontSize.text}`}
                                             >
-                                                <Camera className="h-4 w-4 mr-2" />
+                                                <Camera className={`${themeClasses.iconSizeSmall} mr-2`} />
                                                 Change Photo
                                             </label>
 
@@ -602,12 +807,12 @@ export default function ProfilePage() {
                                                     <button
                                                         onClick={uploadProfileImage}
                                                         disabled={uploadingImage}
-                                                        className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded flex items-center"
+                                                        className={`${themeClasses.fontSize.subtitle} bg-green-600 hover:bg-green-700 text-white ${themeClasses.buttonPaddingSmall} rounded flex items-center disabled:opacity-50`}
                                                     >
                                                         {uploadingImage ? (
-                                                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                                                            <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-1`}></div>
                                                         ) : (
-                                                            <Upload className="h-3 w-3 mr-1" />
+                                                            <Upload className={`${themeClasses.iconSizeSmall} mr-1`} />
                                                         )}
                                                         Upload
                                                     </button>
@@ -616,9 +821,9 @@ export default function ProfilePage() {
                                                             setProfileImageFile(null);
                                                             setProfileImagePreview('');
                                                         }}
-                                                        className="text-sm bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded flex items-center"
+                                                        className={`${themeClasses.fontSize.subtitle} ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-600 hover:bg-gray-700'} text-white ${themeClasses.buttonPaddingSmall} rounded flex items-center`}
                                                     >
-                                                        <X className="h-3 w-3 mr-1" />
+                                                        <X className={`${themeClasses.iconSizeSmall} mr-1`} />
                                                         Cancel
                                                     </button>
                                                 </div>
@@ -628,84 +833,84 @@ export default function ProfilePage() {
                                                 <button
                                                     onClick={deleteProfileImage}
                                                     disabled={uploadingImage}
-                                                    className="flex items-center text-red-600 hover:text-red-800 text-sm"
+                                                    className={`flex items-center text-red-600 hover:text-red-800 ${themeClasses.fontSize.subtitle} disabled:opacity-50`}
                                                 >
-                                                    <Trash2 className="h-3 w-3 mr-1" />
+                                                    <Trash2 className={`${themeClasses.iconSizeSmall} mr-1`} />
                                                     Remove Photo
                                                 </button>
                                             )}
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className={themeClasses.spacing}>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                                 First Name *
                                             </label>
                                             <input
                                                 type="text"
                                                 value={profile.firstName}
                                                 onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                                 Last Name *
                                             </label>
                                             <input
                                                 type="text"
                                                 value={profile.lastName}
                                                 onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                                 Email Address *
                                             </label>
                                             <input
-                                                type="email"
+                                                type="text"
                                                 value={profile.email}
                                                 onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                                 Phone Number
                                             </label>
                                             <input
-                                                type="tel"
-                                                value={profile.phoneNumber || ''}
+                                                type="tel" 
+                                                value={profile.phoneNumber || ''}  
                                                 onChange={(e) => setProfile({ ...profile, phoneNumber: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
+                                                placeholder="For event updates"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                                 Date of Birth
                                             </label>
                                             <input
                                                 type="date"
-                                                value={profile.dateOfBirth || ''}
+                                                value={formatDateForInput(profile.dateOfBirth)}
                                                 onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                            />
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}                                            />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                                 Time Zone
                                             </label>
                                             <select
                                                 value={profile.timeZone || 'UTC'}
                                                 onChange={(e) => setProfile({ ...profile, timeZone: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                             >
                                                 <option value="UTC">UTC</option>
                                                 <option value="America/New_York">Eastern Time</option>
@@ -717,60 +922,44 @@ export default function ProfilePage() {
                                         </div>
 
                                         <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Website
-                                            </label>
-                                            <input
-                                                type="url"
-                                                value={profile.website || ''}
-                                                onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                                placeholder="https://yourwebsite.com"
-                                            />
-                                        </div>
-
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Bio
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                                About Me
                                             </label>
                                             <textarea
                                                 value={profile.bio || ''}
                                                 onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                                                 rows={3}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                                placeholder="Tell us about yourself..."
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
+                                                placeholder="Tell other attendees about yourself..."
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Role
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={profile.roles.join(', ')}
-                                                disabled
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 bg-gray-50 text-gray-500"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
                                                 Account Status
                                             </label>
                                             <div className="flex items-center space-x-2">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${profile.status === 'Active'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-yellow-100 text-yellow-800'
-                                                    }`}>
+                                                <span className={`${themeClasses.buttonPaddingSmall} rounded-full ${themeClasses.fontSize.subtitle} font-medium ${profile.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                                     {profile.status}
                                                 </span>
                                                 {profile.isEmailVerified && (
-                                                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                                                    <span className={`${themeClasses.buttonPaddingSmall} bg-blue-100 text-blue-800 rounded-full ${themeClasses.fontSize.subtitle} font-medium`}>
                                                         Email Verified
                                                     </span>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                                Member Since
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={new Date(profile.createdAt).toLocaleDateString()}
+                                                disabled
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
+                                            />
                                         </div>
                                     </div>
 
@@ -778,137 +967,17 @@ export default function ProfilePage() {
                                         <button
                                             onClick={updateProfile}
                                             disabled={saving}
-                                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 px-6 rounded-xl transition-colors duration-200 flex items-center"
+                                            className={`${themeClasses.accent} ${themeClasses.accentHover} disabled:opacity-50 text-white font-semibold ${themeClasses.buttonPadding} rounded-xl transition-colors duration-200 flex items-center ${themeClasses.fontSize.button}`}
                                         >
                                             {saving ? (
                                                 <>
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                    <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-2`}></div>
                                                     Saving...
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Save className="h-4 w-4 mr-2" />
+                                                    <Save className={`${themeClasses.iconSizeSmall} mr-2`} />
                                                     Save Changes
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Organization Tab */}
-                            {activeTab === 'organization' && profile.isOrganizer && (
-                                <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6">
-                                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Organization Details</h2>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Company Name
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={organization.companyName || ''}
-                                                onChange={(e) => setOrganization({ ...organization, companyName: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Business License
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={organization.businessLicense || ''}
-                                                onChange={(e) => setOrganization({ ...organization, businessLicense: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                            />
-                                        </div>
-
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Address
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={organization.address || ''}
-                                                onChange={(e) => setOrganization({ ...organization, address: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                City
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={organization.city || ''}
-                                                onChange={(e) => setOrganization({ ...organization, city: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                State/Province
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={organization.state || ''}
-                                                onChange={(e) => setOrganization({ ...organization, state: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                ZIP/Postal Code
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={organization.zipCode || ''}
-                                                onChange={(e) => setOrganization({ ...organization, zipCode: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Country
-                                            </label>
-                                            <select
-                                                value={organization.country || ''}
-                                                onChange={(e) => setOrganization({ ...organization, country: e.target.value })}
-                                                className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                            >
-                                                <option value="">Select Country</option>
-                                                <option value="US">United States</option>
-                                                <option value="CA">Canada</option>
-                                                <option value="MY">Malaysia</option>
-                                                <option value="SG">Singapore</option>
-                                                <option value="GB">United Kingdom</option>
-                                                <option value="AU">Australia</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-6 flex justify-end">
-                                        <button
-                                            onClick={updateOrganization}
-                                            disabled={saving}
-                                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 px-6 rounded-xl transition-colors duration-200 flex items-center"
-                                        >
-                                            {saving ? (
-                                                <>
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                    Saving...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Save className="h-4 w-4 mr-2" />
-                                                    Save Organization
                                                 </>
                                             )}
                                         </button>
@@ -920,12 +989,12 @@ export default function ProfilePage() {
                             {activeTab === 'security' && (
                                 <div className="space-y-6">
                                     {/* Change Password */}
-                                    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6">
-                                        <h2 className="text-xl font-semibold text-gray-900 mb-6">Change Password</h2>
+                                    <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
+                                        <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} mb-4`}>Change Password</h2>
 
                                         <div className="space-y-4 max-w-md">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <label className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
                                                     Current Password
                                                 </label>
                                                 <div className="relative">
@@ -933,7 +1002,7 @@ export default function ProfilePage() {
                                                         type={showCurrentPassword ? 'text' : 'password'}
                                                         value={passwordData.currentPassword}
                                                         onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 pr-10 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                                     />
                                                     <button
                                                         type="button"
@@ -941,15 +1010,15 @@ export default function ProfilePage() {
                                                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                                     >
                                                         {showCurrentPassword ?
-                                                            <EyeOff className="h-5 w-5 text-gray-400" /> :
-                                                            <Eye className="h-5 w-5 text-gray-400" />
+                                                            <EyeOff className={`${themeClasses.iconSize} ${themeClasses.textSecondary}`} /> :
+                                                            <Eye className={`${themeClasses.iconSize} ${themeClasses.textSecondary}`} />
                                                         }
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <label className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
                                                     New Password
                                                 </label>
                                                 <div className="relative">
@@ -957,7 +1026,7 @@ export default function ProfilePage() {
                                                         type={showNewPassword ? 'text' : 'password'}
                                                         value={passwordData.newPassword}
                                                         onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 pr-10 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                                     />
                                                     <button
                                                         type="button"
@@ -965,15 +1034,15 @@ export default function ProfilePage() {
                                                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                                     >
                                                         {showNewPassword ?
-                                                            <EyeOff className="h-5 w-5 text-gray-400" /> :
-                                                            <Eye className="h-5 w-5 text-gray-400" />
+                                                            <EyeOff className={`${themeClasses.iconSize} ${themeClasses.textSecondary}`} /> :
+                                                            <Eye className={`${themeClasses.iconSize} ${themeClasses.textSecondary}`} />
                                                         }
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <label className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
                                                     Confirm New Password
                                                 </label>
                                                 <div className="relative">
@@ -981,7 +1050,7 @@ export default function ProfilePage() {
                                                         type={showConfirmPassword ? 'text' : 'password'}
                                                         value={confirmPassword}
                                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 pr-10 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                                     />
                                                     <button
                                                         type="button"
@@ -989,8 +1058,8 @@ export default function ProfilePage() {
                                                         className="absolute inset-y-0 right-0 pr-3 flex items-center"
                                                     >
                                                         {showConfirmPassword ?
-                                                            <EyeOff className="h-5 w-5 text-gray-400" /> :
-                                                            <Eye className="h-5 w-5 text-gray-400" />
+                                                            <EyeOff className={`${themeClasses.iconSize} ${themeClasses.textSecondary}`} /> :
+                                                            <Eye className={`${themeClasses.iconSize} ${themeClasses.textSecondary}`} />
                                                         }
                                                     </button>
                                                 </div>
@@ -1001,16 +1070,16 @@ export default function ProfilePage() {
                                             <button
                                                 onClick={updatePassword}
                                                 disabled={saving}
-                                                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 px-6 rounded-xl transition-colors duration-200 flex items-center"
+                                                className={`${themeClasses.accent} ${themeClasses.accentHover} disabled:opacity-50 text-white font-semibold ${themeClasses.buttonPadding} rounded-xl transition-colors duration-200 flex items-center ${themeClasses.fontSize.button}`}
                                             >
                                                 {saving ? (
                                                     <>
-                                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                        <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-2`}></div>
                                                         Updating...
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Lock className="h-4 w-4 mr-2" />
+                                                        <Lock className={`${themeClasses.iconSizeSmall} mr-2`} />
                                                         Update Password
                                                     </>
                                                 )}
@@ -1019,31 +1088,31 @@ export default function ProfilePage() {
                                     </div>
 
                                     {/* Account Security Info */}
-                                    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6">
-                                        <h2 className="text-xl font-semibold text-gray-900 mb-4">Account Security</h2>
+                                    <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
+                                        <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} mb-4`}>Account Security</h2>
                                         <div className="space-y-4">
-                                            <div className="flex items-center justify-between p-4 bg-green-50/80 border border-green-200 rounded-xl">
+                                            <div className={`flex items-center justify-between p-4 ${themeClasses.backgroundSecure} border ${themeClasses.borderSecure} rounded-xl`}>
                                                 <div className="flex items-center">
-                                                    <Shield className="h-5 w-5 text-green-600 mr-3" />
+                                                    <Shield className={`${themeClasses.iconSize} ${themeClasses.textSecure} mr-3`} />
                                                     <div>
-                                                        <p className="font-medium text-green-900">Account Protected</p>
-                                                        <p className="text-sm text-green-700">Your account is secured with password authentication</p>
+                                                        <p className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>Account Protected</p>
+                                                        <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Your account is secured with password authentication</p>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                            <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap} ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
                                                 <div>
-                                                    <p><strong>Account Created:</strong> {new Date(profile.createdAt).toLocaleDateString()}</p>
+                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Account Created:</strong> {new Date(profile.createdAt).toLocaleDateString()}</p>
                                                 </div>
                                                 <div>
-                                                    <p><strong>Last Login:</strong> {profile.lastLoginAt ? new Date(profile.lastLoginAt).toLocaleDateString() : 'Today'}</p>
+                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Last Login:</strong> {profile.lastLoginAt ? new Date(profile.lastLoginAt).toLocaleDateString() : 'Today'}</p>
                                                 </div>
                                                 <div>
-                                                    <p><strong>Email Verified:</strong> {profile.isEmailVerified ? 'Yes' : 'No'}</p>
+                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Email Verified:</strong> {profile.isEmailVerified ? 'Yes' : 'No'}</p>
                                                 </div>
                                                 <div>
-                                                    <p><strong>Phone Verified:</strong> {profile.isPhoneVerified ? 'Yes' : 'No'}</p>
+                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Phone Verified:</strong> {profile.isPhoneVerified ? 'Yes' : 'No'}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -1051,20 +1120,25 @@ export default function ProfilePage() {
                                 </div>
                             )}
 
-                            {/* Preferences Tab */}
-                            {activeTab === 'notifications' && preferences && (
-                                <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/30 p-6">
-                                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Notification Preferences</h2>
+                            {/* Event Settings Tab - ENHANCED VERSION */}
+                            {activeTab === 'preferences' && preferences && (
+                                <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>                                    <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} ${themeClasses.margin}`}>
+                                        Event & App Settings
+                                    </h2>
 
-                                    <div className="space-y-6">
-                                        {/* Email Notifications */}
+                                    <div className={themeClasses.spacing}>
+                                        {/* Event Notifications */}
                                         <div>
-                                            <h3 className="text-lg font-medium text-gray-900 mb-4">Email Notifications</h3>
+                                            <h3 className={`${themeClasses.fontSize.heading} font-medium ${themeClasses.text} mb-4`}>
+                                                Event Notifications
+                                            </h3>
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h4 className="font-medium text-gray-900">General Notifications</h4>
-                                                        <p className="text-sm text-gray-600">Receive general email notifications</p>
+                                                        <h4 className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>Email Notifications</h4>
+                                                        <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
+                                                            Receive email notifications about events and updates
+                                                        </p>
                                                     </div>
                                                     <label className="relative inline-flex items-center cursor-pointer">
                                                         <input
@@ -1073,129 +1147,58 @@ export default function ProfilePage() {
                                                             onChange={(e) => setPreferences({ ...preferences, emailNotifications: e.target.checked })}
                                                             className="sr-only peer"
                                                         />
-                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                                        <div className={`${themeClasses.compactMode ? 'w-9 h-5' : 'w-11 h-6'} ${themeClasses.isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 ${themeClasses.accentRing.replace('focus:', 'peer-focus:')} rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full ${themeClasses.compactMode ? 'after:h-4 after:w-4' : 'after:h-5 after:w-5'} after:transition-all ${themeClasses.accent.replace('bg-', 'peer-checked:bg-')}`}></div>
                                                     </label>
                                                 </div>
 
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <h4 className="font-medium text-gray-900">Booking Notifications</h4>
-                                                        <p className="text-sm text-gray-600">Get notified about new bookings</p>
-                                                    </div>
-                                                    <label className="relative inline-flex items-center cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={preferences.newBookingNotifications}
-                                                            onChange={(e) => setPreferences({ ...preferences, newBookingNotifications: e.target.checked })}
-                                                            className="sr-only peer"
-                                                        />
-                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                                <div>
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
+                                                        Session Timeout
                                                     </label>
+                                                    <select
+                                                        value={preferences.sessionTimeout}
+                                                        onChange={(e) => setPreferences({ ...preferences, sessionTimeout: parseInt(e.target.value) })}
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
+                                                    >
+                                                        <option value={15}>15 minutes</option>
+                                                        <option value={30}>30 minutes</option>
+                                                        <option value={60}>1 hour</option>
+                                                        <option value={120}>2 hours</option>
+                                                        <option value={480}>8 hours</option>
+                                                    </select>
                                                 </div>
-
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <h4 className="font-medium text-gray-900">Cancellation Alerts</h4>
-                                                        <p className="text-sm text-gray-600">Be notified of cancellations</p>
-                                                    </div>
-                                                    <label className="relative inline-flex items-center cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={preferences.cancellationNotifications}
-                                                            onChange={(e) => setPreferences({ ...preferences, cancellationNotifications: e.target.checked })}
-                                                            className="sr-only peer"
-                                                        />
-                                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                                    </label>
-                                                </div>
-
-                                                {profile.isOrganizer && (
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <h4 className="font-medium text-gray-900">Low Inventory Alerts</h4>
-                                                            <p className="text-sm text-gray-600">Get alerted when ticket inventory is low</p>
-                                                        </div>
-                                                        <label className="relative inline-flex items-center cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={preferences.lowInventoryNotifications}
-                                                                onChange={(e) => setPreferences({ ...preferences, lowInventoryNotifications: e.target.checked })}
-                                                                className="sr-only peer"
-                                                            />
-                                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                                        </label>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
 
-                                        {/* Report Preferences */}
-                                        {profile.isOrganizer && (
-                                            <div>
-                                                <h3 className="text-lg font-medium text-gray-900 mb-4">Reports</h3>
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <h4 className="font-medium text-gray-900">Weekly Reports</h4>
-                                                            <p className="text-sm text-gray-600">Receive weekly sales and analytics reports</p>
-                                                        </div>
-                                                        <label className="relative inline-flex items-center cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={preferences.weeklyReports}
-                                                                onChange={(e) => setPreferences({ ...preferences, weeklyReports: e.target.checked })}
-                                                                className="sr-only peer"
-                                                            />
-                                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                                        </label>
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <h4 className="font-medium text-gray-900">Monthly Reports</h4>
-                                                            <p className="text-sm text-gray-600">Receive comprehensive monthly reports</p>
-                                                        </div>
-                                                        <label className="relative inline-flex items-center cursor-pointer">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={preferences.monthlyReports}
-                                                                onChange={(e) => setPreferences({ ...preferences, monthlyReports: e.target.checked })}
-                                                                className="sr-only peer"
-                                                            />
-                                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* App Preferences */}
-                                        <div>
-                                            <h3 className="text-lg font-medium text-gray-900 mb-4">Application Preferences</h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Display Preferences */}
+                                        <div className="border-t pt-6 mt-6">
+                                            <h3 className={`${themeClasses.fontSize.heading} font-medium ${themeClasses.text} mb-4`}>
+                                                Display Preferences
+                                            </h3>
+                                            <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap}`}>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
                                                         Theme
                                                     </label>
                                                     <select
                                                         value={preferences.theme}
                                                         onChange={(e) => setPreferences({ ...preferences, theme: e.target.value })}
-                                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
                                                     >
                                                         <option value="light">Light</option>
                                                         <option value="dark">Dark</option>
-                                                        <option value="auto">Auto</option>
+                                                        <option value="auto">Auto (system)</option>
                                                     </select>
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
                                                         Language
                                                     </label>
                                                     <select
                                                         value={preferences.language}
                                                         onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
-                                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
                                                     >
                                                         <option value="en">English</option>
                                                         <option value="es">Spanish</option>
@@ -1206,34 +1209,126 @@ export default function ProfilePage() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Currency
-                                                    </label>
-                                                    <select
-                                                        value={preferences.currency}
-                                                        onChange={(e) => setPreferences({ ...preferences, currency: e.target.value })}
-                                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
-                                                    >
-                                                        <option value="USD">USD - US Dollar</option>
-                                                        <option value="EUR">EUR - Euro</option>
-                                                        <option value="GBP">GBP - British Pound</option>
-                                                        <option value="MYR">MYR - Malaysian Ringgit</option>
-                                                        <option value="SGD">SGD - Singapore Dollar</option>
-                                                    </select>
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
                                                         Time Format
                                                     </label>
                                                     <select
                                                         value={preferences.timeFormat}
                                                         onChange={(e) => setPreferences({ ...preferences, timeFormat: e.target.value })}
-                                                        className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90"
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
                                                     >
-                                                        <option value="12h">12 Hour</option>
+                                                        <option value="12h">12 Hour (AM/PM)</option>
                                                         <option value="24h">24 Hour</option>
                                                     </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
+                                                        Date Format
+                                                    </label>
+                                                    <select
+                                                        value={preferences.dateFormat}
+                                                        onChange={(e) => setPreferences({ ...preferences, dateFormat: e.target.value })}
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
+                                                    >
+                                                        <option value="MM/dd/yyyy">MM/dd/yyyy (US)</option>
+                                                        <option value="dd/MM/yyyy">dd/MM/yyyy (UK)</option>
+                                                        <option value="yyyy-MM-dd">yyyy-MM-dd (ISO)</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="md:col-span-2">
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
+                                                        Default Time Zone for Events
+                                                    </label>
+                                                    <select
+                                                        value={preferences.defaultTimeZone || 'UTC'}
+                                                        onChange={(e) => setPreferences({ ...preferences, defaultTimeZone: e.target.value })}
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
+                                                    >
+                                                        <option value="UTC">UTC</option>
+                                                        <option value="America/New_York">Eastern Time</option>
+                                                        <option value="America/Chicago">Central Time</option>
+                                                        <option value="America/Denver">Mountain Time</option>
+                                                        <option value="America/Los_Angeles">Pacific Time</option>
+                                                        <option value="Asia/Kuala_Lumpur">Malaysia Time</option>
+                                                        <option value="Europe/London">London Time</option>
+                                                        <option value="Asia/Tokyo">Tokyo Time</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* NEW: Appearance & Accessibility Section */}
+                                        <div className="border-t pt-6 mt-6">
+                                            <h3 className={`${themeClasses.fontSize.heading} font-medium ${themeClasses.text} mb-4`}>
+                                                Appearance & Accessibility
+                                            </h3>
+                                            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${themeClasses.gap}`}>
+                                                <div>
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
+                                                        Accent Color
+                                                    </label>
+                                                    <select
+                                                        value={preferences.accentColor || 'blue'}
+                                                        onChange={(e) => setPreferences({ ...preferences, accentColor: e.target.value })}
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
+                                                    >
+                                                        <option value="blue">Blue</option>
+                                                        <option value="purple">Purple</option>
+                                                        <option value="green">Green</option>
+                                                        <option value="orange">Orange</option>
+                                                        <option value="pink">Pink</option>
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
+                                                        Font Size
+                                                    </label>
+                                                    <select
+                                                        value={preferences.fontSize || 'medium'}
+                                                        onChange={(e) => setPreferences({ ...preferences, fontSize: e.target.value })}
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
+                                                    >
+                                                        <option value="small">Small</option>
+                                                        <option value="medium">Medium</option>
+                                                        <option value="large">Large</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h4 className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>Compact Mode</h4>
+                                                        <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Reduce spacing for more content</p>
+                                                    </div>
+                                                    <label className="relative inline-flex items-center cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={preferences.compactMode || false}
+                                                            onChange={(e) => setPreferences({ ...preferences, compactMode: e.target.checked })}
+                                                            className="sr-only peer"
+                                                        />
+                                                        <div className={`${themeClasses.compactMode ? 'w-9 h-5' : 'w-11 h-6'} ${themeClasses.isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 ${themeClasses.accentRing.replace('focus:', 'peer-focus:')} rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full ${themeClasses.compactMode ? 'after:h-4 after:w-4' : 'after:h-5 after:w-5'} after:transition-all ${themeClasses.accent.replace('bg-', 'peer-checked:bg-')}`}></div>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            {/* Live Theme Preview */}
+                                            <div className="mt-6">
+                                                <h4 className={`${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-3`}>
+                                                    Live Preview
+                                                </h4>
+                                                <div className={`grid grid-cols-3 ${themeClasses.gapLarge} ${themeClasses.padding} ${themeClasses.backgroundInput} rounded-xl border ${themeClasses.border}`}>
+                                                    <div className={`${themeClasses.compactMode ? 'h-10' : 'h-12'} ${themeClasses.accent} rounded-lg flex items-center justify-center transition-colors duration-200`}>
+                                                        <span className={`text-white ${themeClasses.fontSize.subtitle} font-medium`}>Primary</span>
+                                                    </div>
+                                                    <div className={`${themeClasses.compactMode ? 'h-10' : 'h-12'} ${themeClasses.backgroundCard} border ${themeClasses.border} rounded-lg flex items-center justify-center transition-colors duration-200`}>
+                                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.subtitle}`}>Card</span>
+                                                    </div>
+                                                    <div className={`${themeClasses.compactMode ? 'h-10' : 'h-12'} ${themeClasses.accentLight} rounded-lg flex items-center justify-center transition-colors duration-200`}>
+                                                        <span className={`${themeClasses.accentText} ${themeClasses.fontSize.subtitle} font-medium`}>Accent</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1243,16 +1338,16 @@ export default function ProfilePage() {
                                         <button
                                             onClick={updatePreferences}
                                             disabled={saving}
-                                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2 px-6 rounded-xl transition-colors duration-200 flex items-center"
+                                            className={`${themeClasses.accent} ${themeClasses.accentHover} disabled:opacity-50 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 flex items-center ${themeClasses.fontSize.text}`}
                                         >
                                             {saving ? (
                                                 <>
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                    <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-2`}></div>
                                                     Saving...
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Bell className="h-4 w-4 mr-2" />
+                                                    <Bell className={`${themeClasses.iconSizeSmall} mr-2`} />
                                                     Save Preferences
                                                 </>
                                             )}
