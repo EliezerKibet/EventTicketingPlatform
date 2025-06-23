@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useI18n } from '@/components/providers/I18nProvider';
 import { ArrowLeft, CreditCard, User, Mail, Phone, Lock, ShoppingCart, Check, X, AlertCircle } from 'lucide-react';
 import { promoCodesApi, userApi } from '@/lib/api'; // Import user API for preferences
 
@@ -32,6 +33,7 @@ interface Event {
     venueCity: string;
     isOnline: boolean;
     bannerImageUrl?: string;
+    currency?: string;
 }
 
 interface PromoCodeValidation {
@@ -43,16 +45,17 @@ interface PromoCodeValidation {
 }
 
 interface UserPreferences {
-    emailNotifications: boolean;
-    sessionTimeout: number;
-    theme: string;
-    language: string;
-    dateFormat: string;
-    timeFormat: string;
+    emailNotifications?: boolean;  // Add ? to make it optional
+    sessionTimeout?: number;       // Add ? to make it optional
+    theme?: string;               // Add ? to make it optional
+    language?: string;            // Add ? to make it optional
+    dateFormat?: string;          // Add ? to make it optional
+    timeFormat?: string;          // Add ? to make it optional
     defaultTimeZone?: string;
     accentColor?: string;
     fontSize?: string;
     compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';  // Update this line
 }
 
 // Enhanced theme system from profile page
@@ -228,6 +231,7 @@ export default function CheckoutPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user, isAuthenticated } = useAuth();
+    const { t, formatCurrency, formatDate, formatTime, currentLangData } = useI18n();
 
     const eventId = searchParams.get('eventId');
 
@@ -260,6 +264,194 @@ export default function CheckoutPage() {
 
     const themeClasses = getThemeClasses(preferences);
 
+    const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
+        const eventDate = new Date(dateTimeString);
+        const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+        const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+        const timeFormat = preferences?.timeFormat || '12h';
+
+        console.log('📅 Formatting date with preferences:', {
+            dateFormat,
+            timeFormat,
+            userTimeZone,
+            originalDate: dateTimeString
+        });
+
+        // Create date in user's timezone
+        const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+        // Extract date components
+        const year = zonedDate.getFullYear();
+        const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(zonedDate.getDate()).padStart(2, '0');
+
+        // Month names for text formats
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthShort = monthNames[zonedDate.getMonth()];
+
+        // Weekday names
+        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weekday = weekdays[zonedDate.getDay()];
+
+        // Format date according to user preference - INDEPENDENT OF LOCALE
+        let formattedDate: string;
+        switch (dateFormat) {
+            case 'dd/MM/yyyy':
+                formattedDate = `${weekday}, ${day}/${month}/${year}`;
+                break;
+            case 'yyyy-MM-dd':
+                formattedDate = `${weekday}, ${year}-${month}-${day}`;
+                break;
+            case 'MMM dd, yyyy':
+                formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+                break;
+            case 'dd MMM yyyy':
+                formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+                break;
+            default: // MM/dd/yyyy
+                formattedDate = `${weekday}, ${month}/${day}/${year}`;
+        }
+
+        // Format time - also independent of locale
+        const hours24 = zonedDate.getHours();
+        const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+        let formattedTime: string;
+        if (timeFormat === '24h') {
+            formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+        } else {
+            const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+            const ampm = hours24 >= 12 ? 'PM' : 'AM';
+            formattedTime = `${hours12}:${minutes} ${ampm}`;
+        }
+
+        // Add timezone abbreviation
+        const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+        formattedTime += ` ${timeZoneAbbr}`;
+
+        const result = `${formattedDate} ${t('at')} ${formattedTime}`;
+
+        console.log('📅 Final formatted result:', result);
+        return result;
+    };
+
+    // Helper function to get timezone abbreviations
+    const getTimeZoneAbbreviation = (timeZone: string): string => {
+        const abbreviations: { [key: string]: string } = {
+            'UTC': 'UTC',
+            'America/New_York': 'EST/EDT',
+            'America/Chicago': 'CST/CDT',
+            'America/Denver': 'MST/MDT',
+            'America/Los_Angeles': 'PST/PDT',
+            'Asia/Kuala_Lumpur': 'MYT',
+            'Europe/London': 'GMT/BST',
+            'Europe/Paris': 'CET/CEST',
+            'Asia/Tokyo': 'JST',
+            'Australia/Sydney': 'AEST/AEDT'
+        };
+
+        return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+        const currency = preferences?.currency ?? 'USD';
+        const locale = currentLangData?.region ?? 'en-US';
+
+        try {
+            // Use Intl.NumberFormat for proper currency formatting
+            const formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+
+            return formatter.format(amount);
+        } catch (error) {
+            // Fallback: Simple symbol mapping
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            // For JPY, don't show decimal places
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            // For other currencies, show 2 decimal places
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+
+    // Get currency symbol for display purposes
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'JPY': '¥'
+        };
+
+        return symbols[currency] || '$';
+    };
+
+    const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+        // Ensure we always have a valid user currency
+        const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+            ? preferences.currency
+            : 'USD';
+
+        // Add debugging
+        console.log('💱 Converting:', amount, fromCurrency, '→', userCurrency);
+
+        // If currencies match, just format
+        if (fromCurrency === userCurrency) {
+            return formatCurrencyWithUserPreference(amount, preferences, currentLangData);
+        }
+
+        // Conversion rates for your 4 supported currencies (approximate rates)
+        const conversionRates: { [key: string]: { [key: string]: number } } = {
+            'USD': {
+                'USD': 1,
+                'EUR': 0.92,  // 1 USD = 0.92 EUR
+                'GBP': 0.79,  // 1 USD = 0.79 GBP
+                'JPY': 149    // 1 USD = 149 JPY
+            },
+            'EUR': {
+                'USD': 1.09,  // 1 EUR = 1.09 USD
+                'EUR': 1,
+                'GBP': 0.86,  // 1 EUR = 0.86 GBP
+                'JPY': 162    // 1 EUR = 162 JPY
+            },
+            'GBP': {
+                'USD': 1.27,  // 1 GBP = 1.27 USD
+                'EUR': 1.16,  // 1 GBP = 1.16 EUR
+                'GBP': 1,
+                'JPY': 189    // 1 GBP = 189 JPY
+            },
+            'JPY': {
+                'USD': 0.0067, // 1 JPY = 0.0067 USD
+                'EUR': 0.0062, // 1 JPY = 0.0062 EUR
+                'GBP': 0.0053, // 1 JPY = 0.0053 GBP
+                'JPY': 1
+            }
+        };
+
+        const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+        const convertedAmount = amount * rate;
+
+        return formatCurrencyWithUserPreference(convertedAmount, preferences, currentLangData);
+    };
+
     useEffect(() => {
         if (!isAuthenticated) {
             router.push('/login');
@@ -280,7 +472,7 @@ export default function CheckoutPage() {
         if (preferences) {
             const isDarkMode = preferences.theme === 'dark' ||
                 (preferences.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                
+
             if (isDarkMode) {
                 document.documentElement.classList.add('dark');
                 document.body.classList.add('dark');
@@ -294,20 +486,37 @@ export default function CheckoutPage() {
     const loadUserPreferences = async () => {
         try {
             const prefsData = await userApi.getPreferences();
-            setPreferences({
-                emailNotifications: prefsData.emailNotifications || true,
-                sessionTimeout: prefsData.sessionTimeout || 30,
-                theme: prefsData.theme || 'light',
-                language: prefsData.language || 'en',
-                dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
-                timeFormat: prefsData.timeFormat || '12h',
-                defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
-                accentColor: prefsData.accentColor || 'blue',
-                fontSize: prefsData.fontSize || 'medium',
-                compactMode: prefsData.compactMode || false
-            });
+
+            // Add extra debugging
+            console.log('🔧 Raw preferences from API:', prefsData);
+            console.log('🔧 Currency from API:', prefsData.currency);
+
+            // Validate and set preferences with fallbacks
+            const validatedPrefs: UserPreferences = {
+                emailNotifications: prefsData.emailNotifications ?? true,
+                sessionTimeout: prefsData.sessionTimeout ?? 30,
+                theme: prefsData.theme ?? 'light',
+                language: prefsData.language ?? 'en',
+                dateFormat: prefsData.dateFormat ?? 'MM/dd/yyyy',
+                timeFormat: prefsData.timeFormat ?? '12h',
+                defaultTimeZone: prefsData.defaultTimeZone ?? 'UTC',
+                accentColor: prefsData.accentColor ?? 'blue',
+                fontSize: prefsData.fontSize ?? 'medium',
+                compactMode: prefsData.compactMode ?? false,
+                // Fix: Ensure currency always has a valid value
+                currency: (prefsData.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(prefsData.currency))
+                    ? prefsData.currency as 'USD' | 'EUR' | 'GBP' | 'JPY'
+                    : 'USD'
+            };
+
+            setPreferences(validatedPrefs);
+
+            // Log user preferences for debugging
+            console.log('🔧 User preferences loaded:', validatedPrefs);
+
         } catch (error) {
-            // Use defaults if preferences can't be loaded
+            console.error('❌ Failed to load user preferences:', error);
+            // Use comprehensive defaults if preferences can't be loaded
             setPreferences({
                 emailNotifications: true,
                 sessionTimeout: 30,
@@ -318,7 +527,8 @@ export default function CheckoutPage() {
                 defaultTimeZone: 'UTC',
                 accentColor: 'blue',
                 fontSize: 'medium',
-                compactMode: false
+                compactMode: false,
+                currency: 'USD'
             });
         }
     };
@@ -363,7 +573,7 @@ export default function CheckoutPage() {
                 setupAttendees(cartData);
             }
         } catch (error) {
-            setError('Failed to load checkout data');
+            setError(t('loadError'));
         } finally {
             setLoading(false);
         }
@@ -419,6 +629,18 @@ export default function CheckoutPage() {
 
             const validation = await promoCodesApi.validatePromoCode(requestPayload);
 
+            // Convert discount amount to user's preferred currency for display
+            if (validation.isValid && validation.discountAmount) {
+                const convertedDiscount = convertAndFormatCurrency(
+                    Number(validation.discountAmount),
+                    event?.currency || 'USD',
+                    preferences,
+                    currentLangData
+                );
+                // Update the formatted discount to show in user's currency
+                validation.formattedDiscount = convertedDiscount;
+            } 
+
             console.log('🔍 === VALIDATION RESPONSE RECEIVED ===');
             console.log('🔍 Raw validation response:', validation);
             console.log('🔍 IsValid:', validation.isValid);
@@ -459,7 +681,7 @@ export default function CheckoutPage() {
             console.error('🔍 Error object:', error);
             console.error('🔍 Error message:', error.message);
             console.error('🔍 Error stack:', error.stack);
-            setPromoCodeError(error.message || 'Failed to validate promo code');
+            setPromoCodeError(error.message || t('failedToLoadPromoCodes'));
             setAppliedPromoCode(null);
         } finally {
             setPromoCodeValidating(false);
@@ -550,10 +772,10 @@ export default function CheckoutPage() {
                 router.push(`/order-confirmation/${order.orderId}`);
             } else {
                 const errorData = await response.json();
-                setError(errorData.message || 'Purchase failed');
+                setError(errorData.message || t('failedToCreateEvent'));
             }
         } catch (error) {
-            setError('Purchase failed. Please try again.');
+            setError(t('failedToCreateEvent'));
         } finally {
             setProcessing(false);
         }
@@ -572,12 +794,14 @@ export default function CheckoutPage() {
             <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <ShoppingCart className={`${themeClasses.iconSizeLarge} ${themeClasses.textSecondary} mx-auto ${themeClasses.marginSmall}`} />
-                    <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Your cart is empty</h1>
+                    <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                        {t('inYourCart')} {t('noEventsYet').toLowerCase()}
+                    </h1>
                     <button
                         onClick={() => router.push('/events')}
                         className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg ${themeClasses.fontSize.button}`}
                     >
-                        Browse Events
+                        {t('browseEvents')}
                     </button>
                 </div>
             </div>
@@ -610,9 +834,11 @@ export default function CheckoutPage() {
                             className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} ${themeClasses.marginSmall} transition-colors ${themeClasses.fontSize.text}`}
                         >
                             <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
-                            Back to Event
+                            {t('backToEvents')}
                         </button>
-                        <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>Complete Your Purchase</h1>
+                        <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>
+                            {t('proceedToCheckout')}
+                        </h1>
                         <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>{event.title}</p>
                     </div>
                 </div>
@@ -631,13 +857,39 @@ export default function CheckoutPage() {
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
                                 <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall} flex items-center`}>
                                     <User className={`${themeClasses.iconSize} mr-2`} />
-                                    Billing Information
+                                    {t('personalInformation')}
                                 </h2>
 
                                 <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap}`}>
                                     <div>
                                         <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
-                                            First Name
+                                            {t('firstName')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.billingFirstName}
+                                            onChange={(e) => updateBillingInfo('billingFirstName', e.target.value)}
+                                            className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
+                                            {t('lastName')}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.billingLastName}
+                                            onChange={(e) => updateBillingInfo('billingLastName', e.target.value)}
+                                            className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
+                                            {t('email')}
                                         </label>
                                         <input
                                             type="email"
@@ -650,7 +902,7 @@ export default function CheckoutPage() {
 
                                     <div className="md:col-span-2">
                                         <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
-                                            Address (Optional)
+                                            {t('address')} ({t('optional')})
                                         </label>
                                         <input
                                             type="text"
@@ -662,7 +914,7 @@ export default function CheckoutPage() {
 
                                     <div>
                                         <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
-                                            City (Optional)
+                                            {t('city')} ({t('optional')})
                                         </label>
                                         <input
                                             type="text"
@@ -674,7 +926,19 @@ export default function CheckoutPage() {
 
                                     <div>
                                         <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
-                                            Zip Code (Optional)
+                                            {t('state')} ({t('optional')})
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.billingState}
+                                            onChange={(e) => updateBillingInfo('billingState', e.target.value)}
+                                            className={`w-full border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
+                                            {t('zipCode')} ({t('optional')})
                                         </label>
                                         <input
                                             type="text"
@@ -689,17 +953,19 @@ export default function CheckoutPage() {
                             {/* Attendee Information */}
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
                                 <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                    Attendee Information
+                                    {t('attendeeInformation')}
                                 </h2>
 
                                 <div className={themeClasses.spacing}>
                                     {formData.attendees.map((attendee, index) => (
                                         <div key={index} className={`border ${themeClasses.border} rounded-lg ${themeClasses.paddingSmall} ${themeClasses.backgroundInput}`}>
-                                            <h3 className={`font-medium ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.text}`}>Attendee {index + 1}</h3>
+                                            <h3 className={`font-medium ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.text}`}>
+                                                {t('attendeeInformation')} {index + 1}
+                                            </h3>
                                             <div className={`grid grid-cols-1 md:grid-cols-3 ${themeClasses.gap}`}>
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
-                                                        First Name
+                                                        {t('firstName')}
                                                     </label>
                                                     <input
                                                         type="text"
@@ -712,7 +978,7 @@ export default function CheckoutPage() {
 
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
-                                                        Last Name
+                                                        {t('lastName')}
                                                     </label>
                                                     <input
                                                         type="text"
@@ -725,7 +991,7 @@ export default function CheckoutPage() {
 
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.label} ${themeClasses.marginSmall}`}>
-                                                        Email
+                                                        {t('email')}
                                                     </label>
                                                     <input
                                                         type="email"
@@ -744,7 +1010,7 @@ export default function CheckoutPage() {
                             {/* Enhanced Promo Code Section */}
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
                                 <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                    Promo Code
+                                    {t('promoCodes')}
                                 </h2>
 
                                 {/* Applied Promo Code Display */}
@@ -755,10 +1021,10 @@ export default function CheckoutPage() {
                                                 <Check className={`${themeClasses.iconSize} ${themeClasses.textSuccess} mr-2`} />
                                                 <div>
                                                     <p className={`${themeClasses.fontSize.text} font-medium ${themeClasses.textSuccess}`}>
-                                                        Promo code applied: <span className="font-mono">{formData.promoCode}</span>
+                                                        {t('promoCodeCreatedSuccessfully')}: <span className="font-mono">{formData.promoCode}</span>
                                                     </p>
                                                     <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSuccess}`}>
-                                                        You save {appliedPromoCode.formattedDiscount}!
+                                                        {t('totalSavings')} {convertAndFormatCurrency(Number(appliedPromoCode.discountAmount), event?.currency || 'USD', preferences, currentLangData)}!
                                                     </p>
                                                 </div>
                                             </div>
@@ -779,7 +1045,7 @@ export default function CheckoutPage() {
                                         <div className={`flex ${themeClasses.gap}`}>
                                             <input
                                                 type="text"
-                                                placeholder="Enter promo code"
+                                                placeholder={t('searchPromoCodes')}
                                                 value={promoCodeInput}
                                                 onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
                                                 className={`flex-1 border ${themeClasses.border} rounded-md px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight} font-mono`}
@@ -799,7 +1065,7 @@ export default function CheckoutPage() {
                                                 {promoCodeValidating ? (
                                                     <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white`}></div>
                                                 ) : (
-                                                    'Apply'
+                                                    t('validate')
                                                 )}
                                             </button>
                                         </div>
@@ -814,7 +1080,7 @@ export default function CheckoutPage() {
 
                                         {/* Help Text */}
                                         <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
-                                            Have a promo code? Enter it above to apply your discount.
+                                            {t('createFirstPromoCodeDescription')}
                                         </p>
                                     </div>
                                 )}
@@ -824,18 +1090,22 @@ export default function CheckoutPage() {
                         {/* Order Summary */}
                         <div className="lg:col-span-1">
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding} sticky top-4`}>
-                                <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Order Summary</h2>
+                                <h2 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                    {t('orderDetails')}
+                                </h2>
 
                                 {/* Event Info */}
                                 <div className={`${themeClasses.marginSmall} ${themeClasses.paddingSmall} border-b ${themeClasses.border}`}>
                                     <h3 className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{event.title}</h3>
                                     <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
-                                        {new Date(event.startDateTime).toLocaleDateString('en-US', {
-                                            weekday: 'short',
-                                            month: 'short',
-                                            day: 'numeric',
-                                            year: 'numeric'
-                                        })}
+                                        {formatEventDateTime(event.startDateTime, preferences, currentLangData, t)}
+                                    </p>
+                                    {/* Add timezone indicator */}
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} text-xs mt-1`}>
+                                        📍 {event.isOnline ? t('onlineEvent') : `${event.venueName}, ${event.venueCity}`}
+                                        {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
+                                            <span className="ml-2">🕐 {preferences.defaultTimeZone.replace('_', ' ')}</span>
+                                        )}
                                     </p>
                                 </div>
 
@@ -845,10 +1115,12 @@ export default function CheckoutPage() {
                                         <div key={item.ticketTypeId} className="flex justify-between">
                                             <div>
                                                 <p className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{item.name}</p>
-                                                <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Qty: {item.quantity}</p>
+                                                <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
+                                                    {t('quantity')}: {item.quantity}
+                                                </p>
                                             </div>
                                             <p className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
-                                                ${(item.price * item.quantity).toFixed(2)}
+                                                {convertAndFormatCurrency(item.price * item.quantity, event?.currency || 'USD', preferences, currentLangData)}
                                             </p>
                                         </div>
                                     ))}
@@ -857,35 +1129,78 @@ export default function CheckoutPage() {
                                 {/* Price Breakdown */}
                                 <div className={`border-t ${themeClasses.border} ${themeClasses.paddingSmall} ${themeClasses.spacing}`}>
                                     <div className="flex justify-between">
-                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>Subtotal</span>
-                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>${orderSummary.subtotal.toFixed(2)}</span>
+                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>
+                                            {t('subtotal')}
+                                        </span>
+                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>
+                                            {convertAndFormatCurrency(orderSummary.subtotal, event?.currency || 'USD', preferences, currentLangData)}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>Service Fee</span>
-                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>${orderSummary.serviceFee.toFixed(2)}</span>
+                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>
+                                            {t('serviceFee')}
+                                        </span>
+                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>
+                                            {convertAndFormatCurrency(orderSummary.serviceFee, event?.currency || 'USD', preferences, currentLangData)}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>Tax</span>
-                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>${orderSummary.tax.toFixed(2)}</span>
+                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>
+                                            {t('tax')}
+                                        </span>
+                                        <span className={`${themeClasses.text} ${themeClasses.fontSize.text}`}>
+                                            {convertAndFormatCurrency(orderSummary.tax, event?.currency || 'USD', preferences, currentLangData)}
+                                        </span>
                                     </div>
                                     {orderSummary.discount > 0 && (
                                         <div className={`flex justify-between ${themeClasses.textSuccess} font-medium`}>
                                             <span className="flex items-center">
                                                 <Check className={`${themeClasses.iconSizeSmall} mr-1`} />
-                                                Promo Discount
+                                                {t('discount')}
                                             </span>
-                                            <span>-${orderSummary.discount.toFixed(2)}</span>
+                                            <span>-{convertAndFormatCurrency(orderSummary.discount, event?.currency || 'USD', preferences, currentLangData)}</span>
                                         </div>
                                     )}
                                     <div className={`border-t ${themeClasses.border} pt-2 flex justify-between font-bold ${themeClasses.fontSize.heading}`}>
-                                        <span className={themeClasses.text}>Total</span>
-                                        <span className={themeClasses.text}>${orderSummary.total.toFixed(2)}</span>
+                                        <span className={themeClasses.text}>{t('total')}</span>
+                                        <span className={themeClasses.text}>{convertAndFormatCurrency(orderSummary.total, event?.currency || 'USD', preferences, currentLangData)}</span>
+                                    </div>
+
+                                    {/* Enhanced user preference indicators */}
+                                    <div className={`text-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-3 space-y-1`}>
+                                        {preferences?.currency && (
+                                            <div className="flex items-center justify-center">
+                                                <span className="mr-1">{getCurrencySymbol(preferences.currency)}</span>
+                                                {t('currency')}: {preferences.currency === 'USD' ? 'US Dollar' :
+                                                    preferences.currency === 'EUR' ? 'Euro' :
+                                                        preferences.currency === 'GBP' ? 'British Pound' :
+                                                            preferences.currency === 'JPY' ? 'Japanese Yen' : preferences.currency}
+                                            </div>
+                                        )}
+                                        {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
+                                            <div className="flex items-center justify-center">
+                                                <span className="mr-1">🌍</span>
+                                                {t('timezone')}: {preferences.defaultTimeZone.replace('_', ' ').replace('/', ', ')}
+                                            </div>
+                                        )}
+                                        {preferences?.dateFormat && (
+                                            <div className="flex items-center justify-center">
+                                                <span className="mr-1">📅</span>
+                                                {t('dateFormat')}: {preferences.dateFormat}
+                                            </div>
+                                        )}
+                                        {preferences?.timeFormat && (
+                                            <div className="flex items-center justify-center">
+                                                <span className="mr-1">🕒</span>
+                                                {t('timeFormat')}: {preferences.timeFormat === '12h' ? '12-hour' : '24-hour'}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Savings Display */}
                                     {orderSummary.discount > 0 && (
-                                        <div className={`text-center ${themeClasses.textSuccess} ${themeClasses.fontSize.text} font-medium`}>
-                                            🎉 You saved ${orderSummary.discount.toFixed(2)}!
+                                        <div className={`text-center ${themeClasses.textSuccess} ${themeClasses.fontSize.text} font-medium mt-3`}>
+                                            🎉 {t('totalSavings')} {convertAndFormatCurrency(orderSummary.discount, event?.currency || 'USD', preferences, currentLangData)}!
                                         </div>
                                     )}
                                 </div>
@@ -899,19 +1214,19 @@ export default function CheckoutPage() {
                                     {processing ? (
                                         <>
                                             <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-2`}></div>
-                                            Processing...
+                                            {t('loading')}...
                                         </>
                                     ) : (
                                         <>
                                             <CreditCard className={`${themeClasses.iconSize} mr-2`} />
-                                            Complete Purchase
+                                            {t('completePurchase')}
                                         </>
                                     )}
                                 </button>
 
                                 <div className={`mt-4 flex items-center justify-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
                                     <Lock className={`${themeClasses.iconSizeSmall} mr-1`} />
-                                    Secure checkout powered by EventHub
+                                    {t('securitySettings')} EventHub
                                 </div>
                             </div>
                         </div>
@@ -920,4 +1235,4 @@ export default function CheckoutPage() {
             </div>
         </div>
     );
-}
+}                           

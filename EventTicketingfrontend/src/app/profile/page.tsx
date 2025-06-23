@@ -1,13 +1,14 @@
 ﻿/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// app/profile/page.tsx - Attendee-focused profile page
+// app/profile/page.tsx - Attendee-focused profile page with mirror background and translations
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { userApi, imageApi } from '@/lib/api';
+import { useI18n } from '@/components/providers/I18nProvider';
 import {
     User,
     Mail,
@@ -50,7 +51,6 @@ interface AttendeeProfile {
 }
 
 interface AttendeePreferences {
-    // Essential preferences for event attendees (matching backend UserPreferences)
     emailNotifications: boolean;
     sessionTimeout: number;
     theme: string;
@@ -58,10 +58,10 @@ interface AttendeePreferences {
     dateFormat: string;
     timeFormat: string;
     defaultTimeZone?: string;
-
     accentColor?: string;
     fontSize?: string;
     compactMode?: boolean;
+    currency?: string;
 }
 
 interface PasswordChange {
@@ -69,11 +69,9 @@ interface PasswordChange {
     newPassword: string;
 }
 
-
-
 const getThemeClasses = (preferences: AttendeePreferences | null) => {
     const isDarkMode = preferences?.theme === 'dark' ||
-        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        (preferences?.theme === 'auto' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     const accentColor = preferences?.accentColor || 'blue';
     const fontSize = preferences?.fontSize || 'medium';
@@ -158,13 +156,14 @@ const getThemeClasses = (preferences: AttendeePreferences | null) => {
     return {
         // Basic colors
         background: isDarkMode ? 'bg-gray-900' : 'bg-white',
-        backgroundCard: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
-        backgroundSidebar: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
+        backgroundCard: isDarkMode ? 'bg-gray-800/95' : 'bg-white/95',
+        backgroundSidebar: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
         backgroundInput: isDarkMode ? 'bg-gray-700/90' : 'bg-white/90',
         backgroundDisabled: isDarkMode ? 'bg-gray-600' : 'bg-gray-50',
         backgroundSuccess: isDarkMode ? 'bg-green-900/90' : 'bg-green-50/90',
         backgroundError: isDarkMode ? 'bg-red-900/90' : 'bg-red-50/90',
         backgroundSecure: isDarkMode ? 'bg-green-900/80' : 'bg-green-50/80',
+        backgroundOverlay: isDarkMode ? 'bg-black/60' : 'bg-black/40',
 
         // Text colors
         text: isDarkMode ? 'text-gray-100' : 'text-gray-900',
@@ -173,6 +172,7 @@ const getThemeClasses = (preferences: AttendeePreferences | null) => {
         textSuccess: isDarkMode ? 'text-green-300' : 'text-green-600',
         textError: isDarkMode ? 'text-red-300' : 'text-red-600',
         textSecure: isDarkMode ? 'text-green-300' : 'text-green-900',
+        textLight: isDarkMode ? 'text-gray-200' : 'text-white',
 
         // Borders
         border: isDarkMode ? 'border-gray-600' : 'border-gray-300',
@@ -190,7 +190,7 @@ const getThemeClasses = (preferences: AttendeePreferences | null) => {
         label: isDarkMode ? 'text-gray-300' : 'text-gray-700',
         placeholder: isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500',
 
-        // Typography & Layout - Enhanced for all elements
+        // Typography & Layout
         fontSize: currentFont,
 
         // Padding/spacing based on compact mode
@@ -223,7 +223,7 @@ const getThemeClasses = (preferences: AttendeePreferences | null) => {
         iconSizeSmall: compactMode ? 'h-3 w-3' : 'h-4 w-4',
         iconSizeLarge: compactMode ? 'h-6 w-6' : 'h-8 w-8',
 
-        // Accent colors (dynamic and complete)
+        // Accent colors
         accent: currentAccent.primary,
         accentHover: currentAccent.hover,
         accentText: currentAccent.text,
@@ -242,6 +242,7 @@ const getThemeClasses = (preferences: AttendeePreferences | null) => {
 export default function AttendeeProfilePage() {
     const { user, logout, isAuthenticated } = useAuth();
     const router = useRouter();
+    const { t, currentLanguage, changeLanguage, availableLanguages } = useI18n();
 
     // State management
     const [loading, setLoading] = useState(true);
@@ -265,7 +266,6 @@ export default function AttendeeProfilePage() {
     const [profileImagePreview, setProfileImagePreview] = useState<string>('');
     const [uploadingImage, setUploadingImage] = useState(false);
 
-   
     const themeClasses = getThemeClasses(preferences);
 
     useEffect(() => {
@@ -290,11 +290,9 @@ export default function AttendeeProfilePage() {
         if (!dateString) return '';
 
         try {
-            // Handle ISO date format from backend (e.g., "2025-06-06T00:00:00")
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return '';
 
-            // Extract just the date part in YYYY-MM-DD format
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
@@ -306,22 +304,18 @@ export default function AttendeeProfilePage() {
         }
     };
 
-    // Theme system
-    const isDarkMode = preferences?.theme === 'dark' ||
-        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-
-
     // Apply theme to document body
     useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-            document.body.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            document.body.classList.remove('dark');
+        if (preferences) {
+            if (themeClasses.isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
         }
-    }, [isDarkMode]);
+    }, [preferences, themeClasses.isDarkMode]);
 
     const loadUserData = async () => {
         try {
@@ -349,7 +343,6 @@ export default function AttendeeProfilePage() {
                     dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
                     timeFormat: prefsData.timeFormat || '12h',
                     defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
-                    // ADD THESE NEW APPEARANCE PREFERENCES:
                     accentColor: prefsData.accentColor || 'blue',
                     fontSize: prefsData.fontSize || 'medium',
                     compactMode: prefsData.compactMode || false
@@ -364,14 +357,13 @@ export default function AttendeeProfilePage() {
                     dateFormat: 'MM/dd/yyyy',
                     timeFormat: '12h',
                     defaultTimeZone: 'UTC',
-                    // DEFAULT APPEARANCE PREFERENCES:
                     accentColor: 'blue',
                     fontSize: 'medium',
                     compactMode: false
                 });
             }
         } catch (error: any) {
-            setError('Failed to load profile data: ' + error.message);
+            setError(t('failedToUpdateProfile') + ': ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -382,7 +374,7 @@ export default function AttendeeProfilePage() {
         if (file) {
             const validation = imageApi.validateImageFile(file);
             if (!validation.isValid) {
-                setError(validation.error || 'Invalid image file');
+                setError(validation.error || t('invalidImageFile'));
                 return;
             }
 
@@ -415,10 +407,10 @@ export default function AttendeeProfilePage() {
 
             setProfileImageFile(null);
             setProfileImagePreview('');
-            setSuccess('Profile image updated successfully!');
+            setSuccess(t('imageUploadSuccess'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError('Failed to upload image: ' + error.message);
+            setError(t('imageUploadFailed') + ': ' + error.message);
         } finally {
             setUploadingImage(false);
         }
@@ -434,10 +426,10 @@ export default function AttendeeProfilePage() {
             const updatedProfile = await userApi.getProfile();
             setProfile(updatedProfile);
 
-            setSuccess('Profile image deleted successfully!');
+            setSuccess(t('imageUploadSuccess'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError('Failed to delete image: ' + error.message);
+            setError(t('imageUploadFailed') + ': ' + error.message);
         } finally {
             setUploadingImage(false);
         }
@@ -464,10 +456,10 @@ export default function AttendeeProfilePage() {
             const updatedProfile = await userApi.updateProfile(updateData);
             setProfile(updatedProfile);
 
-            setSuccess('Profile updated successfully!');
+            setSuccess(t('profileUpdatedSuccessfully'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError('Failed to update profile: ' + error.message);
+            setError(t('failedToUpdateProfile') + ': ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -475,12 +467,12 @@ export default function AttendeeProfilePage() {
 
     const updatePassword = async () => {
         if (passwordData.newPassword !== confirmPassword) {
-            setError('New passwords do not match');
+            setError(t('passwordsDoNotMatch'));
             return;
         }
 
         if (passwordData.newPassword.length < 6) {
-            setError('Password must be at least 6 characters long');
+            setError(t('passwordTooShort'));
             return;
         }
 
@@ -493,10 +485,10 @@ export default function AttendeeProfilePage() {
 
             setPasswordData({ currentPassword: '', newPassword: '' });
             setConfirmPassword('');
-            setSuccess('Password updated successfully!');
+            setSuccess(t('passwordChanged'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError('Failed to update password: ' + error.message);
+            setError(t('failedToChangePassword') + ': ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -510,49 +502,79 @@ export default function AttendeeProfilePage() {
             setError('');
             setSuccess('');
 
-            // Convert attendee preferences to full preferences format for API
+            console.log('🔧 Saving preferences:', preferences);
+
+            // Get current preferences first to ensure we send all required fields
+            const currentPrefs = await userApi.getPreferences();
+
+            // Merge current preferences with new ones to ensure all fields are present
             const fullPreferences = {
-                emailNotifications: preferences.emailNotifications,
-                smsNotifications: false,
-                newBookingNotifications: true,
-                cancellationNotifications: true,
-                lowInventoryNotifications: false,
-                dailyReports: false,
-                weeklyReports: false,
-                monthlyReports: false,
-                twoFactorEnabled: false,
-                sessionTimeout: preferences.sessionTimeout,
-                loginNotifications: false,
-                defaultTimeZone: preferences.defaultTimeZone || 'UTC',
-                defaultEventDuration: 120,
-                defaultTicketSaleStart: 30,
-                defaultRefundPolicy: 'flexible',
-                requireApproval: false,
-                autoPublish: false,
-                theme: preferences.theme,
-                language: preferences.language,
-                dateFormat: preferences.dateFormat,
-                timeFormat: preferences.timeFormat,
-                currency: 'USD',
-                // ADD THESE NEW APPEARANCE PREFERENCES:
-                accentColor: preferences.accentColor || 'blue',
-                fontSize: preferences.fontSize || 'medium',
-                compactMode: preferences.compactMode ?? false
+                // Start with current preferences
+                ...currentPrefs,
+                // Override with new values
+                emailNotifications: preferences.emailNotifications ?? currentPrefs.emailNotifications ?? true,
+                smsNotifications: currentPrefs.smsNotifications ?? false,
+                newBookingNotifications: currentPrefs.newBookingNotifications ?? true,
+                cancellationNotifications: currentPrefs.cancellationNotifications ?? true,
+                lowInventoryNotifications: currentPrefs.lowInventoryNotifications ?? false,
+                dailyReports: currentPrefs.dailyReports ?? false,
+                weeklyReports: currentPrefs.weeklyReports ?? false,
+                monthlyReports: currentPrefs.monthlyReports ?? false,
+                twoFactorEnabled: currentPrefs.twoFactorEnabled ?? false,
+                sessionTimeout: preferences.sessionTimeout ?? currentPrefs.sessionTimeout ?? 30,
+                loginNotifications: currentPrefs.loginNotifications ?? false,
+                defaultTimeZone: preferences.defaultTimeZone ?? currentPrefs.defaultTimeZone ?? 'UTC',
+                defaultEventDuration: currentPrefs.defaultEventDuration ?? 120,
+                defaultTicketSaleStart: currentPrefs.defaultTicketSaleStart ?? 30,
+                defaultRefundPolicy: currentPrefs.defaultRefundPolicy ?? 'flexible',
+                requireApproval: currentPrefs.requireApproval ?? false,
+                autoPublish: currentPrefs.autoPublish ?? false,
+                theme: preferences.theme ?? currentPrefs.theme ?? 'light',
+                language: preferences.language ?? currentPrefs.language ?? 'en',
+                dateFormat: preferences.dateFormat ?? currentPrefs.dateFormat ?? 'MM/dd/yyyy',
+                timeFormat: preferences.timeFormat ?? currentPrefs.timeFormat ?? '12h',
+                currency: preferences.currency ?? currentPrefs.currency ?? 'USD',
+                accentColor: preferences.accentColor ?? currentPrefs.accentColor ?? 'blue',
+                fontSize: preferences.fontSize ?? currentPrefs.fontSize ?? 'medium',
+                compactMode: preferences.compactMode ?? currentPrefs.compactMode ?? false
             };
+
+            console.log('🔧 Full preferences being sent:', fullPreferences);
+            console.log('🔧 Payload size:', Object.keys(fullPreferences).length, 'fields');
 
             await userApi.updatePreferences(fullPreferences);
 
-            setSuccess('Preferences updated successfully!');
+            // Update language in the i18n context
+            if (preferences.language !== currentLanguage) {
+                changeLanguage(preferences.language);
+            }
+
+            setSuccess(t('preferencesUpdatedSuccessfully'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError('Failed to update preferences: ' + error.message);
+            console.error('❌ Failed to save preferences:', error);
+
+            if (error.response) {
+                console.error('❌ Response status:', error.response.status);
+                console.error('❌ Response data:', error.response.data);
+                console.error('❌ Response headers:', error.response.headers);
+
+                const errorMessage = error.response.data?.message ||
+                    error.response.data?.error ||
+                    JSON.stringify(error.response.data) ||
+                    error.message;
+
+                setError(`${t('failedToUpdatePreferences')}: ${errorMessage}`);
+            } else {
+                setError(t('failedToUpdatePreferences') + ': ' + error.message);
+            }
         } finally {
             setSaving(false);
         }
     };
 
     const deleteAccount = async () => {
-        if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+        if (!confirm(t('confirmDeleteEvent', { title: t('profile') }))) {
             return;
         }
 
@@ -601,19 +623,24 @@ export default function AttendeeProfilePage() {
     if (loading) {
         return (
             <div
-                className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : ''}`}
+                className="min-h-screen relative"
                 style={{
                     backgroundImage: 'url("/images/bg/background.jpg")',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat',
-                    backgroundAttachment: 'fixed'
+                    backgroundAttachment: 'fixed',
+                    transform: 'scaleX(-1)'
                 }}
             >
-                <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.paddingLarge} ${themeClasses.shadow} border ${themeClasses.borderCard}`}>
-                    <div className="text-center">
-                        <div className={`animate-spin rounded-full ${themeClasses.iconSizeLarge} border-b-2 border-blue-600 mx-auto ${themeClasses.marginSmall}`}></div>
-                        <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Loading Profile...</h1>
+                <div className={`min-h-screen ${themeClasses?.backgroundOverlay || 'bg-black/20'} backdrop-blur-[2px]`} style={{ transform: 'scaleX(-1)' }}>
+                    <div className="flex items-center justify-center min-h-screen">
+                        <div className={`${themeClasses?.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses?.paddingLarge} ${themeClasses?.shadow} border ${themeClasses?.borderCard}`}>
+                            <div className="text-center">
+                                <div className={`animate-spin rounded-full ${themeClasses?.iconSizeLarge} border-b-2 border-blue-600 mx-auto ${themeClasses?.marginSmall}`}></div>
+                                <h1 className={`${themeClasses?.fontSize.title} font-bold ${themeClasses?.text} ${themeClasses?.marginSmall}`}>{t('loadingProfile')}</h1>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -622,14 +649,14 @@ export default function AttendeeProfilePage() {
 
     if (!profile) {
         return (
-            <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Profile not found</h1>
                     <button
                         onClick={() => router.push('/')}
                         className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg ${themeClasses.fontSize.button}`}
                     >
-                        Go Home
+                        {t('home')}
                     </button>
                 </div>
             </div>
@@ -638,23 +665,24 @@ export default function AttendeeProfilePage() {
 
     // Attendee-focused tabs
     const tabs = [
-        { id: 'profile', label: 'My Info', icon: User },
-        { id: 'security', label: 'Security', icon: Shield },
-        { id: 'preferences', label: 'Event Settings', icon: Bell }
+        { id: 'profile', label: t('personalInformation'), icon: User },
+        { id: 'security', label: t('security'), icon: Shield },
+        { id: 'preferences', label: t('eventPreferences'), icon: Bell }
     ];
 
     return (
         <div
-            className="min-h-screen"
+            className="min-h-screen relative"
             style={{
                 backgroundImage: 'url("/images/bg/background.jpg")',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-                backgroundAttachment: 'fixed'
+                backgroundAttachment: 'fixed',
+                transform: 'scaleX(-1)'
             }}
         >
-            <div className="min-h-screen bg-black/20 backdrop-blur-[2px]">
+            <div className={`min-h-screen ${themeClasses.backgroundOverlay} backdrop-blur-[2px]`} style={{ transform: 'scaleX(-1)' }}>
                 {/* Header */}
                 <div className={`${themeClasses.backgroundSidebar} backdrop-blur-xl shadow-lg border-b ${themeClasses.borderCard}`}>
                     <div className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 ${themeClasses.paddingSmall}`}>
@@ -665,9 +693,9 @@ export default function AttendeeProfilePage() {
                                     className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} mr-4 transition-colors ${themeClasses.fontSize.text}`}
                                 >
                                     <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
-                                    Back
+                                    {t('back')}
                                 </button>
-                                <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>My Profile</h1>
+                                <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>{t('profile')}</h1>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <span className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
@@ -709,8 +737,8 @@ export default function AttendeeProfilePage() {
                                             key={tab.id}
                                             onClick={() => setActiveTab(tab.id)}
                                             className={`w-full flex items-center ${themeClasses.paddingSmall} text-left rounded-xl transition-all duration-200 ${themeClasses.fontSize.text} ${activeTab === tab.id
-                                                    ? `${themeClasses.accent} text-white shadow-lg`
-                                                    : `${themeClasses.textSecondary} ${themeClasses.hover}`
+                                                ? `${themeClasses.accent} text-white shadow-lg`
+                                                : `${themeClasses.textSecondary} ${themeClasses.hover}`
                                                 }`}
                                         >
                                             <Icon className={`${themeClasses.iconSize} mr-3`} />
@@ -726,14 +754,14 @@ export default function AttendeeProfilePage() {
                                         className={`w-full flex items-center ${themeClasses.paddingSmall} text-left rounded-xl ${themeClasses.textSecondary} ${themeClasses.hover} transition-all duration-200 ${themeClasses.fontSize.text}`}
                                     >
                                         <Download className={`${themeClasses.iconSize} mr-3`} />
-                                        Download My Data
+                                        {t('downloadData')}
                                     </button>
                                     <button
                                         onClick={deleteAccount}
                                         className={`w-full flex items-center ${themeClasses.paddingSmall} text-left rounded-xl text-red-600 ${themeClasses.hoverRed} transition-all duration-200 ${themeClasses.fontSize.text}`}
                                     >
                                         <Trash2 className={`${themeClasses.iconSize} mr-3`} />
-                                        Delete Account
+                                        {t('delete')} {t('profile')}
                                     </button>
                                 </div>
                             </nav>
@@ -758,11 +786,11 @@ export default function AttendeeProfilePage() {
                             {/* Profile Info Tab */}
                             {activeTab === 'profile' && (
                                 <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
-                                    <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} ${themeClasses.margin}`}>Personal Information</h2>
+                                    <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} ${themeClasses.margin}`}>{t('personalInformation')}</h2>
 
                                     {/* Profile Picture */}
                                     <div className="flex items-center mb-6">
-                                        <div className={`${themeClasses.compactMode ? 'w-16 h-16' : 'w-20 h-20'} ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full flex items-center justify-center mr-4 overflow-hidden border-4 ${isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}>
+                                        <div className={`${themeClasses.compactMode ? 'w-16 h-16' : 'w-20 h-20'} ${themeClasses.isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full flex items-center justify-center mr-4 overflow-hidden border-4 ${themeClasses.isDarkMode ? 'border-gray-600' : 'border-gray-300'}`}>
                                             {profileImagePreview ? (
                                                 <img
                                                     src={profileImagePreview}
@@ -784,7 +812,7 @@ export default function AttendeeProfilePage() {
                                                     }}
                                                 />
                                             ) : null}
-                                            <User className={`${themeClasses.compactMode ? 'h-8 w-8' : 'h-10 w-10'} ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} fallback-icon ${profile.profileImageUrl && !profileImagePreview ? 'hidden' : ''}`} />
+                                            <User className={`${themeClasses.compactMode ? 'h-8 w-8' : 'h-10 w-10'} ${themeClasses.isDarkMode ? 'text-gray-500' : 'text-gray-400'} fallback-icon ${profile.profileImageUrl && !profileImagePreview ? 'hidden' : ''}`} />
                                         </div>
                                         <div className="flex flex-col space-y-2">
                                             <input
@@ -799,7 +827,7 @@ export default function AttendeeProfilePage() {
                                                 className={`flex items-center ${themeClasses.accentText} ${themeClasses.accentHover} cursor-pointer ${themeClasses.fontSize.text}`}
                                             >
                                                 <Camera className={`${themeClasses.iconSizeSmall} mr-2`} />
-                                                Change Photo
+                                                {t('changeImage')}
                                             </label>
 
                                             {profileImageFile && (
@@ -814,17 +842,17 @@ export default function AttendeeProfilePage() {
                                                         ) : (
                                                             <Upload className={`${themeClasses.iconSizeSmall} mr-1`} />
                                                         )}
-                                                        Upload
+                                                        {t('uploadImage')}
                                                     </button>
                                                     <button
                                                         onClick={() => {
                                                             setProfileImageFile(null);
                                                             setProfileImagePreview('');
                                                         }}
-                                                        className={`${themeClasses.fontSize.subtitle} ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-600 hover:bg-gray-700'} text-white ${themeClasses.buttonPaddingSmall} rounded flex items-center`}
+                                                        className={`${themeClasses.fontSize.subtitle} ${themeClasses.isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-600 hover:bg-gray-700'} text-white ${themeClasses.buttonPaddingSmall} rounded flex items-center`}
                                                     >
                                                         <X className={`${themeClasses.iconSizeSmall} mr-1`} />
-                                                        Cancel
+                                                        {t('cancel')}
                                                     </button>
                                                 </div>
                                             )}
@@ -836,7 +864,7 @@ export default function AttendeeProfilePage() {
                                                     className={`flex items-center text-red-600 hover:text-red-800 ${themeClasses.fontSize.subtitle} disabled:opacity-50`}
                                                 >
                                                     <Trash2 className={`${themeClasses.iconSizeSmall} mr-1`} />
-                                                    Remove Photo
+                                                    {t('removeImage')}
                                                 </button>
                                             )}
                                         </div>
@@ -845,7 +873,7 @@ export default function AttendeeProfilePage() {
                                     <div className={themeClasses.spacing}>
                                         <div>
                                             <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                                First Name *
+                                                {t('firstName')} *
                                             </label>
                                             <input
                                                 type="text"
@@ -857,7 +885,7 @@ export default function AttendeeProfilePage() {
 
                                         <div>
                                             <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                                Last Name *
+                                                {t('lastName')} *
                                             </label>
                                             <input
                                                 type="text"
@@ -869,7 +897,7 @@ export default function AttendeeProfilePage() {
 
                                         <div>
                                             <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                                Email Address *
+                                                {t('email')} *
                                             </label>
                                             <input
                                                 type="text"
@@ -881,11 +909,11 @@ export default function AttendeeProfilePage() {
 
                                         <div>
                                             <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                                Phone Number
+                                                {t('phoneNumber')}
                                             </label>
                                             <input
-                                                type="tel" 
-                                                value={profile.phoneNumber || ''}  
+                                                type="tel"
+                                                value={profile.phoneNumber || ''}
                                                 onChange={(e) => setProfile({ ...profile, phoneNumber: e.target.value })}
                                                 className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                                 placeholder="For event updates"
@@ -894,18 +922,19 @@ export default function AttendeeProfilePage() {
 
                                         <div>
                                             <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                                Date of Birth
+                                                {t('eventDate')}
                                             </label>
                                             <input
                                                 type="date"
                                                 value={formatDateForInput(profile.dateOfBirth)}
                                                 onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
-                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}                                            />
+                                                className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
+                                            />
                                         </div>
 
                                         <div>
                                             <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                                Time Zone
+                                                {t('timezone')}
                                             </label>
                                             <select
                                                 value={profile.timeZone || 'UTC'}
@@ -923,7 +952,7 @@ export default function AttendeeProfilePage() {
 
                                         <div className="md:col-span-2">
                                             <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                                About Me
+                                                {t('description')}
                                             </label>
                                             <textarea
                                                 value={profile.bio || ''}
@@ -936,7 +965,7 @@ export default function AttendeeProfilePage() {
 
                                         <div>
                                             <label className={`block ${themeClasses.fontSize.label} font-medium ${themeClasses.text} ${themeClasses.marginSmall}`}>
-                                                Account Status
+                                                {t('status')}
                                             </label>
                                             <div className="flex items-center space-x-2">
                                                 <span className={`${themeClasses.buttonPaddingSmall} rounded-full ${themeClasses.fontSize.subtitle} font-medium ${profile.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
@@ -944,7 +973,7 @@ export default function AttendeeProfilePage() {
                                                 </span>
                                                 {profile.isEmailVerified && (
                                                     <span className={`${themeClasses.buttonPaddingSmall} bg-blue-100 text-blue-800 rounded-full ${themeClasses.fontSize.subtitle} font-medium`}>
-                                                        Email Verified
+                                                        {t('verified')}
                                                     </span>
                                                 )}
                                             </div>
@@ -972,12 +1001,12 @@ export default function AttendeeProfilePage() {
                                             {saving ? (
                                                 <>
                                                     <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-2`}></div>
-                                                    Saving...
+                                                    {t('savingChanges')}
                                                 </>
                                             ) : (
                                                 <>
                                                     <Save className={`${themeClasses.iconSizeSmall} mr-2`} />
-                                                    Save Changes
+                                                    {t('saveChanges')}
                                                 </>
                                             )}
                                         </button>
@@ -990,12 +1019,12 @@ export default function AttendeeProfilePage() {
                                 <div className="space-y-6">
                                     {/* Change Password */}
                                     <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
-                                        <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} mb-4`}>Change Password</h2>
+                                        <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} mb-4`}>{t('changePassword')}</h2>
 
                                         <div className="space-y-4 max-w-md">
                                             <div>
                                                 <label className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
-                                                    Current Password
+                                                    {t('currentPassword')}
                                                 </label>
                                                 <div className="relative">
                                                     <input
@@ -1019,7 +1048,7 @@ export default function AttendeeProfilePage() {
 
                                             <div>
                                                 <label className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
-                                                    New Password
+                                                    {t('newPassword')}
                                                 </label>
                                                 <div className="relative">
                                                     <input
@@ -1043,7 +1072,7 @@ export default function AttendeeProfilePage() {
 
                                             <div>
                                                 <label className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>
-                                                    Confirm New Password
+                                                    {t('confirmNewPassword')}
                                                 </label>
                                                 <div className="relative">
                                                     <input
@@ -1075,12 +1104,12 @@ export default function AttendeeProfilePage() {
                                                 {saving ? (
                                                     <>
                                                         <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-2`}></div>
-                                                        Updating...
+                                                        {t('changingPassword')}
                                                     </>
                                                 ) : (
                                                     <>
                                                         <Lock className={`${themeClasses.iconSizeSmall} mr-2`} />
-                                                        Update Password
+                                                        {t('changePassword')}
                                                     </>
                                                 )}
                                             </button>
@@ -1089,7 +1118,7 @@ export default function AttendeeProfilePage() {
 
                                     {/* Account Security Info */}
                                     <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
-                                        <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} mb-4`}>Account Security</h2>
+                                        <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} mb-4`}>{t('securitySettings')}</h2>
                                         <div className="space-y-4">
                                             <div className={`flex items-center justify-between p-4 ${themeClasses.backgroundSecure} border ${themeClasses.borderSecure} rounded-xl`}>
                                                 <div className="flex items-center">
@@ -1109,10 +1138,10 @@ export default function AttendeeProfilePage() {
                                                     <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Last Login:</strong> {profile.lastLoginAt ? new Date(profile.lastLoginAt).toLocaleDateString() : 'Today'}</p>
                                                 </div>
                                                 <div>
-                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Email Verified:</strong> {profile.isEmailVerified ? 'Yes' : 'No'}</p>
+                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Email Verified:</strong> {profile.isEmailVerified ? t('verified') : t('emailNotVerified')}</p>
                                                 </div>
                                                 <div>
-                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Phone Verified:</strong> {profile.isPhoneVerified ? 'Yes' : 'No'}</p>
+                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}><strong>Phone Verified:</strong> {profile.isPhoneVerified ? t('verified') : t('phoneNotVerified')}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -1122,22 +1151,23 @@ export default function AttendeeProfilePage() {
 
                             {/* Event Settings Tab - ENHANCED VERSION */}
                             {activeTab === 'preferences' && preferences && (
-                                <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>                                    <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} ${themeClasses.margin}`}>
-                                        Event & App Settings
+                                <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl shadow-lg border ${themeClasses.borderCard} ${themeClasses.padding}`}>
+                                    <h2 className={`${themeClasses.fontSize.title} font-semibold ${themeClasses.text} ${themeClasses.margin}`}>
+                                        {t('eventPreferences')}
                                     </h2>
 
                                     <div className={themeClasses.spacing}>
                                         {/* Event Notifications */}
                                         <div>
                                             <h3 className={`${themeClasses.fontSize.heading} font-medium ${themeClasses.text} mb-4`}>
-                                                Event Notifications
+                                                {t('notifications')}
                                             </h3>
                                             <div className="space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h4 className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>Email Notifications</h4>
+                                                        <h4 className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{t('emailNotifications')}</h4>
                                                         <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
-                                                            Receive email notifications about events and updates
+                                                            {t('getNotifiedNewBooking')}
                                                         </p>
                                                     </div>
                                                     <label className="relative inline-flex items-center cursor-pointer">
@@ -1151,20 +1181,21 @@ export default function AttendeeProfilePage() {
                                                     </label>
                                                 </div>
 
+
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
-                                                        Session Timeout
+                                                        {t('sessionTimeout')}
                                                     </label>
                                                     <select
                                                         value={preferences.sessionTimeout}
                                                         onChange={(e) => setPreferences({ ...preferences, sessionTimeout: parseInt(e.target.value) })}
                                                         className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
                                                     >
-                                                        <option value={15}>15 minutes</option>
-                                                        <option value={30}>30 minutes</option>
-                                                        <option value={60}>1 hour</option>
-                                                        <option value={120}>2 hours</option>
-                                                        <option value={480}>8 hours</option>
+                                                        <option value={15}>15 {t('minutes')}</option>
+                                                        <option value={30}>30 {t('minutes')}</option>
+                                                        <option value={60}>1 {t('hour')}</option>
+                                                        <option value={120}>2 {t('hours')}</option>
+                                                        <option value={480}>8 {t('hours')}</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -1173,58 +1204,75 @@ export default function AttendeeProfilePage() {
                                         {/* Display Preferences */}
                                         <div className="border-t pt-6 mt-6">
                                             <h3 className={`${themeClasses.fontSize.heading} font-medium ${themeClasses.text} mb-4`}>
-                                                Display Preferences
+                                                {t('displaySettings')}
                                             </h3>
                                             <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap}`}>
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
-                                                        Theme
+                                                        {t('theme')}
                                                     </label>
                                                     <select
                                                         value={preferences.theme}
                                                         onChange={(e) => setPreferences({ ...preferences, theme: e.target.value })}
                                                         className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
                                                     >
-                                                        <option value="light">Light</option>
-                                                        <option value="dark">Dark</option>
-                                                        <option value="auto">Auto (system)</option>
+                                                        <option value="light">{t('lightMode')}</option>
+                                                        <option value="dark">{t('darkMode')}</option>
+                                                        <option value="auto">{t('autoMode')}</option>
                                                     </select>
                                                 </div>
 
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
-                                                        Language
+                                                        {t('language')}
                                                     </label>
                                                     <select
                                                         value={preferences.language}
                                                         onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
                                                         className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
                                                     >
-                                                        <option value="en">English</option>
-                                                        <option value="es">Spanish</option>
-                                                        <option value="fr">French</option>
-                                                        <option value="de">German</option>
-                                                        <option value="ms">Bahasa Malaysia</option>
+                                                        {availableLanguages.map((lang) => (
+                                                            <option key={lang.code} value={lang.code}>
+                                                                {lang.flag} {lang.nativeName}
+                                                            </option>
+                                                        ))}
                                                     </select>
                                                 </div>
 
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
-                                                        Time Format
+                                                        {t('timeFormat')}
                                                     </label>
                                                     <select
                                                         value={preferences.timeFormat}
                                                         onChange={(e) => setPreferences({ ...preferences, timeFormat: e.target.value })}
                                                         className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
                                                     >
-                                                        <option value="12h">12 Hour (AM/PM)</option>
-                                                        <option value="24h">24 Hour</option>
+                                                        <option value="12h">{t('hour12Format')}</option>
+                                                        <option value="24h">{t('hour24Format')}</option>
+                                                    </select>
+                                                </div>
+
+
+                                                <div>
+                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
+                                                        {t('currency')}
+                                                    </label>
+                                                    <select
+                                                        value={preferences.currency}
+                                                        onChange={(e) => setPreferences({ ...preferences, currency: e.target.value })}
+                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
+                                                    >
+                                                        <option value="USD">USD - US Dollar</option>
+                                                        <option value="EUR">EUR - Euro</option>
+                                                        <option value="GBP">GBP - British Pound</option>
+                                                        <option value="JPY">JPY - Japanese Yen</option>
                                                     </select>
                                                 </div>
 
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
-                                                        Date Format
+                                                        {t('dateFormat')}
                                                     </label>
                                                     <select
                                                         value={preferences.dateFormat}
@@ -1236,71 +1284,51 @@ export default function AttendeeProfilePage() {
                                                         <option value="yyyy-MM-dd">yyyy-MM-dd (ISO)</option>
                                                     </select>
                                                 </div>
-
-                                                <div className="md:col-span-2">
-                                                    <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
-                                                        Default Time Zone for Events
-                                                    </label>
-                                                    <select
-                                                        value={preferences.defaultTimeZone || 'UTC'}
-                                                        onChange={(e) => setPreferences({ ...preferences, defaultTimeZone: e.target.value })}
-                                                        className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
-                                                    >
-                                                        <option value="UTC">UTC</option>
-                                                        <option value="America/New_York">Eastern Time</option>
-                                                        <option value="America/Chicago">Central Time</option>
-                                                        <option value="America/Denver">Mountain Time</option>
-                                                        <option value="America/Los_Angeles">Pacific Time</option>
-                                                        <option value="Asia/Kuala_Lumpur">Malaysia Time</option>
-                                                        <option value="Europe/London">London Time</option>
-                                                        <option value="Asia/Tokyo">Tokyo Time</option>
-                                                    </select>
-                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* NEW: Appearance & Accessibility Section */}
+                                        {/* Appearance & Accessibility Section */}
                                         <div className="border-t pt-6 mt-6">
                                             <h3 className={`${themeClasses.fontSize.heading} font-medium ${themeClasses.text} mb-4`}>
-                                                Appearance & Accessibility
+                                                {t('appearance')}
                                             </h3>
                                             <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${themeClasses.gap}`}>
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
-                                                        Accent Color
+                                                        {t('accentColor')}
                                                     </label>
                                                     <select
                                                         value={preferences.accentColor || 'blue'}
                                                         onChange={(e) => setPreferences({ ...preferences, accentColor: e.target.value })}
                                                         className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
                                                     >
-                                                        <option value="blue">Blue</option>
-                                                        <option value="purple">Purple</option>
-                                                        <option value="green">Green</option>
-                                                        <option value="orange">Orange</option>
-                                                        <option value="pink">Pink</option>
+                                                        <option value="blue">{t('blue')}</option>
+                                                        <option value="purple">{t('purple')}</option>
+                                                        <option value="green">{t('green')}</option>
+                                                        <option value="orange">{t('orange')}</option>
+                                                        <option value="pink">{t('pink')}</option>
                                                     </select>
                                                 </div>
 
                                                 <div>
                                                     <label className={`block ${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-2`}>
-                                                        Font Size
+                                                        {t('fontSize')}
                                                     </label>
                                                     <select
                                                         value={preferences.fontSize || 'medium'}
                                                         onChange={(e) => setPreferences({ ...preferences, fontSize: e.target.value })}
                                                         className={`w-full border ${themeClasses.border} rounded-xl px-3 py-2 ${themeClasses.accentRing} ${themeClasses.backgroundInput} ${themeClasses.text} ${themeClasses.fontSize.text}`}
                                                     >
-                                                        <option value="small">Small</option>
-                                                        <option value="medium">Medium</option>
-                                                        <option value="large">Large</option>
+                                                        <option value="small">{t('small')}</option>
+                                                        <option value="medium">{t('medium')}</option>
+                                                        <option value="large">{t('large')}</option>
                                                     </select>
                                                 </div>
 
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <h4 className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>Compact Mode</h4>
-                                                        <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Reduce spacing for more content</p>
+                                                        <h4 className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{t('compactMode')}</h4>
+                                                        <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>{t('reduceSpacing')}</p>
                                                     </div>
                                                     <label className="relative inline-flex items-center cursor-pointer">
                                                         <input
@@ -1317,7 +1345,7 @@ export default function AttendeeProfilePage() {
                                             {/* Live Theme Preview */}
                                             <div className="mt-6">
                                                 <h4 className={`${themeClasses.fontSize.subtitle} font-medium ${themeClasses.label} mb-3`}>
-                                                    Live Preview
+                                                    {t('livePreview')}
                                                 </h4>
                                                 <div className={`grid grid-cols-3 ${themeClasses.gapLarge} ${themeClasses.padding} ${themeClasses.backgroundInput} rounded-xl border ${themeClasses.border}`}>
                                                     <div className={`${themeClasses.compactMode ? 'h-10' : 'h-12'} ${themeClasses.accent} rounded-lg flex items-center justify-center transition-colors duration-200`}>
@@ -1343,12 +1371,12 @@ export default function AttendeeProfilePage() {
                                             {saving ? (
                                                 <>
                                                     <div className={`animate-spin rounded-full ${themeClasses.iconSizeSmall} border-b-2 border-white mr-2`}></div>
-                                                    Saving...
+                                                    {t('savingChanges')}
                                                 </>
                                             ) : (
                                                 <>
                                                     <Bell className={`${themeClasses.iconSizeSmall} mr-2`} />
-                                                    Save Preferences
+                                                    {t('saveChanges')}
                                                 </>
                                             )}
                                         </button>

@@ -17,6 +17,5 @@
   <ItemGroup>
     <Folder Include="event-ticketing-frontend-nextjs\" />
     <Folder Include="public\" />
-    <Folder Include="src\" />
   </ItemGroup>
 </Project>

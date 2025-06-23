@@ -173,6 +173,7 @@ namespace EventTicketing.API.Models.DTOs
         public string TicketNumber { get; set; }
         public string? QrCode { get; set; }
         public decimal PricePaid { get; set; }
+        public string Currency { get; set; } = "USD"; // Default currency
         public string Status { get; set; }
         public DateTime PurchaseDate { get; set; }
         public DateTime? CheckInDate { get; set; }

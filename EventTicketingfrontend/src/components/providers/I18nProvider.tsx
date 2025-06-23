@@ -916,6 +916,151 @@ export interface TranslationKeys {
     loadingAnalytics: string;
     unknown: string;
     usageHistory: string;
+
+    noimagesavailable: string;
+    loadingevents: string;
+
+    // Events Page - Hero Section
+    discoverEvents: string;
+    eventsAcrossCategories: string;
+    searchPlaceholder: string;
+    filters: string;
+
+    // Events Page - Gallery
+    galleryShowcase: string;
+    featuredEventsAndVenues: string;
+
+    // Events Page - Event Cards
+    today: string;
+    tomorrow: string;
+    soon: string;
+    inDays: string;
+    limited: string;
+    from: string;
+    viewAndBook: string;
+    at: string;
+
+    // Events Page - Sections
+    searchResults: string;
+    resultsFor: string;
+    exploreAllEvents: string;
+    premierVenues: string;
+    topEventLocations: string;
+    hot: string;
+    popular: string;
+
+
+    // Events Page - Actions
+    myTickets: string;
+    signIn: string;
+    clearFilters: string;
+
+    // Events Page - Empty States
+    noEventsAvailable: string;
+    tryAdjustingSearch: string;
+    eventsWillAppearSoon: string;
+
+    // Events Page - Footer
+    quickLinks: string;
+    browseEvents: string;
+    becomeAnOrganizer: string;
+    contactUs: string;
+    support: string;
+    helpCenter: string;
+    faq: string;
+    contactSupport: string;
+    privacyPolicy: string;
+    termsOfService: string;
+    stayUpdated: string;
+    enterYourEmail: string;
+    availableWorldwide: string;
+
+    // Events Page - Time/Date
+    scheduleText: string;
+
+    // Additional missing keys from your events page
+    featuredEvents: string;
+    categories: string;
+
+    clearSearch: string;
+    ticketsavailable: string;   
+
+    // Add these to your existing TranslationKeys interface
+    by: string;
+    eventsHosted: string;
+    yourPremierDestination: string;
+    connectWithExperiences: string;
+    home: string;
+    eventStreet: string;
+    shahAlam: string;
+    malaysia: string;
+    monFriHours: string;
+    satSunHours: string;
+    allRightsReserved: string;
+    eventBanner: string;
+    eventGallery: string;
+    eventNotFound: string;
+    backToEvents: string;
+    featured: string;
+    aboutThisEvent: string;
+    onlineEventNote: string;
+    eventOrganizer: string;
+    venueInformation: string;
+    visitWebsite: string;
+    inYourCart: string;
+    items: string;
+    remove: string;
+    total: string;
+    getTickets: string;
+    available: string;
+    noTicketsAvailable: string;
+    maxPerOrder: string;
+    addToCart: string;
+    soldOut: string;
+    notAvailable: string;
+    proceedToCheckout: string;
+
+    manageTickets: string;
+    valid: string;
+    cancelled: string;
+    upcoming: string;
+    pastEvents: string;
+    attended: string;
+    download: string;
+    attendeeInformation: string;
+    purchaseDetails: string;
+    purchaseDate: string;
+    checkInDate: string;
+    viewEventDetails: string;
+
+    // Order confirmation and profile specific translations
+    orderNotFound: string;
+    purchaseSuccessful: string;
+    ticketsConfirmedSentEmail: string;
+    eventDetails: string;
+    orderDetails: string;
+    orderNumber: string;
+    totalAmount: string;
+    orderDate: string;
+    yourTickets: string;
+    ticketsCount: string;
+    qrCode: string;
+    importantNotice: string;
+    bringTicketsAndId: string;
+    viewMyTickets: string;
+    browseMoreEvents: string;
+    checkEmailForDetails: string;
+    downloadData: string;
+    defaultTimeZone: string;
+
+    serviceFee: string;
+    tax: string;
+
+    completePurchase: string;
+
+    minutes: string;
+    hours: string
+    hour: string;
 }
 
 interface SettingsTranslationKeys {
@@ -1201,7 +1346,10 @@ interface SettingsTranslationKeys {
     expiredDescription: string;
     scheduledDescription: string;
 
+    //attendee
+    noimagesavailable: string;
 
+    
 }
 
 const settingsTranslationsEn: SettingsTranslationKeys = {
@@ -1485,7 +1633,9 @@ const settingsTranslationsEn: SettingsTranslationKeys = {
     expiredDescription: 'Past the end date',
     scheduledDescription: 'Not yet active, starts in the future',
 
-
+    // Attendee
+    noimagesavailable: 'No images available',
+    
 };
 
 // Spanish translations for settings
@@ -1772,6 +1922,10 @@ const settingsTranslationsEs: SettingsTranslationKeys = {
     inactiveDescription: 'Desactivado y no disponible para usar',
     expiredDescription: 'Pasada la fecha de fin',
     scheduledDescription: 'Aún no activo, comienza en el futuro',
+
+    // Attendee
+    noimagesavailable: 'No hay imágenes disponibles',
+    
 };
 
 // French translations for settings
@@ -2056,6 +2210,10 @@ const settingsTranslationsFr: SettingsTranslationKeys = {
     inactiveDescription: 'Désactivé et non disponible',
     expiredDescription: 'Passé la date de fin',
     scheduledDescription: 'Pas encore actif, commence dans le futur',
+
+    // Attendee
+    noimagesavailable: 'Aucune image disponible',
+    
 };
 
 // German translations for settings
@@ -2341,6 +2499,10 @@ const settingsTranslationsDe: SettingsTranslationKeys = {
     inactiveDescription: 'Deaktiviert und nicht verfügbar',
     expiredDescription: 'Nach dem Enddatum',
     scheduledDescription: 'Noch nicht aktiv, startet in der Zukunft',
+
+    // Attendee
+    noimagesavailable: 'Keine Bilder verfügbar',
+    
 };
 
 // Italian translations for settings
@@ -2626,7 +2788,13 @@ const settingsTranslationsIt: SettingsTranslationKeys = {
     inactiveDescription: 'Disattivato e non disponibile',
     expiredDescription: 'Oltre la data di fine',
     scheduledDescription: 'Non ancora attivo, inizia nel futuro',
+
+    // Attendee
+    noimagesavailable: 'Nessuna immagine disponibile',
+    
 };
+
+
 
 // Helper function for string interpolation
 const interpolate = (str: string, params: Record<string, any> = {}): string => {
@@ -2996,7 +3164,7 @@ const translations: Record<string, TranslationKeys> = {
         loadError: 'Failed to load data',
 
         // Dashboard specific
-        welcomeBack: 'Welcome back, {name}!',
+        welcomeBack: 'Welcome back',
         virtualEvent: 'Virtual Event',
         viewAllEvents: 'View all events →',
         upcomingEvents: 'Upcoming Events',
@@ -3473,7 +3641,148 @@ const translations: Record<string, TranslationKeys> = {
         usagehistory: '',
         promoCodeDetails: '',
         noTimelineData: '',
-        timelineWillAppear: ''
+        timelineWillAppear: '',
+
+        //attendee
+        noimagesavailable: 'No images available',
+        loadingevents: 'Loading events...',
+
+        discoverEvents: "Discover Events",
+        eventsAcrossCategories: "events across {count} categories",
+        searchPlaceholder: "Search events, venues, organizers...",
+        filters: "Filters",
+
+        // Gallery
+        galleryShowcase: "Gallery Showcase",
+        featuredEventsAndVenues: "Featured events and venues",
+
+        // Event Cards
+        today: "Today!",
+        tomorrow: "Tomorrow",
+        soon: "Soon!",
+        inDays: "In {days} days",
+        limited: "Limited!",
+        from: "From",
+        viewAndBook: "View & Book",
+        at: "at",
+
+        // Sections
+        searchResults: "Search Results",
+        resultsFor: "Results for \"{term}\"",
+        exploreAllEvents: "Explore all events",
+        premierVenues: "Premier Venues",
+        topEventLocations: "Top event locations",
+        hot: "Hot",
+        popular: "Popular",
+
+        // Actions
+        myTickets: "My Tickets",
+        signIn: "Sign In",
+        clearFilters: "Clear Filters",
+
+        // Empty States
+        noEventsAvailable: "No events available",
+        tryAdjustingSearch: "Try adjusting your search",
+        eventsWillAppearSoon: "Events will appear here soon",
+
+        // Footer
+        quickLinks: "Quick Links",
+        browseEvents: "Browse Events",
+        becomeAnOrganizer: "Become an Organizer",
+        contactUs: "Contact Us",
+        support: "Support",
+        helpCenter: "Help Center",
+        faq: "FAQ",
+        contactSupport: "Contact Support",
+        privacyPolicy: "Privacy Policy",
+        termsOfService: "Terms of Service",
+        stayUpdated: "Stay Updated",
+        enterYourEmail: "Enter your email",
+        availableWorldwide: "Available Worldwide",
+
+        // Additional
+        scheduleText: "Schedule",
+        featuredEvents: "Featured Events",
+        categories: "Categories",
+
+        clearSearch: "Clear Search",
+        ticketsavailable: "Tickets Available",
+
+        // Add to English translations (en):
+        by: 'By',
+        eventsHosted: 'events hosted',
+        yourPremierDestination: 'Your premier destination for discovering and booking amazing events.',
+        connectWithExperiences: 'Connect with experiences that matter to you.',
+        home: 'Home',
+        eventStreet: '123 Event Street',
+        shahAlam: 'Shah Alam, Selangor 40150',
+        malaysia: 'Malaysia',
+        monFriHours: 'Mon - Fri: 9:00 AM - 6:00 PM',
+        satSunHours: 'Sat - Sun: 10:00 AM - 4:00 PM',
+        allRightsReserved: 'All rights reserved',
+        eventBanner: 'Event Banner',
+        eventGallery: 'Event Gallery',
+        eventNotFound: 'Event Not Found',
+        backToEvents: 'Back to Events',
+        featured: 'Featured',
+        aboutThisEvent: 'About This Event',
+        onlineEventNote: 'This event will be held online. Access details will be provided after purchase.',
+        eventOrganizer: 'Event Organizer',
+        venueInformation: 'Venue Information',
+        visitWebsite: 'Visit Website',
+        inYourCart: 'In Your Cart',
+        items: 'items',
+        remove: 'Remove',
+        total: 'Total',
+        getTickets: 'Get Tickets',
+        available: 'Available',
+        noTicketsAvailable: 'No tickets available yet',
+        maxPerOrder: 'Max {max} per order',
+        addToCart: 'Add to Cart',
+        soldOut: 'Sold Out',
+        notAvailable: 'Not Available',
+        proceedToCheckout: 'Proceed to Checkout',
+
+        manageTickets: 'View and manage all your event tickets',
+        valid: 'Valid',
+        cancelled: 'Cancelled',
+        upcoming: 'Upcoming',
+        pastEvents: 'Past Events',
+        attended: 'Events Attended',
+        download: 'Download',
+        attendeeInformation: 'Attendee Information',
+        purchaseDetails: 'Purchase Details',
+        purchaseDate: 'Purchase Date',
+        checkInDate: 'Check-in Date',
+        viewEventDetails: 'View Event Details',
+
+        // Order confirmation and profile specific translations
+        orderNotFound: 'Order not found',
+        purchaseSuccessful: 'Purchase Successful!',
+        ticketsConfirmedSentEmail: 'Your tickets have been confirmed and sent to your email.',
+        eventDetails: 'Event Details',
+        orderDetails: 'Order Details',
+        orderNumber: 'Order Number',
+        totalAmount: 'Total Amount',
+        orderDate: 'Order Date',
+        yourTickets: 'Your Tickets',
+        ticketsCount: '{count} ticket(s)',
+        qrCode: 'QR Code',
+        importantNotice: 'Important Notice',
+        bringTicketsAndId: 'Please bring your tickets (printed or on mobile) and a valid ID to the event. QR codes will be scanned at entry.',
+        viewMyTickets: 'View My Tickets',
+        browseMoreEvents: 'Browse More Events',
+        checkEmailForDetails: 'Check your email for detailed tickets and event information.',
+        downloadData: 'Download My Data',
+        defaultTimeZone: 'Default Time Zone for Events',
+
+        serviceFee: 'Service Fee',
+        tax: 'Tax',
+
+        completePurchase: 'Complete Purchase',
+        minutes: 'minutes',
+        hours: 'hours',
+        hour: 'hour',   
     },
     // Spanish translations
     es: {
@@ -3833,7 +4142,7 @@ const translations: Record<string, TranslationKeys> = {
         loadError: 'Error al cargar los datos',
 
         // Dashboard specific
-        welcomeBack: '¡Bienvenido de vuelta, {name}!',
+        welcomeBack: '¡Bienvenido de vuelta',
         virtualEvent: 'Evento Virtual',
         viewAllEvents: 'Ver todos los eventos →',
         upcomingEvents: 'Próximos Eventos',
@@ -4313,7 +4622,150 @@ const translations: Record<string, TranslationKeys> = {
         retry: 'Reintentar',
         loadingAnalytics: 'Cargando analytics...',
         unknown: 'Desconocido',
-        backToPromoCodes: ''
+        backToPromoCodes: '',
+
+        //attendee
+        noimagesavailable: 'No hay imágenes disponibles',
+        loadingevents: 'Cargando eventos...',
+
+        // Hero Section
+        discoverEvents: "Descubrir Eventos",
+        eventsAcrossCategories: "eventos en {count} categorías",
+        searchPlaceholder: "Buscar eventos, lugares, organizadores...",
+        filters: "Filtros",
+
+        // Gallery
+        galleryShowcase: "Galería Destacada",
+        featuredEventsAndVenues: "Eventos y lugares destacados",
+
+        // Event Cards
+        today: "¡Hoy!",
+        tomorrow: "Mañana",
+        soon: "¡Pronto!",
+        inDays: "En {days} días",
+        limited: "¡Limitado!",
+        from: "Desde",
+        viewAndBook: "Ver y Reservar",
+        at: "a las",
+
+        // Sections
+        searchResults: "Resultados de Búsqueda",
+        resultsFor: "Resultados para \"{term}\"",
+        exploreAllEvents: "Explorar todos los eventos",
+        premierVenues: "Lugares Premier",
+        topEventLocations: "Principales ubicaciones de eventos",
+        hot: "Popular",
+        popular: "Popular",
+
+        // Stats
+
+        // Actions
+        myTickets: "Mis Boletos",
+        signIn: "Iniciar Sesión",
+        clearFilters: "Limpiar Filtros",
+
+        // Empty States
+        noEventsAvailable: "No hay eventos disponibles",
+        tryAdjustingSearch: "Intenta ajustar tu búsqueda",
+        eventsWillAppearSoon: "Los eventos aparecerán aquí pronto",
+
+        // Footer
+        quickLinks: "Enlaces Rápidos",
+        browseEvents: "Explorar Eventos",
+        becomeAnOrganizer: "Conviértete en Organizador",
+        contactUs: "Contáctanos",
+        support: "Soporte",
+        helpCenter: "Centro de Ayuda",
+        faq: "Preguntas Frecuentes",
+        contactSupport: "Contactar Soporte",
+        privacyPolicy: "Política de Privacidad",
+        termsOfService: "Términos de Servicio",
+        stayUpdated: "Mantente Actualizado",
+        enterYourEmail: "Ingresa tu email",
+        availableWorldwide: "Disponible en Todo el Mundo",
+
+        // Additional
+        scheduleText: "Horario",
+        featuredEvents: "Eventos Destacados",
+        categories: "Categorías",
+
+        clearSearch: "Limpiar Búsqueda",
+        ticketsavailable: "Boletos Disponibles",
+
+        // Add to Spanish translations (es):
+        by: 'Por',
+        eventsHosted: 'eventos organizados',
+        yourPremierDestination: 'Tu destino principal para descubrir y reservar eventos increíbles.',
+        connectWithExperiences: 'Conecta con experiencias que te importan.',
+        home: 'Inicio',
+        eventStreet: '123 Calle del Evento',
+        shahAlam: 'Shah Alam, Selangor 40150',
+        malaysia: 'Malasia',
+        monFriHours: 'Lun - Vie: 9:00 AM - 6:00 PM',
+        satSunHours: 'Sáb - Dom: 10:00 AM - 4:00 PM',
+        allRightsReserved: 'Todos los derechos reservados',
+        eventBanner: 'Banner del Evento',
+        eventGallery: 'Galería del Evento',
+        eventNotFound: 'Evento No Encontrado',
+        backToEvents: 'Volver a Eventos',
+        featured: 'Destacado',
+        aboutThisEvent: 'Acerca de Este Evento',
+        onlineEventNote: 'Este evento se realizará en línea. Los detalles de acceso se proporcionarán después de la compra.',
+        eventOrganizer: 'Organizador del Evento',
+        venueInformation: 'Información del Lugar',
+        visitWebsite: 'Visitar Sitio Web',
+        inYourCart: 'En Tu Carrito',
+        items: 'artículos',
+        remove: 'Eliminar',
+        total: 'Total',
+        getTickets: 'Obtener Boletos',
+        available: 'Disponibles',
+        noTicketsAvailable: 'Aún no hay boletos disponibles',
+        maxPerOrder: 'Máx {max} por pedido',
+        addToCart: 'Agregar al Carrito',
+        soldOut: 'Agotado',
+        notAvailable: 'No Disponible',
+        proceedToCheckout: 'Proceder al Checkout',
+
+        manageTickets: 'Ver y administrar todos tus boletos de eventos',
+        valid: 'Válido',
+        cancelled: 'Cancelado',
+        upcoming: 'Próximos',
+        pastEvents: 'Eventos Pasados',
+        attended: 'Eventos Asistidos',
+        download: 'Descargar',
+        attendeeInformation: 'Información del Asistente',
+        purchaseDetails: 'Detalles de Compra',
+        purchaseDate: 'Fecha de Compra',
+        checkInDate: 'Fecha de Check-in',
+        viewEventDetails: 'Ver Detalles del Evento',
+
+        // Order confirmation and profile specific translations
+        orderNotFound: 'Pedido no encontrado',
+        purchaseSuccessful: '¡Compra Exitosa!',
+        ticketsConfirmedSentEmail: 'Tus boletos han sido confirmados y enviados a tu email.',
+        eventDetails: 'Detalles del Evento',
+        orderDetails: 'Detalles del Pedido',
+        orderNumber: 'Número de Pedido',
+        totalAmount: 'Monto Total',
+        orderDate: 'Fecha del Pedido',
+        yourTickets: 'Tus Boletos',
+        ticketsCount: '{count} boleto(s)',
+        qrCode: 'Código QR',
+        importantNotice: 'Aviso Importante',
+        bringTicketsAndId: 'Por favor trae tus boletos (impresos o en móvil) y una identificación válida al evento. Los códigos QR serán escaneados en la entrada.',
+        viewMyTickets: 'Ver Mis Boletos',
+        browseMoreEvents: 'Explorar Más Eventos',
+        checkEmailForDetails: 'Revisa tu email para obtener boletos detallados e información del evento.',
+        downloadData: 'Descargar Mis Datos',
+        defaultTimeZone: 'Zona Horaria Predeterminada para Eventos',
+        serviceFee: 'Tarifa de Servicio',
+        tax: 'Impuesto',
+
+        completePurchase: 'Completar Compra',
+        minutes: 'minutos',
+        hours: 'horas',
+        hour: 'horas',
     },
     // French translations
     fr: {
@@ -5150,7 +5602,152 @@ const translations: Record<string, TranslationKeys> = {
         retry: 'Réessayer',
         loadingAnalytics: 'Chargement des analytics...',
         unknown: 'Inconnu',
-        backToPromoCodes: ''
+        backToPromoCodes: '',
+
+        //attendee
+        noimagesavailable: 'Aucune image disponible',
+        loadingevents: 'Chargement des événements...',
+
+        // Hero Section
+        discoverEvents: "Découvrir des Événements",
+        eventsAcrossCategories: "événements dans {count} catégories",
+        searchPlaceholder: "Rechercher événements, lieux, organisateurs...",
+        filters: "Filtres",
+
+        // Gallery
+        galleryShowcase: "Galerie de Présentation",
+        featuredEventsAndVenues: "Événements et lieux en vedette",
+
+        // Event Cards
+        today: "Aujourd'hui !",
+        tomorrow: "Demain",
+        soon: "Bientôt !",
+        inDays: "Dans {days} jours",
+        limited: "Limité !",
+        from: "À partir de",
+        viewAndBook: "Voir et Réserver",
+        at: "à",
+
+        // Sections
+        searchResults: "Résultats de Recherche",
+        resultsFor: "Résultats pour \"{term}\"",
+        exploreAllEvents: "Explorer tous les événements",
+        premierVenues: "Lieux Premier",
+        topEventLocations: "Principaux lieux d'événements",
+        hot: "Tendance",
+        popular: "Populaire",
+
+
+
+        // Actions
+        myTickets: "Mes Billets",
+        signIn: "Se Connecter",
+        clearFilters: "Effacer les Filtres",
+
+
+        // Empty States
+
+        noEventsAvailable: "Aucun événement disponible",
+        tryAdjustingSearch: "Essayez d'ajuster votre recherche",
+        eventsWillAppearSoon: "Les événements apparaîtront ici bientôt",
+
+        // Footer
+        quickLinks: "Liens Rapides",
+        browseEvents: "Explorer les Événements",
+        becomeAnOrganizer: "Devenir Organisateur",
+        contactUs: "Nous Contacter",
+        support: "Support",
+        helpCenter: "Centre d'Aide",
+        faq: "FAQ",
+        contactSupport: "Contacter le Support",
+        privacyPolicy: "Politique de Confidentialité",
+        termsOfService: "Conditions de Service",
+        stayUpdated: "Restez Informé",
+        enterYourEmail: "Entrez votre email",
+        availableWorldwide: "Disponible dans le Monde Entier",
+
+        // Additional
+        scheduleText: "Horaire",
+        featuredEvents: "Événements en Vedette",
+        categories: "Catégories",
+
+        clearSearch: "Effacer la recherche",
+        ticketsavailable: "Billets disponibles",
+
+        // Add to French translations (fr):
+        by: 'Par',
+        eventsHosted: 'événements organisés',
+        yourPremierDestination: 'Votre destination de choix pour découvrir et réserver des événements extraordinaires.',
+        connectWithExperiences: 'Connectez-vous avec des expériences qui vous tiennent à cœur.',
+        home: 'Accueil',
+        eventStreet: '123 Rue de l\'Événement',
+        shahAlam: 'Shah Alam, Selangor 40150',
+        malaysia: 'Malaisie',
+        monFriHours: 'Lun - Ven : 9h00 - 18h00',
+        satSunHours: 'Sam - Dim : 10h00 - 16h00',
+        allRightsReserved: 'Tous droits réservés',
+        eventBanner: 'Bannière de l\'Événement',
+        eventGallery: 'Galerie de l\'Événement',
+        eventNotFound: 'Événement Non Trouvé',
+        backToEvents: 'Retour aux Événements',
+        featured: 'En Vedette',
+        aboutThisEvent: 'À Propos de Cet Événement',
+        onlineEventNote: 'Cet événement se déroulera en ligne. Les détails d\'accès seront fournis après l\'achat.',
+        eventOrganizer: 'Organisateur de l\'Événement',
+        venueInformation: 'Informations sur le Lieu',
+        visitWebsite: 'Visiter le Site Web',
+        inYourCart: 'Dans Votre Panier',
+        items: 'articles',
+        remove: 'Supprimer',
+        total: 'Total',
+        getTickets: 'Obtenir des Billets',
+        available: 'Disponibles',
+        noTicketsAvailable: 'Aucun billet disponible encore',
+        maxPerOrder: 'Max {max} par commande',
+        addToCart: 'Ajouter au Panier',
+        soldOut: 'Épuisé',
+        notAvailable: 'Non Disponible',
+        proceedToCheckout: 'Procéder au Checkout',
+
+        manageTickets: 'Voir et gérer tous vos billets d\'événements',
+        valid: 'Valide',
+        cancelled: 'Annulé',
+        upcoming: 'À venir',
+        pastEvents: 'Événements Passés',
+        attended: 'Événements Assistés',
+        download: 'Télécharger',
+        attendeeInformation: 'Informations du Participant',
+        purchaseDetails: 'Détails d\'Achat',
+        purchaseDate: 'Date d\'Achat',
+        checkInDate: 'Date d\'Enregistrement',
+        viewEventDetails: 'Voir les Détails de l\'Événement',
+
+        // Order confirmation and profile specific translations
+        orderNotFound: 'Commande introuvable',
+        purchaseSuccessful: 'Achat Réussi !',
+        ticketsConfirmedSentEmail: 'Vos billets ont été confirmés et envoyés à votre email.',
+        eventDetails: 'Détails de l\'Événement',
+        orderDetails: 'Détails de la Commande',
+        orderNumber: 'Numéro de Commande',
+        totalAmount: 'Montant Total',
+        orderDate: 'Date de Commande',
+        yourTickets: 'Vos Billets',
+        ticketsCount: '{count} billet(s)',
+        qrCode: 'Code QR',
+        importantNotice: 'Avis Important',
+        bringTicketsAndId: 'Veuillez apporter vos billets (imprimés ou sur mobile) et une pièce d\'identité valide à l\'événement. Les codes QR seront scannés à l\'entrée.',
+        viewMyTickets: 'Voir Mes Billets',
+        browseMoreEvents: 'Parcourir Plus d\'Événements',
+        checkEmailForDetails: 'Vérifiez votre email pour les billets détaillés et les informations de l\'événement.',
+        downloadData: 'Télécharger Mes Données',
+        defaultTimeZone: 'Fuseau Horaire par Défaut pour les Événements',
+        serviceFee: 'Frais de Service',
+        tax: 'Taxe',
+
+        completePurchase: 'Compléter l\'Achat',
+        minutes: 'minutes',
+        hours: 'heures',
+        hour: 'heures',
     },
     // German translations
     de: {
@@ -5510,7 +6107,7 @@ const translations: Record<string, TranslationKeys> = {
         loadError: 'Fehler beim Laden der Daten',
 
         // Dashboard specific
-        welcomeBack: 'Willkommen zurück, {name}!',
+        welcomeBack: 'Willkommen zurück',
         virtualEvent: 'Virtuelle Veranstaltung',
         viewAllEvents: 'Alle Veranstaltungen anzeigen →',
         upcomingEvents: 'Bevorstehende Veranstaltungen',
@@ -5990,7 +6587,151 @@ const translations: Record<string, TranslationKeys> = {
         retry: 'Erneut versuchen',
         loadingAnalytics: 'Analytics werden geladen...',
         unknown: 'Unbekannt',
-        backToPromoCodes: ''
+        backToPromoCodes: '',
+
+        //attendee
+        noimagesavailable: 'Keine Bilder verfügbar',
+        loadingevents: 'Veranstaltungen werden geladen...',
+
+        // Hero Section
+        discoverEvents: "Veranstaltungen Entdecken",
+        eventsAcrossCategories: "Veranstaltungen in {count} Kategorien",
+        searchPlaceholder: "Events, Locations, Veranstalter suchen...",
+        filters: "Filter",
+
+        // Gallery
+        galleryShowcase: "Galerie-Showcase",
+        featuredEventsAndVenues: "Hervorgehobene Events und Locations",
+
+        // Event Cards
+        today: "Heute!",
+        tomorrow: "Morgen",
+        soon: "Bald!",
+        inDays: "In {days} Tagen",
+        limited: "Begrenzt!",
+        from: "Ab",
+        viewAndBook: "Ansehen & Buchen",
+        at: "um",
+
+        // Sections
+        searchResults: "Suchergebnisse",
+        resultsFor: "Ergebnisse für \"{term}\"",
+        exploreAllEvents: "Alle Events erkunden",
+        premierVenues: "Premium-Locations",
+        topEventLocations: "Top Event-Locations",
+        hot: "Angesagt",
+        popular: "Beliebt",
+
+
+
+        // Actions
+        myTickets: "Meine Tickets",
+        signIn: "Anmelden",
+        clearFilters: "Filter Löschen",
+
+
+        // Empty States
+        noEventsAvailable: "Keine Events verfügbar",
+        tryAdjustingSearch: "Versuchen Sie, Ihre Suche anzupassen",
+        eventsWillAppearSoon: "Events werden hier bald erscheinen",
+
+        // Footer
+        quickLinks: "Schnelllinks",
+        browseEvents: "Events Durchsuchen",
+        becomeAnOrganizer: "Veranstalter Werden",
+        contactUs: "Kontakt",
+        support: "Support",
+        helpCenter: "Hilfe-Center",
+        faq: "FAQ",
+        contactSupport: "Support Kontaktieren",
+        privacyPolicy: "Datenschutzrichtlinie",
+        termsOfService: "Nutzungsbedingungen",
+        stayUpdated: "Auf dem Laufenden Bleiben",
+        enterYourEmail: "Geben Sie Ihre E-Mail ein",
+        availableWorldwide: "Weltweit Verfügbar",
+
+        // Additional
+        scheduleText: "Zeitplan",
+        featuredEvents: "Hervorgehobene Events",
+        categories: "Kategorien",
+
+        clearSearch: "Suche Löschen",
+        ticketsavailable: "Tickets Verfügbar",
+
+        // Add to German translations (de):
+        by: 'Von',
+        eventsHosted: 'Veranstaltungen ausgerichtet',
+        yourPremierDestination: 'Ihr erstklassiges Ziel für die Entdeckung und Buchung fantastischer Events.',
+        connectWithExperiences: 'Verbinden Sie sich mit Erfahrungen, die Ihnen wichtig sind.',
+        home: 'Startseite',
+        eventStreet: '123 Event Straße',
+        shahAlam: 'Shah Alam, Selangor 40150',
+        malaysia: 'Malaysia',
+        monFriHours: 'Mo - Fr: 9:00 - 18:00',
+        satSunHours: 'Sa - So: 10:00 - 16:00',
+        allRightsReserved: 'Alle Rechte vorbehalten',
+        eventBanner: 'Veranstaltungs-Banner',
+        eventGallery: 'Veranstaltungs-Galerie',
+        eventNotFound: 'Veranstaltung Nicht Gefunden',
+        backToEvents: 'Zurück zu Veranstaltungen',
+        featured: 'Hervorgehoben',
+        aboutThisEvent: 'Über Diese Veranstaltung',
+        onlineEventNote: 'Diese Veranstaltung findet online statt. Zugangsdaten werden nach dem Kauf bereitgestellt.',
+        eventOrganizer: 'Veranstaltungsorganisator',
+        venueInformation: 'Veranstaltungsort-Informationen',
+        visitWebsite: 'Website Besuchen',
+        inYourCart: 'In Ihrem Warenkorb',
+        items: 'Artikel',
+        remove: 'Entfernen',
+        total: 'Gesamt',
+        getTickets: 'Tickets Erhalten',
+        available: 'Verfügbar',
+        noTicketsAvailable: 'Noch keine Tickets verfügbar',
+        maxPerOrder: 'Max {max} pro Bestellung',
+        addToCart: 'In den Warenkorb',
+        soldOut: 'Ausverkauft',
+        notAvailable: 'Nicht Verfügbar',
+        proceedToCheckout: 'Zur Kasse',
+
+        manageTickets: 'Alle Ihre Event-Tickets anzeigen und verwalten',
+        valid: 'Gültig',
+        cancelled: 'Storniert',
+        upcoming: 'Bevorstehend',
+        pastEvents: 'Vergangene Veranstaltungen',
+        attended: 'Besuchte Veranstaltungen',
+        download: 'Herunterladen',
+        attendeeInformation: 'Teilnehmer-Informationen',
+        purchaseDetails: 'Kaufdetails',
+        purchaseDate: 'Kaufdatum',
+        checkInDate: 'Check-in Datum',
+        viewEventDetails: 'Veranstaltungsdetails anzeigen',
+
+        // Order confirmation and profile specific translations
+        orderNotFound: 'Bestellung nicht gefunden',
+        purchaseSuccessful: 'Kauf Erfolgreich!',
+        ticketsConfirmedSentEmail: 'Ihre Tickets wurden bestätigt und an Ihre E-Mail gesendet.',
+        eventDetails: 'Veranstaltungsdetails',
+        orderDetails: 'Bestelldetails',
+        orderNumber: 'Bestellnummer',
+        totalAmount: 'Gesamtbetrag',
+        orderDate: 'Bestelldatum',
+        yourTickets: 'Ihre Tickets',
+        ticketsCount: '{count} Ticket(s)',
+        qrCode: 'QR-Code',
+        importantNotice: 'Wichtiger Hinweis',
+        bringTicketsAndId: 'Bitte bringen Sie Ihre Tickets (gedruckt oder auf dem Handy) und einen gültigen Ausweis zur Veranstaltung mit. QR-Codes werden am Eingang gescannt.',
+        viewMyTickets: 'Meine Tickets Anzeigen',
+        browseMoreEvents: 'Weitere Veranstaltungen Durchsuchen',
+        checkEmailForDetails: 'Überprüfen Sie Ihre E-Mail für detaillierte Tickets und Veranstaltungsinformationen.',
+        downloadData: 'Meine Daten Herunterladen',
+        defaultTimeZone: 'Standard-Zeitzone für Veranstaltungen',
+        serviceFee: 'Servicegebühr',
+        tax: 'Steuer',
+
+        completePurchase: 'Kauf Abschließen',
+        minutes: 'Minuten',
+        hours: 'Stunden',
+        hour: 'Stunde',
     },
     // Italian translations
     it: {
@@ -6350,7 +7091,7 @@ const translations: Record<string, TranslationKeys> = {
         loadError: 'Impossibile caricare i dati',
 
         // Dashboard specific
-        welcomeBack: 'Bentornato, {name}!',
+        welcomeBack: 'Bentornato',
         virtualEvent: 'Evento virtuale',
         viewAllEvents: 'Visualizza tutti gli eventi →',
         upcomingEvents: 'Eventi in arrivo',
@@ -6829,6 +7570,146 @@ const translations: Record<string, TranslationKeys> = {
         allMonetaryValuesUSD: 'Tutti i valori monetari sono visualizzati in USD.',
         backToPromoCodes: 'Torna ai Codici Promozionali',
         usageHistory: 'Cronologia Utilizzo',
+
+        //attendee
+        noimagesavailable: 'Nessuna immagine disponibile',
+        loadingevents: 'Caricamento eventi in corso...',
+
+        // Hero Section
+        discoverEvents: "Scopri Eventi",
+        eventsAcrossCategories: "eventi in {count} categorie",
+        searchPlaceholder: "Cerca eventi, luoghi, organizzatori...",
+        filters: "Filtri",
+
+        // Gallery
+        galleryShowcase: "Galleria in Evidenza",
+        featuredEventsAndVenues: "Eventi e luoghi in evidenza",
+
+        // Event Cards
+        today: "Oggi!",
+        tomorrow: "Domani",
+        soon: "Presto!",
+        inDays: "Tra {days} giorni",
+        limited: "Limitato!",
+        from: "Da",
+        viewAndBook: "Visualizza e Prenota",
+        at: "alle",
+
+        // Sections
+        searchResults: "Risultati di Ricerca",
+        resultsFor: "Risultati per \"{term}\"",
+        exploreAllEvents: "Esplora tutti gli eventi",
+        premierVenues: "Luoghi Premium",
+        topEventLocations: "Principali location per eventi",
+        hot: "Tendenza",
+        popular: "Popolare",
+
+        // Actions
+        myTickets: "I Miei Biglietti",
+        signIn: "Accedi",
+        clearFilters: "Cancella Filtri",
+
+        // Empty States
+        noEventsAvailable: "Nessun evento disponibile",
+        tryAdjustingSearch: "Prova ad aggiustare la tua ricerca",
+        eventsWillAppearSoon: "Gli eventi appariranno qui presto",
+
+        // Footer
+        quickLinks: "Link Rapidi",
+        browseEvents: "Sfoglia Eventi",
+        becomeAnOrganizer: "Diventa Organizzatore",
+        contactUs: "Contattaci",
+        support: "Supporto",
+        helpCenter: "Centro Assistenza",
+        faq: "Domande Frequenti",
+        contactSupport: "Contatta il Supporto",
+        privacyPolicy: "Politica sulla Privacy",
+        termsOfService: "Termini di Servizio",
+        stayUpdated: "Rimani Aggiornato",
+        enterYourEmail: "Inserisci la tua email",
+        availableWorldwide: "Disponibile in Tutto il Mondo",
+
+        // Additional
+        scheduleText: "Programma",
+        featuredEvents: "Eventi in Evidenza",
+        categories: "Categorie",
+
+        clearSearch: "Cancella Ricerca",
+        ticketsavailable: "Biglietti Disponibili",
+        // Add to Italian translations (it):
+        by: 'Di',
+        eventsHosted: 'eventi ospitati',
+        yourPremierDestination: 'La tua destinazione principale per scoprire e prenotare eventi straordinari.',
+        connectWithExperiences: 'Connettiti con esperienze che contano per te.',
+        home: 'Home',
+        eventStreet: '123 Via degli Eventi',
+        shahAlam: 'Shah Alam, Selangor 40150',
+        malaysia: 'Malesia',
+        monFriHours: 'Lun - Ven: 9:00 - 18:00',
+        satSunHours: 'Sab - Dom: 10:00 - 16:00',
+        allRightsReserved: 'Tutti i diritti riservati',
+        eventBanner: 'Banner dell\'Evento',
+        eventGallery: 'Galleria dell\'Evento',
+        eventNotFound: 'Evento Non Trovato',
+        backToEvents: 'Torna agli Eventi',
+        featured: 'In Evidenza',
+        aboutThisEvent: 'Informazioni su Questo Evento',
+        onlineEventNote: 'Questo evento si svolgerà online. I dettagli di accesso verranno forniti dopo l\'acquisto.',
+        eventOrganizer: 'Organizzatore dell\'Evento',
+        venueInformation: 'Informazioni sul Luogo',
+        visitWebsite: 'Visita il Sito Web',
+        inYourCart: 'Nel Tuo Carrello',
+        items: 'articoli',
+        remove: 'Rimuovi',
+        total: 'Totale',
+        getTickets: 'Ottieni Biglietti',
+        available: 'Disponibili',
+        noTicketsAvailable: 'Nessun biglietto disponibile ancora',
+        maxPerOrder: 'Max {max} per ordine',
+        addToCart: 'Aggiungi al Carrello',
+        soldOut: 'Esaurito',
+        notAvailable: 'Non Disponibile',
+        proceedToCheckout: 'Procedi al Checkout',
+
+        manageTickets: 'Visualizza e gestisci tutti i tuoi biglietti per eventi',
+        valid: 'Valido',
+        cancelled: 'Annullato',
+        upcoming: 'Prossimi',
+        pastEvents: 'Eventi Passati',
+        attended: 'Eventi Partecipati',
+        download: 'Scarica',
+        attendeeInformation: 'Informazioni Partecipante',
+        purchaseDetails: 'Dettagli Acquisto',
+        purchaseDate: 'Data di Acquisto',
+        checkInDate: 'Data di Check-in',
+        viewEventDetails: 'Visualizza Dettagli Evento',
+
+        orderNotFound: 'Ordine non trovato',
+        purchaseSuccessful: 'Acquisto completato con successo',
+        ticketsConfirmedSentEmail: 'Biglietti confermati e inviati via email',
+        eventDetails: 'Dettagli evento',
+        orderDetails: 'Dettagli ordine',
+        orderNumber: 'Numero ordine',
+        totalAmount: 'Importo totale',
+        orderDate: 'Data ordine',
+        yourTickets: 'I tuoi biglietti',
+        ticketsCount: 'Numero di biglietti',
+        qrCode: 'Codice QR',
+        importantNotice: 'Avviso importante',
+        bringTicketsAndId: 'Porta i biglietti e un documento d\'identità',
+        viewMyTickets: 'Visualizza i miei biglietti',
+        browseMoreEvents: 'Esplora altri eventi',
+        checkEmailForDetails: 'Controlla la tua email per i dettagli',
+        downloadData: 'Scarica dati',
+        defaultTimeZone: 'Fuso orario predefinito',
+
+        serviceFee: 'Commissione',
+        tax: 'Tassa',
+
+        completePurchase: 'Completa l\'acquisto',
+        minutes: 'minuti',
+        hours: 'ore',
+        hour: 'ora',
     }
 };
 
@@ -6946,6 +7827,74 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } catch (error) {
                 console.error('Error saving language preference:', error);
             }
+        }
+    }, []);
+
+    useEffect(() => {
+        const loadLanguageFromPreferences = async () => {
+            try {
+                // Check if user is logged in
+                const authToken = localStorage.getItem('authToken');
+                if (authToken) {
+                    // Try to get user preferences
+                    const response = await fetch('http://localhost:5251/api/user/preferences', {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const preferences = await response.json();
+                        if (preferences.language && preferences.language !== currentLanguage) {
+                            changeLanguage(preferences.language);
+                            return; // Exit early if we found user preference
+                        }
+                    }
+                }
+
+                // Fallback: Load from localStorage or browser language
+                const savedLanguage = localStorage.getItem('selectedLanguage');
+                if (savedLanguage && SUPPORTED_LANGUAGES.find(lang => lang.code === savedLanguage)) {
+                    changeLanguage(savedLanguage);
+                } else {
+                    // Detect browser language
+                    const browserLang = navigator.language.split('-')[0];
+                    const supportedLang = SUPPORTED_LANGUAGES.find(lang => lang.code === browserLang);
+                    if (supportedLang) {
+                        changeLanguage(browserLang);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading language preference:', error);
+                // Fallback to localStorage
+                const savedLanguage = localStorage.getItem('selectedLanguage');
+                if (savedLanguage) {
+                    changeLanguage(savedLanguage);
+                }
+            }
+        };
+
+        loadLanguageFromPreferences();
+    }, []); // Only run on mount
+
+    // Add this: Method to sync language with user preferences
+    const syncLanguageWithPreferences = useCallback(async (languageCode: string) => {
+        try {
+            const authToken = localStorage.getItem('authToken');
+            if (authToken) {
+                await fetch('http://localhost:5251/api/user/preferences', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        language: languageCode
+                    })
+                });
+            }
+        } catch (error) {
+            console.error('Error syncing language with server:', error);
         }
     }, []);
 

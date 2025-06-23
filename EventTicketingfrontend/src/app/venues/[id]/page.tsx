@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { TranslationKeys, useI18n } from '@/components/providers/I18nProvider';
 import {
     Calendar,
     MapPin,
@@ -32,6 +33,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { userApi } from '@/lib/api';
+import { useI18nContext } from '@/components/providers/I18nProvider';
 
 // Interfaces based on your database structure
 interface Venue {
@@ -68,7 +70,8 @@ interface VenueEvent {
     isPublished: boolean;
 }
 
-interface UserPreferences {
+
+interface AttendeePreferences {
     emailNotifications: boolean;
     sessionTimeout: number;
     theme: string;
@@ -79,9 +82,9 @@ interface UserPreferences {
     accentColor?: string;
     fontSize?: string;
     compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY'; 
 }
-
-const getThemeClasses = (preferences: UserPreferences | null) => {
+const getThemeClasses = (preferences: AttendeePreferences | null) => {
     const isDarkMode = preferences?.theme === 'dark' ||
         (preferences?.theme === 'auto' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
@@ -230,15 +233,119 @@ export default function VenueDetailPage() {
     const params = useParams();
     const router = useRouter();
     const venueId = params.id as string;
+    const { formatDate: i18nFormatDate, formatTime: i18nFormatTime } = useI18nContext();
+    const { t, currentLanguage, changeLanguage, availableLanguages } = useI18n();
 
     const [venue, setVenue] = useState<Venue | null>(null);
     const [events, setEvents] = useState<VenueEvent[]>([]);
-    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+    const [preferences, setPreferences] = useState<AttendeePreferences | null>(null);
     const [loading, setLoading] = useState(true);
     const [imageError, setImageError] = useState(false);
     const [activeTab, setActiveTab] = useState<'overview' | 'events' | 'location'>('overview');
 
     const themeClasses = getThemeClasses(preferences);
+
+    // Currency helper functions
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'JPY': '¥'
+        };
+        return symbols[currency] || '$';
+    };
+
+    const formatPrice = (price: number, preferences: AttendeePreferences | null) => {
+        const currency = preferences?.currency || 'USD';
+        const symbol = getCurrencySymbol(currency);
+
+        // Conversion rates (in a real app, you'd fetch these from an API)
+        const conversionRates: { [key: string]: number } = {
+            'USD': 1,
+            'EUR': 0.92,  // 1 USD = 0.92 EUR
+            'GBP': 0.79,  // 1 USD = 0.79 GBP
+            'JPY': 149    // 1 USD = 149 JPY
+        };
+
+        const convertedPrice = price * (conversionRates[currency] || 1);
+
+        if (currency === 'JPY') {
+            return `${symbol}${Math.round(convertedPrice).toLocaleString()}`;
+        }
+
+        return `${symbol}${convertedPrice.toFixed(2)}`;
+    };
+
+    // Enhanced date formatting
+    const formatAccountCreationDate = (
+        dateString: string,
+        preferences: AttendeePreferences | null,
+        includeTime = false
+    ): string => {
+        if (!dateString) return 'N/A';
+
+        const date = new Date(dateString);
+        const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+        const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+        const timeFormat = preferences?.timeFormat || '12h';
+
+        // Convert to user's timezone
+        const zonedDate = new Date(date.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+        // Extract date components
+        const year = zonedDate.getFullYear();
+        const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(zonedDate.getDate()).padStart(2, '0');
+
+        // Month names for text formats
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        const monthFull = monthNames[zonedDate.getMonth()];
+        const monthAbbr = monthShort[zonedDate.getMonth()];
+
+        // Weekday names
+        const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        // Format date according to user preference
+        let formattedDate: string;
+        switch (dateFormat) {
+            case 'dd/MM/yyyy':
+                formattedDate = `${day}/${month}/${year}`;
+                break;
+            case 'yyyy-MM-dd':
+                formattedDate = `${year}-${month}-${day}`;
+                break;
+            case 'MMM dd, yyyy':
+                formattedDate = `${monthAbbr} ${parseInt(day)}, ${year}`;
+                break;
+            case 'dd MMM yyyy':
+                formattedDate = `${parseInt(day)} ${monthAbbr} ${year}`;
+                break;
+            case 'MMMM dd, yyyy':
+                formattedDate = `${monthFull} ${parseInt(day)}, ${year}`;
+                break;
+            case 'dd MMMM yyyy':
+                formattedDate = `${parseInt(day)} ${monthFull} ${year}`;
+                break;
+            case 'EEE, MMM dd, yyyy':
+                formattedDate = `${weekdaysShort[zonedDate.getDay()]}, ${monthAbbr} ${parseInt(day)}, ${year}`;
+                break;
+            case 'EEEE, MMMM dd, yyyy':
+                formattedDate = `${weekdays[zonedDate.getDay()]}, ${monthFull} ${parseInt(day)}, ${year}`;
+                break;
+            default: // MM/dd/yyyy
+                formattedDate = `${month}/${day}/${year}`;
+        }
+
+        return formattedDate;
+    };
 
     useEffect(() => {
         Promise.all([loadUserPreferences()]);
@@ -274,7 +381,10 @@ export default function VenueDetailPage() {
                 defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
                 accentColor: prefsData.accentColor || 'blue',
                 fontSize: prefsData.fontSize || 'medium',
-                compactMode: prefsData.compactMode || false
+                compactMode: prefsData.compactMode || false,
+                currency: (prefsData.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(prefsData.currency))
+                    ? prefsData.currency as 'USD' | 'EUR' | 'GBP' | 'JPY'
+                    : 'USD' // Add this line
             });
         } catch (error) {
             console.log('No preferences found, using defaults');
@@ -288,7 +398,8 @@ export default function VenueDetailPage() {
                 defaultTimeZone: 'UTC',
                 accentColor: 'blue',
                 fontSize: 'medium',
-                compactMode: false
+                compactMode: false,
+                currency: 'USD' // Add this line
             });
         }
     };
@@ -341,51 +452,17 @@ export default function VenueDetailPage() {
     };
 
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const format = preferences?.dateFormat || 'MM/dd/yyyy';
-
-        switch (format) {
-            case 'dd/MM/yyyy':
-                return date.toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            case 'yyyy-MM-dd':
-                return date.toLocaleDateString('sv-SE', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            default:
-                return date.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
+        if (preferences) {
+            return formatAccountCreationDate(dateString, preferences, false);
         }
+        const date = new Date(dateString);
+        return i18nFormatDate(date);
     };
 
     const formatTime = (dateString: string) => {
         const date = new Date(dateString);
         const format = preferences?.timeFormat || '12h';
-
-        if (format === '24h') {
-            return date.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-        } else {
-            return date.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
-        }
+        return i18nFormatTime(date, format as '12h' | '24h');
     };
 
     const shareVenue = async () => {
@@ -401,9 +478,11 @@ export default function VenueDetailPage() {
             }
         } else if (venue) {
             navigator.clipboard.writeText(window.location.href);
-            alert('Venue link copied to clipboard!');
+            alert(t('copySuccess'));
         }
     };
+
+
 
     const openMap = () => {
         if (venue?.latitude && venue?.longitude) {
@@ -419,7 +498,9 @@ export default function VenueDetailPage() {
             <div className={`min-h-screen ${themeClasses?.background || 'bg-gray-50'} flex items-center justify-center`}>
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-6"></div>
-                    <p className={`${themeClasses?.fontSize?.text || 'text-xl'} ${themeClasses?.textSecondary || 'text-gray-600'}`}>Loading venue details...</p>
+                    <p className={`${themeClasses?.fontSize?.text || 'text-xl'} ${themeClasses?.textSecondary || 'text-gray-600'}`}>
+                        {t('loadingVenues')}
+                    </p>
                 </div>
             </div>
         );
@@ -430,13 +511,17 @@ export default function VenueDetailPage() {
             <div className={`min-h-screen ${themeClasses.background} flex items-center justify-center`}>
                 <div className="text-center">
                     <Building className={`h-16 w-16 ${themeClasses.textMuted} mx-auto mb-4`} />
-                    <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} mb-2`}>Venue Not Found</h1>
-                    <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} mb-6`}>The venue you're looking for doesn't exist.</p>
+                    <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} mb-2`}>
+                        {t('eventNotFound')}
+                    </h1>
+                    <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} mb-6`}>
+                        {t('noVenuesFound')}
+                    </p>
                     <Link
                         href="/"
                         className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg transition-colors ${themeClasses.fontSize.button}`}
                     >
-                        Back to Events
+                        {t('backToEvents')}
                     </Link>
                 </div>
             </div>
@@ -466,9 +551,39 @@ export default function VenueDetailPage() {
                             className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}
                         >
                             <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
-                            Back
+                            {t('back')}
                         </button>
                         <div className="flex items-center space-x-4">
+                            {/* User Preferences Display */}
+                            <div className={`hidden md:flex flex-col items-end ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} space-y-1`}>
+                                {preferences?.currency && (
+                                    <div className="flex items-center">
+                                        <span className="mr-1">{getCurrencySymbol(preferences.currency)}</span>
+                                        {t('currency')}: {preferences.currency === 'USD' ? 'US Dollar' :
+                                            preferences.currency === 'EUR' ? 'Euro' :
+                                                preferences.currency === 'GBP' ? 'British Pound' :
+                                                    preferences.currency === 'JPY' ? 'Japanese Yen' : preferences.currency}
+                                    </div>
+                                )}
+                                {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
+                                    <div className="flex items-center">
+                                        <span className="mr-1">🌍</span>
+                                        {t('timezone')}: {preferences.defaultTimeZone.replace('_', ' ').replace('/', ', ')}
+                                    </div>
+                                )}
+                                {preferences?.dateFormat && (
+                                    <div className="flex items-center">
+                                        <span className="mr-1">📅</span>
+                                        {t('dateFormat')}: {preferences.dateFormat}
+                                    </div>
+                                )}
+                                {preferences?.timeFormat && (
+                                    <div className="flex items-center">
+                                        <span className="mr-1">🕒</span>
+                                        {t('timeFormat')}: {preferences.timeFormat === '12h' ? '12-hour' : '24-hour'}
+                                    </div>
+                                )}
+                            </div>
                             <button
                                 onClick={shareVenue}
                                 className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}
@@ -522,11 +637,11 @@ export default function VenueDetailPage() {
                                     </div>
                                     <div className="flex items-center">
                                         <Users className={`${themeClasses.iconSize} mr-1`} />
-                                        {venue.capacity.toLocaleString()} capacity
+                                        {venue.capacity.toLocaleString()} {t('capacity')}
                                     </div>
                                     <div className="flex items-center">
                                         <Calendar className={`${themeClasses.iconSize} mr-1`} />
-                                        {venue.eventCount} events hosted
+                                        {t('eventsHosted', { count: venue.eventCount })}
                                     </div>
                                 </div>
                             </div>
@@ -535,17 +650,17 @@ export default function VenueDetailPage() {
                             <div className="hidden md:flex space-x-6">
                                 <div className="text-center text-white">
                                     <div className={`${themeClasses.fontSize.metric} font-bold drop-shadow-lg`}>{upcomingEvents.length}</div>
-                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>Upcoming Events</div>
+                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>{t('upcomingEvents')}</div>
                                 </div>
                                 <div className="text-center text-white">
                                     <div className={`${themeClasses.fontSize.metric} font-bold drop-shadow-lg`}>{venue.eventCount}</div>
-                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>Total Events</div>
+                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>{t('totalEvents')}</div>
                                 </div>
                                 <div className="text-center text-white">
                                     <div className={`${themeClasses.fontSize.metric} font-bold drop-shadow-lg`}>
                                         {(venue.capacity / 1000).toFixed(0)}K
                                     </div>
-                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>Capacity</div>
+                                    <div className={`${themeClasses.fontSize.subtitle} opacity-80`}>{t('capacity')}</div>
                                 </div>
                             </div>
                         </div>
@@ -564,7 +679,7 @@ export default function VenueDetailPage() {
                                 : `border-transparent ${themeClasses.textMuted} hover:${themeClasses.textSecondary}`
                                 }`}
                         >
-                            Overview
+                            {t('overview')}
                         </button>
                         <button
                             onClick={() => setActiveTab('events')}
@@ -573,7 +688,7 @@ export default function VenueDetailPage() {
                                 : `border-transparent ${themeClasses.textMuted} hover:${themeClasses.textSecondary}`
                                 }`}
                         >
-                            Events ({upcomingEvents.length})
+                            {t('events')} ({upcomingEvents.length})
                         </button>
                         <button
                             onClick={() => setActiveTab('location')}
@@ -582,7 +697,7 @@ export default function VenueDetailPage() {
                                 : `border-transparent ${themeClasses.textMuted} hover:${themeClasses.textSecondary}`
                                 }`}
                         >
-                            Location & Contact
+                            {t('location')} & {t('contactUs')}
                         </button>
                     </nav>
                 </div>
@@ -596,7 +711,9 @@ export default function VenueDetailPage() {
                         <div className={`lg:col-span-2 ${themeClasses.spacing}`}>
                             {/* Description */}
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
-                                <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>About This Venue</h2>
+                                <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                    {t('aboutThisEvent')}
+                                </h2>
                                 <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} leading-relaxed`}>{venue.description}</p>
                             </div>
 
@@ -610,7 +727,7 @@ export default function VenueDetailPage() {
                                 <div className="relative z-10">
                                     <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginSmall} flex items-center`}>
                                         <Star className={`${themeClasses.iconSize} ${themeClasses.accentText} mr-3`} />
-                                        Venue Features
+                                        {t('venueCapacity')}
                                     </h2>
 
                                     <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap}`}>
@@ -630,10 +747,10 @@ export default function VenueDetailPage() {
                                                     {venue.capacity.toLocaleString()}
                                                 </div>
                                                 <div className={`${themeClasses.fontSize.text} ${themeClasses.accentText} font-medium`}>
-                                                    People Capacity
+                                                    {t('maximumCapacity')}
                                                 </div>
                                                 <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-2`}>
-                                                    {venue.capacity > 10000 ? 'Large Scale Events' : venue.capacity > 5000 ? 'Medium Scale Events' : 'Intimate Events'}
+                                                    {venue.capacity > 10000 ? t('large') : venue.capacity > 5000 ? t('medium') : t('small')}
                                                 </div>
                                             </div>
                                         </div>
@@ -655,13 +772,13 @@ export default function VenueDetailPage() {
                                                     </span>
                                                 </div>
                                                 <div className={`font-bold ${themeClasses.text} text-xl mb-1`}>
-                                                    {venue.isActive ? 'Active' : 'Inactive'}
+                                                    {venue.isActive ? t('active') : t('inactive')}
                                                 </div>
                                                 <div className={`${themeClasses.fontSize.text} ${venue.isActive ? 'text-green-700' : 'text-red-700'} font-medium`}>
-                                                    Venue Status
+                                                    {t('venueStatus')}
                                                 </div>
                                                 <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-2`}>
-                                                    {venue.isActive ? 'Available for bookings' : 'Currently unavailable'}
+                                                    {venue.isActive ? t('available') : t('notAvailable')}
                                                 </div>
                                             </div>
                                         </div>
@@ -682,12 +799,12 @@ export default function VenueDetailPage() {
                                                     {venue.eventCount}
                                                 </div>
                                                 <div className={`${themeClasses.fontSize.text} text-purple-700 font-medium`}>
-                                                    Events Hosted
+                                                    {t('eventsHosted')}
                                                 </div>
                                                 <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-2`}>
-                                                    {venue.eventCount > 50 ? 'Premier venue with extensive experience' :
-                                                        venue.eventCount > 10 ? 'Experienced event hosting' :
-                                                            'Growing event portfolio'}
+                                                    {venue.eventCount > 50 ? t('popular') :
+                                                        venue.eventCount > 10 ? t('featured') :
+                                                            t('soon')}
                                                 </div>
                                             </div>
                                         </div>
@@ -707,15 +824,15 @@ export default function VenueDetailPage() {
                                                     </div>
                                                 </div>
                                                 <div className={`font-bold ${themeClasses.text} text-xl mb-1`}>
-                                                    {venue.eventCount > 20 ? 'Premier' : venue.eventCount > 10 ? 'Popular' : 'Rising'}
+                                                    {venue.eventCount > 20 ? t('popular') : venue.eventCount > 10 ? t('featured') : t('hot')}
                                                 </div>
                                                 <div className={`${themeClasses.fontSize.text} text-orange-700 font-medium`}>
-                                                    Venue Rating
+                                                    {t('venueStatus')}
                                                 </div>
                                                 <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-2`}>
-                                                    {venue.eventCount > 20 ? 'Top-tier venue choice' :
-                                                        venue.eventCount > 10 ? 'Trusted by event organizers' :
-                                                            'Quality venue option'}
+                                                    {venue.eventCount > 20 ? t('topEventLocations') :
+                                                        venue.eventCount > 10 ? t('featured') :
+                                                            t('hot')}
                                                 </div>
                                             </div>
                                         </div>
@@ -723,31 +840,33 @@ export default function VenueDetailPage() {
 
                                     {/* Additional Venue Stats */}
                                     <div className={`mt-6 p-4 rounded-lg ${themeClasses.backgroundCard} border ${themeClasses.border}`}>
-                                        <h3 className={`${themeClasses.fontSize.label} font-semibold ${themeClasses.text} mb-3`}>Quick Facts</h3>
+                                        <h3 className={`${themeClasses.fontSize.label} font-semibold ${themeClasses.text} mb-3`}>
+                                            {t('quickLinks')}
+                                        </h3>
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                             <div className="text-center">
                                                 <div className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.accentText}`}>
                                                     {Math.round(venue.capacity / 1000)}K
                                                 </div>
-                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Capacity</div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>{t('capacity')}</div>
                                             </div>
                                             <div className="text-center">
                                                 <div className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.accentText}`}>
                                                     {venue.eventCount}
                                                 </div>
-                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Events</div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>{t('events')}</div>
                                             </div>
                                             <div className="text-center">
                                                 <div className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.accentText}`}>
                                                     {venue.city}
                                                 </div>
-                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Location</div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>{t('location')}</div>
                                             </div>
                                             <div className="text-center">
                                                 <div className={`${themeClasses.fontSize.heading} font-bold ${venue.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                                                    {venue.isActive ? 'Open' : 'Closed'}
+                                                    {venue.isActive ? t('active') : t('inactive')}
                                                 </div>
-                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Status</div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>{t('status')}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -759,7 +878,9 @@ export default function VenueDetailPage() {
                         <div className={themeClasses.spacing}>
                             {/* Contact Card */}
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
-                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Contact Information</h3>
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                    {t('contactUs')}
+                                </h3>
                                 <div className="space-y-3">
                                     <div className="flex items-center">
                                         <Mail className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
@@ -788,7 +909,7 @@ export default function VenueDetailPage() {
                                                 rel="noopener noreferrer"
                                                 className={`${themeClasses.accentText} ${themeClasses.accentHover} flex items-center ${themeClasses.fontSize.text}`}
                                             >
-                                                Visit Website
+                                                {t('visitWebsite')}
                                                 <ExternalLink className={`${themeClasses.iconSizeSmall} ml-1`} />
                                             </a>
                                         </div>
@@ -798,7 +919,9 @@ export default function VenueDetailPage() {
 
                             {/* Location Card */}
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
-                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Location</h3>
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                    {t('location')}
+                                </h3>
                                 <div className={`space-y-2 ${themeClasses.marginSmall}`}>
                                     <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>{venue.address}</div>
                                     <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
@@ -822,15 +945,17 @@ export default function VenueDetailPage() {
                     <div className={themeClasses.spacing}>
                         {/* Events Summary */}
                         <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.padding} border ${themeClasses.borderCard}`}>
-                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Events at {venue.name}</h2>
+                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                {t('events')} {t('at')} {venue.name}
+                            </h2>
                             <div className={`grid grid-cols-1 md:grid-cols-2 ${themeClasses.gap}`}>
                                 <div className={`text-center ${themeClasses.paddingSmall} ${themeClasses.accentLight} rounded-lg`}>
                                     <div className={`${themeClasses.fontSize.metric} font-bold ${themeClasses.accentText}`}>{upcomingEvents.length}</div>
-                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>Upcoming Events</div>
+                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>{t('upcomingEvents')}</div>
                                 </div>
                                 <div className={`text-center ${themeClasses.paddingSmall} bg-green-50 rounded-lg`}>
                                     <div className={`${themeClasses.fontSize.metric} font-bold text-green-600`}>{pastEvents.length}</div>
-                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>Past Events</div>
+                                    <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>{t('pastEvents')}</div>
                                 </div>
                             </div>
                         </div>
@@ -840,10 +965,10 @@ export default function VenueDetailPage() {
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.padding} border ${themeClasses.borderCard}`}>
                                 <div className={`flex items-center justify-between ${themeClasses.marginLarge}`}>
                                     <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
-                                        Upcoming Events ({upcomingEvents.length})
+                                        {t('upcomingEvents')} ({upcomingEvents.length})
                                     </h2>
                                     <span className={`px-3 py-1 bg-green-100 text-green-800 ${themeClasses.fontSize.subtitle} font-medium rounded-full`}>
-                                        Available Now
+                                        {t('ticketsavailable')}
                                     </span>
                                 </div>
                                 <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${themeClasses.gap}`}>
@@ -857,6 +982,7 @@ export default function VenueDetailPage() {
                                                 preferences={preferences}
                                                 formatDate={formatDate}
                                                 formatTime={formatTime}
+                                                t={t as any}
                                             />
                                         ))}
                                 </div>
@@ -864,8 +990,12 @@ export default function VenueDetailPage() {
                         ) : (
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.paddingLarge} border ${themeClasses.borderCard} text-center`}>
                                 <Calendar className={`${themeClasses.iconSizeLarge} ${themeClasses.textMuted} mx-auto ${themeClasses.marginSmall}`} />
-                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>No Upcoming Events</h3>
-                                <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>This venue doesn't have any scheduled upcoming events.</p>
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                    {t('noEventsAvailable')}
+                                </h3>
+                                <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
+                                    {t('eventsWillAppearSoon')}
+                                </p>
                             </div>
                         )}
 
@@ -874,10 +1004,10 @@ export default function VenueDetailPage() {
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.padding} border ${themeClasses.borderCard}`}>
                                 <div className={`flex items-center justify-between ${themeClasses.marginLarge}`}>
                                     <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
-                                        Past Events ({pastEvents.length})
+                                        {t('pastEvents')} ({pastEvents.length})
                                     </h2>
                                     <span className={`px-3 py-1 bg-gray-100 text-gray-600 ${themeClasses.fontSize.subtitle} font-medium rounded-full`}>
-                                        Event History
+                                        {t('pastEvents')}
                                     </span>
                                 </div>
                                 <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 ${themeClasses.gap}`}>
@@ -892,13 +1022,14 @@ export default function VenueDetailPage() {
                                                 preferences={preferences}
                                                 formatDate={formatDate}
                                                 formatTime={formatTime}
+                                                t={t as any}
                                             />
                                         ))}
                                 </div>
                                 {pastEvents.length > 6 && (
                                     <div className="text-center mt-6">
                                         <button className={`${themeClasses.buttonPadding} ${themeClasses.backgroundCard} ${themeClasses.hover} ${themeClasses.text} rounded-lg transition-colors ${themeClasses.fontSize.button}`}>
-                                            View All {pastEvents.length} Past Events
+                                            {t('viewAllEvents')} {pastEvents.length} {t('pastEvents')}
                                         </button>
                                     </div>
                                 )}
@@ -909,15 +1040,12 @@ export default function VenueDetailPage() {
                         {events.length === 0 && (
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-xl ${themeClasses.paddingLarge} border ${themeClasses.borderCard} text-center`}>
                                 <Building className={`h-20 w-20 ${themeClasses.textMuted} mx-auto ${themeClasses.marginLarge}`} />
-                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>No Events Yet</h3>
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>
+                                    {t('noEventsYet')}
+                                </h3>
                                 <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} ${themeClasses.marginLarge}`}>
-                                    This venue hasn't hosted any events yet, but that could change soon!
+                                    {t('eventsWillAppearSoon')}
                                 </p>
-                                <div className={`space-y-2 ${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>
-                                    <p>• Check back later for upcoming events</p>
-                                    <p>• Contact the venue for booking information</p>
-                                    <p>• Follow our updates for new announcements</p>
-                                </div>
                             </div>
                         )}
                     </div>
@@ -926,10 +1054,14 @@ export default function VenueDetailPage() {
                 {activeTab === 'location' && (
                     <div className={`grid grid-cols-1 lg:grid-cols-2 ${themeClasses.gap}`}>
                         <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
-                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginLarge}`}>Address & Directions</h2>
+                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginLarge}`}>
+                                {t('venueLocation')}
+                            </h2>
                             <div className="space-y-4">
                                 <div>
-                                    <h3 className={`font-semibold ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.label}`}>Full Address</h3>
+                                    <h3 className={`font-semibold ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.label}`}>
+                                        {t('address')}
+                                    </h3>
                                     <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
                                         <div>{venue.address}</div>
                                         <div>{venue.city}, {venue.state} {venue.zipCode}</div>
@@ -939,9 +1071,11 @@ export default function VenueDetailPage() {
 
                                 {venue.latitude && venue.longitude && (
                                     <div>
-                                        <h3 className={`font-semibold ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.label}`}>Coordinates</h3>
+                                        <h3 className={`font-semibold ${themeClasses.text} ${themeClasses.marginSmall} ${themeClasses.fontSize.label}`}>
+                                            {t('latitude')} & {t('longitude')}
+                                        </h3>
                                         <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
-                                            Lat: {venue.latitude}, Lng: {venue.longitude}
+                                            {t('latitude')}: {venue.latitude}, {t('longitude')}: {venue.longitude}
                                         </div>
                                     </div>
                                 )}
@@ -957,15 +1091,19 @@ export default function VenueDetailPage() {
                         </div>
 
                         <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-lg ${themeClasses.shadow} ${themeClasses.padding} border ${themeClasses.borderCard}`}>
-                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginLarge}`}>Contact Information</h2>
+                            <h2 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ${themeClasses.marginLarge}`}>
+                                {t('venueInformation')}
+                            </h2>
                             <div className={themeClasses.spacing}>
                                 <div>
-                                    <h3 className={`font-semibold ${themeClasses.text} mb-3 ${themeClasses.fontSize.label}`}>Get in Touch</h3>
+                                    <h3 className={`font-semibold ${themeClasses.text} mb-3 ${themeClasses.fontSize.label}`}>
+                                        {t('contactUs')}
+                                    </h3>
                                     <div className="space-y-3">
                                         <div className={`flex items-center p-3 ${themeClasses.backgroundCard} rounded-lg`}>
                                             <Mail className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                             <div>
-                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Email</div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>{t('email')}</div>
                                                 <a
                                                     href={`mailto:${venue.contactEmail}`}
                                                     className={`${themeClasses.accentText} ${themeClasses.accentHover} font-medium ${themeClasses.fontSize.text}`}
@@ -978,7 +1116,7 @@ export default function VenueDetailPage() {
                                         <div className={`flex items-center p-3 ${themeClasses.backgroundCard} rounded-lg`}>
                                             <Phone className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                             <div>
-                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Phone</div>
+                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>{t('phoneNumber')}</div>
                                                 <a
                                                     href={`tel:${venue.contactPhone}`}
                                                     className={`${themeClasses.accentText} ${themeClasses.accentHover} font-medium ${themeClasses.fontSize.text}`}
@@ -992,14 +1130,14 @@ export default function VenueDetailPage() {
                                             <div className={`flex items-center p-3 ${themeClasses.backgroundCard} rounded-lg`}>
                                                 <Globe className={`${themeClasses.iconSize} ${themeClasses.textMuted} mr-3`} />
                                                 <div>
-                                                    <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>Website</div>
+                                                    <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>{t('website')}</div>
                                                     <a
                                                         href={venue.website}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className={`${themeClasses.accentText} ${themeClasses.accentHover} font-medium flex items-center ${themeClasses.fontSize.text}`}
                                                     >
-                                                        Visit Website
+                                                        {t('visitWebsite')}
                                                         <ExternalLink className={`${themeClasses.iconSizeSmall} ml-1`} />
                                                     </a>
                                                 </div>
@@ -1022,13 +1160,15 @@ function EnhancedEventCard({
     isUpcoming,
     preferences,
     formatDate,
-    formatTime
+    formatTime,
+    t
 }: {
     event: VenueEvent;
     isUpcoming: boolean;
-    preferences: UserPreferences | null;
+    preferences: AttendeePreferences | null;
     formatDate: (dateString: string) => string;
     formatTime: (dateString: string) => string;
+    t: (key: keyof TranslationKeys, params?: any) => string;
 }) {
     const themeClasses = getThemeClasses(preferences);
 
@@ -1043,12 +1183,30 @@ function EnhancedEventCard({
         return `http://localhost:5251/${imageUrl}`;
     };
 
+    // SINGLE formatShortDate function - use the formatDate prop that already handles user preferences
     const formatShortDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
+        return formatDate(dateString);
+    };
+
+    // Add the formatPrice function
+    const formatPrice = (price: number, preferences: AttendeePreferences | null) => {
+        const currency = preferences?.currency || 'USD';
+        const symbols: { [key: string]: string } = {
+            'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥'
+        };
+        const symbol = symbols[currency] || '$';
+
+        const conversionRates: { [key: string]: number } = {
+            'USD': 1, 'EUR': 0.92, 'GBP': 0.79, 'JPY': 149
+        };
+
+        const convertedPrice = price * (conversionRates[currency] || 1);
+
+        if (currency === 'JPY') {
+            return `${symbol}${Math.round(convertedPrice).toLocaleString()}`;
+        }
+
+        return `${symbol}${convertedPrice.toFixed(2)}`;
     };
 
     const getDaysUntil = (dateString: string) => {
@@ -1100,16 +1258,16 @@ function EnhancedEventCard({
                     {isUpcoming ? (
                         daysUntil <= 7 ? (
                             <span className={`px-3 py-1 bg-red-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
-                                {daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days left`}
+                                {daysUntil === 0 ? t('today') : daysUntil === 1 ? t('tomorrow') : t('inDays', { days: daysUntil })}
                             </span>
                         ) : (
                             <span className={`px-3 py-1 bg-green-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
-                                Upcoming
+                                {t('upcoming')}
                             </span>
                         )
                     ) : (
                         <span className={`px-3 py-1 bg-gray-500/90 text-white ${themeClasses.fontSize.subtitle} font-medium rounded-full backdrop-blur-sm`}>
-                            {daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`}
+                            {daysAgo === 0 ? t('today') : daysAgo === 1 ? 'Yesterday' : `${daysAgo} days ago`}
                         </span>
                     )}
                 </div>
@@ -1131,15 +1289,15 @@ function EnhancedEventCard({
                     <div className="absolute top-3 right-3">
                         {event.availableTickets === 0 ? (
                             <span className={`px-2 py-1 bg-red-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
-                                Sold Out
+                                {t('soldOut')}
                             </span>
                         ) : event.availableTickets < 50 ? (
                             <span className={`px-2 py-1 bg-orange-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
-                                Almost Full
+                                {t('limited')}
                             </span>
                         ) : (
                             <span className={`px-2 py-1 bg-blue-500/90 text-white ${themeClasses.fontSize.subtitle} font-medium rounded-full backdrop-blur-sm`}>
-                                Available
+                                {t('available')}
                             </span>
                         )}
                     </div>
@@ -1153,7 +1311,7 @@ function EnhancedEventCard({
                     </span>
                     {isUpcoming && (
                         <span className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted}`}>
-                            {event.ticketsSold} sold
+                            {event.ticketsSold} {t('ticketsSold')}
                         </span>
                     )}
                 </div>
@@ -1163,20 +1321,20 @@ function EnhancedEventCard({
                 </h3>
 
                 <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} mb-3`}>
-                    By {event.organizerName}
+                    {t('by')} {event.organizerName}
                 </div>
 
                 <div className="flex items-center justify-between">
                     <span className={`${themeClasses.text} font-medium ${themeClasses.fontSize.text}`}>
-                        From ${event.basePrice}
+                        {t('from')} {formatPrice(event.basePrice, preferences)}
                     </span>
                     {isUpcoming ? (
                         <span className={`text-green-600 ${themeClasses.fontSize.subtitle} font-medium`}>
-                            {event.availableTickets} tickets left
+                            {event.availableTickets} {t('remaining')}
                         </span>
                     ) : (
                         <span className={`${themeClasses.textMuted} ${themeClasses.fontSize.subtitle}`}>
-                            {event.ticketsSold} attendees
+                            {event.ticketsSold} {t('attended')}
                         </span>
                     )}
                 </div>
@@ -1184,3 +1342,4 @@ function EnhancedEventCard({
         </Link>
     );
 }
+

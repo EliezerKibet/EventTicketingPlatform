@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/jsx-no-undef */
 /* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
@@ -46,6 +47,8 @@ import {
     Image
 } from 'lucide-react';
 import Link from 'next/link';
+import { useI18nContext } from '@/components/providers/I18nProvider';
+import { useI18n } from '../../hooks/useSafeI18n';
 
 // Your existing interfaces
 interface Event {
@@ -119,16 +122,17 @@ interface SlideshowImage {
 }
 
 interface UserPreferences {
-    emailNotifications: boolean;
-    sessionTimeout: number;
-    theme: string;
-    language: string;
-    dateFormat: string;
-    timeFormat: string;
+    emailNotifications?: boolean;  // Add ? to make it optional
+    sessionTimeout?: number;       // Add ? to make it optional
+    theme?: string;               // Add ? to make it optional
+    language?: string;            // Add ? to make it optional
+    dateFormat?: string;          // Add ? to make it optional
+    timeFormat?: string;          // Add ? to make it optional
     defaultTimeZone?: string;
     accentColor?: string;
     fontSize?: string;
     compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
 }
 
 // Helper component for category icons
@@ -156,10 +160,61 @@ const EventGallerySlideshow = ({ images, autoPlay = true, themeClasses }: {
     autoPlay?: boolean,
     themeClasses: any
 }) => {
+    const { t } = useI18nContext();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(autoPlay);
     const [showModal, setShowModal] = useState(false);
     const [imageError, setImageError] = useState<Set<number>>(new Set());
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+        const currency = preferences?.currency || 'USD';
+        const locale = currentLangData?.region || 'en-US';
+
+        try {
+            // Use Intl.NumberFormat for proper currency formatting
+            const formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+
+            return formatter.format(amount);
+        } catch (error) {
+            // Fallback: Simple symbol mapping
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            // For JPY, don't show decimal places
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            // For other currencies, show 2 decimal places
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    // Get currency symbol for display purposes
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',  // US Dollar
+            'EUR': '€',  // Euro
+            'GBP': '£',  // British Pound
+            'JPY': '¥'   // Japanese Yen
+        };
+
+        return symbols[currency] || '$'; 
+    };
+
 
     useEffect(() => {
         if (!isPlaying || images.length <= 1) return;
@@ -196,7 +251,7 @@ const EventGallerySlideshow = ({ images, autoPlay = true, themeClasses }: {
             <div className={`w-full ${themeClasses.compactMode ? 'h-80' : 'h-96'} ${themeClasses.accentGradient} bg-gradient-to-r rounded-2xl flex items-center justify-center`}>
                 <div className="text-center text-white">
                     <Camera className={`${themeClasses.compactMode ? 'h-12 w-12' : 'h-16 w-16'} mx-auto mb-4 opacity-50`} />
-                    <p className={`${themeClasses.fontSize.heading}`}>No images available</p>
+                    <p className={`${themeClasses.fontSize.heading}`}>{t('noimagesavailable')}</p>
                 </div>
             </div>
         );
@@ -221,7 +276,7 @@ const EventGallerySlideshow = ({ images, autoPlay = true, themeClasses }: {
                         <div className={`w-full h-full ${themeClasses.accentGradient} bg-gradient-to-r flex items-center justify-center`}>
                             <div className="text-center text-white">
                                 <Image className={`${themeClasses.iconSizeLarge} mx-auto mb-2 opacity-50`} />
-                                <p className={themeClasses.fontSize.text}>Image not available</p>
+                                    <p className={themeClasses.fontSize.text}>{t('noimagesavailable')}</p>
                             </div>
                         </div>
                     )}
@@ -382,8 +437,10 @@ const EventGallerySlideshow = ({ images, autoPlay = true, themeClasses }: {
 
 // Enhanced theming system from profile page
 const getThemeClasses = (preferences: UserPreferences | null) => {
-    const isDarkMode = preferences?.theme === 'dark' ||
-        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const isDarkMode = typeof window !== 'undefined' && (
+        preferences?.theme === 'dark' ||
+        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
 
     const accentColor = preferences?.accentColor || 'blue';
     const fontSize = preferences?.fontSize || 'medium';
@@ -551,10 +608,158 @@ const getThemeClasses = (preferences: UserPreferences | null) => {
     };
 };
 
+// Helper function to get timezone abbreviations
+const getTimeZoneAbbreviation = (timeZone: string): string => {
+    const abbreviations: { [key: string]: string } = {
+        'UTC': 'UTC',
+        'America/New_York': 'EST/EDT',
+        'America/Chicago': 'CST/CDT',
+        'America/Denver': 'MST/MDT',
+        'America/Los_Angeles': 'PST/PDT',
+        'Asia/Kuala_Lumpur': 'MYT',
+        'Europe/London': 'GMT/BST',
+        'Europe/Paris': 'CET/CEST',
+        'Asia/Tokyo': 'JST',
+        'Australia/Sydney': 'AEST/AEDT'
+    };
+
+    return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+};
+
+// ADD this function right after the getTimeZoneAbbreviation function (around line 497):
+
+const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+    const timeFormat = preferences?.timeFormat || '12h';
+
+    console.log('📅 Formatting date with preferences:', {
+        dateFormat,
+        timeFormat,
+        userTimeZone,
+        originalDate: dateTimeString
+    });
+
+    // Create date in user's timezone
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    // Extract date components
+    const year = zonedDate.getFullYear();
+    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(zonedDate.getDate()).padStart(2, '0');
+
+    // Month names for text formats
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthShort = monthNames[zonedDate.getMonth()];
+
+    // Weekday names
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekday = weekdays[zonedDate.getDay()];
+
+    // Format date according to user preference - INDEPENDENT OF LOCALE
+    let formattedDate: string;
+    switch (dateFormat) {
+        case 'dd/MM/yyyy':
+            formattedDate = `${weekday}, ${day}/${month}/${year}`;
+            break;
+        case 'yyyy-MM-dd':
+            formattedDate = `${weekday}, ${year}-${month}-${day}`;
+            break;
+        case 'MMM dd, yyyy':
+            formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+            break;
+        case 'dd MMM yyyy':
+            formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+            break;
+        default: // MM/dd/yyyy
+            formattedDate = `${weekday}, ${month}/${day}/${year}`;
+    }
+
+    // Format time - also independent of locale
+    const hours24 = zonedDate.getHours();
+    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+    let formattedTime: string;
+    if (timeFormat === '24h') {
+        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    } else {
+        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+        const ampm = hours24 >= 12 ? 'PM' : 'AM';
+        formattedTime = `${hours12}:${minutes} ${ampm}`;
+    }
+
+    // Add timezone abbreviation
+    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+    formattedTime += ` ${timeZoneAbbr}`;
+
+    const result = `${formattedDate} ${t('at')} ${formattedTime}`;
+
+    console.log('📅 Final formatted result:', result);
+    return result;
+};
+
+const formatEventDateOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    const year = zonedDate.getFullYear();
+    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(zonedDate.getDate()).padStart(2, '0');
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthShort = monthNames[zonedDate.getMonth()];
+
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekday = weekdays[zonedDate.getDay()];
+
+    switch (dateFormat) {
+        case 'dd/MM/yyyy':
+            return `${weekday}, ${day}/${month}/${year}`;
+        case 'yyyy-MM-dd':
+            return `${weekday}, ${year}-${month}-${day}`;
+        case 'MMM dd, yyyy':
+            return `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+        case 'dd MMM yyyy':
+            return `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+        default: // MM/dd/yyyy
+            return `${weekday}, ${month}/${day}/${year}`;
+    }
+};
+
+const formatEventTimeOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const timeFormat = preferences?.timeFormat || '12h';
+
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    const hours24 = zonedDate.getHours();
+    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+    let formattedTime: string;
+    if (timeFormat === '24h') {
+        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    } else {
+        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+        const ampm = hours24 >= 12 ? 'PM' : 'AM';
+        formattedTime = `${hours12}:${minutes} ${ampm}`;
+    }
+
+    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+    return `${formattedTime} ${timeZoneAbbr}`;
+};
+
 export default function EventsHomepage() {
+    const { t } = useI18nContext();
     const router = useRouter();
     const { user, isLoading } = useAuth();
-
+    const { formatCurrency, currentLangData } = useI18n();
     // State management
     const [events, setEvents] = useState<Event[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -568,6 +773,141 @@ export default function EventsHomepage() {
 
     const [preferences, setPreferences] = useState<UserPreferences | null>(null);
     const themeClasses = getThemeClasses(preferences);
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+        const currency = preferences?.currency ?? 'USD';
+        const locale = currentLangData?.region ?? 'en-US';
+
+        try {
+            // Use Intl.NumberFormat for proper currency formatting
+            const formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+
+            return formatter.format(amount);
+        } catch (error) {
+            // Fallback: Simple symbol mapping
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            // For JPY, don't show decimal places
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            // For other currencies, show 2 decimal places
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+        // Ensure we always have a valid user currency
+        const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+            ? preferences.currency
+            : 'USD';
+
+        // Add debugging
+        console.log('💱 Converting:', amount, fromCurrency, '→', userCurrency);
+
+        // If currencies match, just format
+        if (fromCurrency === userCurrency) {
+            return formatCurrencyWithUserPreference(amount, {
+                ...preferences,
+                currency: userCurrency
+            } as UserPreferences, currentLangData);
+        }
+
+        // Conversion rates for your 4 supported currencies (approximate rates)
+        const conversionRates: { [key: string]: { [key: string]: number } } = {
+            'USD': {
+                'USD': 1,
+                'EUR': 0.92,  // 1 USD = 0.92 EUR
+                'GBP': 0.79,  // 1 USD = 0.79 GBP
+                'JPY': 149    // 1 USD = 149 JPY
+            },
+            'EUR': {
+                'USD': 1.09,  // 1 EUR = 1.09 USD
+                'EUR': 1,
+                'GBP': 0.86,  // 1 EUR = 0.86 GBP
+                'JPY': 162    // 1 EUR = 162 JPY
+            },
+            'GBP': {
+                'USD': 1.27,  // 1 GBP = 1.27 USD
+                'EUR': 1.16,  // 1 GBP = 1.16 EUR
+                'GBP': 1,
+                'JPY': 189    // 1 GBP = 189 JPY
+            },
+            'JPY': {
+                'USD': 0.0067, // 1 JPY = 0.0067 USD
+                'EUR': 0.0062, // 1 JPY = 0.0062 EUR
+                'GBP': 0.0053, // 1 JPY = 0.0053 GBP
+                'JPY': 1
+            }
+        };
+
+        const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+        const convertedAmount = amount * rate;
+
+        return formatCurrencyWithUserPreference(convertedAmount, {
+            ...preferences,
+            currency: userCurrency
+        } as UserPreferences, currentLangData);
+    };
+
+    const loadUserPreferences = async () => {
+        try {
+            const prefsData = await userApi.getPreferences();
+
+            // Add extra debugging
+            console.log('🔧 Raw preferences from API:', prefsData);
+            console.log('🔧 Currency from API:', prefsData.currency);
+
+            setPreferences({
+                emailNotifications: prefsData.emailNotifications ?? true,
+                sessionTimeout: prefsData.sessionTimeout ?? 30,
+                theme: prefsData.theme ?? 'light',
+                language: prefsData.language ?? 'en',
+                dateFormat: prefsData.dateFormat ?? 'MM/dd/yyyy',
+                timeFormat: prefsData.timeFormat ?? '12h',
+                defaultTimeZone: prefsData.defaultTimeZone ?? 'UTC',
+                accentColor: prefsData.accentColor ?? 'blue',
+                fontSize: prefsData.fontSize ?? 'medium',
+                compactMode: prefsData.compactMode ?? false,
+                currency: (prefsData.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(prefsData.currency))
+                    ? prefsData.currency as 'USD' | 'EUR' | 'GBP' | 'JPY'
+                    : 'USD'
+            });
+        } catch (error) {
+            console.log('No preferences found, using defaults');
+            setPreferences({
+                emailNotifications: true,
+                sessionTimeout: 30,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false,
+                currency: 'USD'
+            });
+        }
+    };
+
+    console.log('🔍 Debug - Current preferences:', preferences);
+    console.log('🔍 Debug - User currency:', preferences?.currency);
 
     // 2. SECOND: Add this useEffect with your other useEffects (around line 355-365)
     useEffect(() => {
@@ -606,54 +946,33 @@ export default function EventsHomepage() {
                 defaultTimeZone: 'UTC',
                 accentColor: 'blue',
                 fontSize: 'medium',
-                compactMode: false
+                compactMode: false,
+                currency: 'USD' // Default currency
             });
         }
     }, [user]);
 
+    // Regenerate slideshow when preferences change
+    useEffect(() => {
+        if (events.length > 0 && venues.length > 0 && preferences) {
+            console.log('🔄 Regenerating slideshow with new preferences:', preferences.currency);
+            generateSlideshowImages();
+        }
+    }, [preferences]);
+
     // Apply theme to document body
     useEffect(() => {
-        if (themeClasses.isDarkMode) {
-            document.documentElement.classList.add('dark');
-            document.body.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            document.body.classList.remove('dark');
+        if (typeof window !== 'undefined') {
+            if (themeClasses.isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark');
+            }
         }
     }, [themeClasses.isDarkMode]);
 
-
-    const loadUserPreferences = async () => {
-        try {
-            const prefsData = await userApi.getPreferences();
-            setPreferences({
-                emailNotifications: prefsData.emailNotifications || true,
-                sessionTimeout: prefsData.sessionTimeout || 30,
-                theme: prefsData.theme || 'light',
-                language: prefsData.language || 'en',
-                dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
-                timeFormat: prefsData.timeFormat || '12h',
-                defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
-                accentColor: prefsData.accentColor || 'blue',
-                fontSize: prefsData.fontSize || 'medium',
-                compactMode: prefsData.compactMode || false
-            });
-        } catch (error) {
-            console.log('No preferences found, using defaults');
-            setPreferences({
-                emailNotifications: true,
-                sessionTimeout: 30,
-                theme: 'light',
-                language: 'en',
-                dateFormat: 'MM/dd/yyyy',
-                timeFormat: '12h',
-                defaultTimeZone: 'UTC',
-                accentColor: 'blue',
-                fontSize: 'medium',
-                compactMode: false
-            });
-        }
-    };
 
     const getFullImageUrl = (imageUrl: string | undefined) => {
         if (!imageUrl) return '';
@@ -701,8 +1020,8 @@ export default function EventsHomepage() {
                     id: `featured-${event.eventId}`,
                     url: imageUrl,
                     title: event.title,
-                    subtitle: `${formatDate(event.startDateTime)} • ${event.venueName}`,
-                    description: `${event.shortDescription || event.description.substring(0, 100)}... • From $${event.basePrice}`,
+                    subtitle: `${formatEventDateTime(event.startDateTime, preferences, currentLangData, t)} • ${event.venueName}`,
+                    description: `${event.shortDescription || event.description.substring(0, 100)}... • ${t('from')} ${convertAndFormatCurrency(event.basePrice, event.currency, preferences, currentLangData)}`,
                     type: 'featured-banner',
                     eventId: event.eventId
                 });
@@ -723,8 +1042,8 @@ export default function EventsHomepage() {
                     id: `upcoming-${event.eventId}`,
                     url: imageUrl,
                     title: event.title,
-                    subtitle: daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`,
-                    description: `${event.isOnline ? 'Online Event' : event.venueName} • ${event.ticketsSold} tickets sold`,
+                    subtitle: `${daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`} at ${formatEventTimeOnly(event.startDateTime, preferences)}`,
+                    description: `${event.isOnline ? t('onlineEvent') : event.venueName} • ${event.ticketsSold} ${t('ticketsSold')}`,
                     type: 'upcoming',
                     eventId: event.eventId
                 });
@@ -739,6 +1058,7 @@ export default function EventsHomepage() {
             !upcomingEvents.some(ue => ue.eventId === event.eventId)
         );
 
+
         regularEvents.slice(0, 6).forEach(event => {
             const imageUrl = getImageUrl(event.bannerImageUrl || event.imageUrl);
             if (imageUrl) {
@@ -746,8 +1066,8 @@ export default function EventsHomepage() {
                     id: `event-${event.eventId}`,
                     url: imageUrl,
                     title: event.title,
-                    subtitle: `${event.categoryName} • By ${event.organizerName}`,
-                    description: `${event.availableTickets} tickets available • ${event.venueCity}`,
+                    subtitle: `${event.categoryName} • ${t('by')} ${event.organizerName}`,
+                    description: `${event.availableTickets} ${t('ticketsavailable')} • ${event.venueCity}`,
                     type: 'event-image',
                     eventId: event.eventId
                 });
@@ -767,7 +1087,7 @@ export default function EventsHomepage() {
                     url: imageUrl,
                     title: venue.name,
                     subtitle: `${venue.city}, ${venue.state}`,
-                    description: `Capacity: ${venue.capacity.toLocaleString()} • ${venue.eventCount || 0} events hosted`,
+                    description: `${t('capacity')}: ${venue.capacity.toLocaleString()} • ${venue.eventCount || 0} ${t('eventsHosted')}`,
                     type: 'venue',
                     venueId: venue.venueId
                 });
@@ -853,20 +1173,6 @@ export default function EventsHomepage() {
         setShowFilters(false);
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-    };
-
-    const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
-        });
-    };
 
     const getDaysUntilEvent = (dateString: string) => {
         const eventDate = new Date(dateString);
@@ -914,16 +1220,28 @@ export default function EventsHomepage() {
         }
     };
 
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',  // US Dollar
+            'EUR': '€',  // Euro
+            'GBP': '£',  // British Pound
+            'JPY': '¥'   // Japanese Yen
+        };
+
+        return symbols[currency] || '$'; // Default to $ if currency not found
+    };
+
     if (isLoading || loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mb-6"></div>
-                    <p className="text-gray-600 text-xl">Loading events...</p>
+                    <p className="text-gray-600 text-xl">{t('loadingevents')}</p>
                 </div>
             </div>
         );
     }
+
 
     const featuredEvents = filteredEvents.filter(event => event.isFeatured);
     const upcomingEvents = filteredEvents.filter(event =>
@@ -936,6 +1254,7 @@ export default function EventsHomepage() {
         .slice(0, 6);
 
     return (
+
         <div
             className="min-h-screen"
             style={{
@@ -946,31 +1265,130 @@ export default function EventsHomepage() {
                 backgroundAttachment: 'fixed'
             }}
         >
-            {/* Header - Enhanced with theming */}
-            <div className={`${themeClasses.backgroundHeader} backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b ${themeClasses.borderCard}`}>
-                <div className="max-w-full mx-auto px-6 lg:px-8">
-                    <div className={`flex justify-between items-center ${themeClasses.searchHeight}`}>
-                        <div className="flex items-center">
-                            <Calendar className={`${themeClasses.iconSizeLarge} ${themeClasses.accentText} mr-3`} />
-                            <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>EventHub</h1>
+
+            {/* Header */}
+            <header className={`${themeClasses.backgroundHeader} backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b ${themeClasses.borderCard}`}>
+                <div className={`${themeClasses.backgroundHeader} backdrop-blur-xl shadow-sm sticky top-0 z-50 border-b ${themeClasses.borderCard}`}>
+                    <div className="max-w-full mx-auto px-6 lg:px-8">
+                        <div className={`flex justify-between items-center ${themeClasses.searchHeight}`}>
+                            <div className="flex items-center">
+                                <Calendar className={`${themeClasses.iconSizeLarge} ${themeClasses.accentText} mr-3`} />
+                                <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>EventHub</h1>
+                            </div>
+
+                            {/* Enhanced user preference indicators */}
+                            <div className={`text-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-3 space-y-1`}>
+                                {preferences?.currency && (
+                                    <div className="flex items-center justify-center">
+                                        <span className="mr-1">{getCurrencySymbol(preferences.currency)}</span>
+                                        {t('currency')}: {preferences.currency === 'USD' ? 'US Dollar' :
+                                            preferences.currency === 'EUR' ? 'Euro' :
+                                                preferences.currency === 'GBP' ? 'British Pound' :
+                                                    preferences.currency === 'JPY' ? 'Japanese Yen' : preferences.currency}
+                                    </div>
+                                )}
+                                {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
+                                    <div className="flex items-center justify-center">
+                                        <span className="mr-1">🌍</span>
+                                        {t('timezone')}: {preferences.defaultTimeZone.replace('_', ' ').replace('/', ', ')}
+                                    </div>
+                                )}
+                                {preferences?.dateFormat && (
+                                    <div className="flex items-center justify-center">
+                                        <span className="mr-1">📅</span>
+                                        {t('dateFormat')}: {preferences.dateFormat}
+                                    </div>
+                                )}
+                                {preferences?.timeFormat && (
+                                    <div className="flex items-center justify-center">
+                                        <span className="mr-1">🕒</span>
+                                        {t('timeFormat')}: {preferences.timeFormat === '12h' ? '12-hour' : '24-hour'}
+                                    </div>
+                                )}
+                            </div> 
+
+                            <div className="flex items-center space-x-6">
+                                {/* User welcome message */}
+                                <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
+                                    {t('welcomeBack')}, {user?.firstName || 'Guest'}
+                                </div>
+
+                                {/* Event count */}
+                                <div className={`flex items-center space-x-2 ${themeClasses.fontSize.text} ${themeClasses.textMuted}`}>
+                                    <Eye className={themeClasses.iconSizeSmall} />
+                                    <span>{events.length} {t('events')}</span>
+                                </div>
+
+                                
+
+                                {/* My Tickets Button */}
+                                {user && (
+                                    <button
+                                        onClick={() => router.push('/mytickets')}
+                                        className={`flex items-center justify-center bg-green-600 hover:bg-green-700 text-white rounded-lg ${themeClasses.buttonPadding} transition-colors duration-200 font-medium relative hidden sm:flex ${themeClasses.fontSize.button}`}
+                                    >
+                                        <Ticket className={`${themeClasses.iconSizeSmall} mr-2`} />
+                                        {t('myTickets')}
+                                        {myTicketCount > 0 && (
+                                            <span className={`ml-2 bg-white/20 text-white ${themeClasses.fontSize.subtitle} px-2 py-1 rounded-full`}>
+                                                {myTicketCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                )}
+
+                                {/* Profile/Login Button */}
+                                <div className="flex items-center space-x-2">
+                                    {user ? (
+                                        <div className="flex items-center space-x-3">
+                                            <div className={`${themeClasses.iconSizeLarge} ${themeClasses.accent} rounded-full flex items-center justify-center text-white ${themeClasses.fontSize.text} font-medium overflow-hidden border-2 ${themeClasses.accentBorder}`}>
+                                                {user.profileImageUrl ? (
+                                                    <img
+                                                        src={getFullImageUrl(user.profileImageUrl)}
+                                                        alt={`${user.firstName} ${user.lastName}`}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.style.display = 'none';
+                                                            const fallback = target.nextElementSibling as HTMLSpanElement;
+                                                            if (fallback) {
+                                                                fallback.style.display = 'block';
+                                                            }
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <span
+                                                    className={user.profileImageUrl ? 'hidden' : 'block'}
+                                                    style={{ display: user.profileImageUrl ? 'none' : 'block' }}
+                                                >
+                                                    {user.firstName?.charAt(0) || 'U'}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={() => router.push('/profile')}
+                                                className={`${themeClasses.fontSize.text} ${themeClasses.text} hover:${themeClasses.accentText} hidden md:block transition-colors`}
+                                            >
+                                                {t('profile')}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => router.push('/login')}
+                                            className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg ${themeClasses.fontSize.text} transition-colors`}
+                                        >
+                                            Sign In
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center space-x-6">
-                            {/* User welcome message */}
-                            <div className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>
-                                Welcome, {user?.firstName || 'Guest'}
-                            </div>
 
-                            {/* Event count */}
-                            <div className={`flex items-center space-x-2 ${themeClasses.fontSize.text} ${themeClasses.textMuted}`}>
-                                <Eye className={themeClasses.iconSizeSmall} />
-                                <span>{events.length} events</span>
-                            </div>
-
-                            {/* My Tickets Button */}
-                            {user && (
+                        {/* Mobile My Tickets Button */}
+                        {user && (
+                            <div className={`sm:hidden ${themeClasses.paddingSmall}`}>
                                 <button
                                     onClick={() => router.push('/mytickets')}
-                                    className={`flex items-center justify-center bg-green-600 hover:bg-green-700 text-white rounded-lg ${themeClasses.buttonPadding} transition-colors duration-200 font-medium relative hidden sm:flex ${themeClasses.fontSize.button}`}
+                                    className={`w-full flex items-center justify-center bg-green-600 hover:bg-green-700 text-white rounded-lg ${themeClasses.buttonPadding} transition-colors duration-200 font-medium ${themeClasses.fontSize.button}`}
                                 >
                                     <Ticket className={`${themeClasses.iconSizeSmall} mr-2`} />
                                     My Tickets
@@ -980,319 +1398,130 @@ export default function EventsHomepage() {
                                         </span>
                                     )}
                                 </button>
-                            )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </header>
 
-                            {/* Profile/Login Button */}
-                            <div className="flex items-center space-x-2">
-                                {user ? (
-                                    <div className="flex items-center space-x-3">
-                                        <div className={`${themeClasses.iconSizeLarge} ${themeClasses.accent} rounded-full flex items-center justify-center text-white ${themeClasses.fontSize.text} font-medium overflow-hidden border-2 ${themeClasses.accentBorder}`}>
-                                            {user.profileImageUrl ? (
-                                                <img
-                                                    src={getFullImageUrl(user.profileImageUrl)}
-                                                    alt={`${user.firstName} ${user.lastName}`}
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement;
-                                                        target.style.display = 'none';
-                                                        const fallback = target.nextElementSibling as HTMLSpanElement;
-                                                        if (fallback) {
-                                                            fallback.style.display = 'block';
-                                                        }
-                                                    }}
-                                                />
-                                            ) : null}
-                                            <span
-                                                className={user.profileImageUrl ? 'hidden' : 'block'}
-                                                style={{ display: user.profileImageUrl ? 'none' : 'block' }}
-                                            >
-                                                {user.firstName?.charAt(0) || 'U'}
-                                            </span>
-                                        </div>
-                                        <button
-                                            onClick={() => router.push('/profile')}
-                                            className={`${themeClasses.fontSize.text} ${themeClasses.text} hover:${themeClasses.accentText} hidden md:block transition-colors`}
-                                        >
-                                            Profile
-                                        </button>
-                                    </div>
-                                ) : (
+
+            {/* Main Content */}
+            <main className="relative z-10">
+                <div className="text-gray-900">
+                    <div className={`max-w-full mx-auto px-6 lg:px-8 ${themeClasses.compactMode ? 'py-12' : 'py-16'}`}>
+                        <div className="text-center">
+                            <h2 className={`${themeClasses.fontSize.hero} font-bold text-white ${themeClasses.compactMode ? 'mb-3' : 'mb-4'} drop-shadow-lg`}>
+                                {t('discoverEvents')}
+                            </h2>
+                            <p className={`${themeClasses.fontSize.heading} text-white/90 ${themeClasses.compactMode ? 'mb-8' : 'mb-12'} max-w-2xl mx-auto drop-shadow`}>
+                                {t('eventsAcrossCategories', { count: categories.length })} {filteredEvents.length}
+                            </p>
+
+                            {/* Search Bar */}
+                            <div className="max-w-2xl mx-auto">
+                                <div className="relative">
+                                    <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${themeClasses.iconSize} text-gray-400`} />
+                                    <input
+                                        type="text"
+                                        placeholder={t('searchPlaceholder')}
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className={`w-full pl-14 pr-20 ${themeClasses.compactMode ? 'py-3' : 'py-4'} text-gray-900 ${themeClasses.backgroundInput} backdrop-blur-sm border ${themeClasses.borderCard} rounded-2xl ${themeClasses.accentRing} ${themeClasses.shadow} ${themeClasses.fontSize.heading}`}
+                                    />
                                     <button
-                                        onClick={() => router.push('/login')}
-                                        className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg ${themeClasses.fontSize.text} transition-colors`}
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${themeClasses.buttonPadding} ${themeClasses.accent} ${themeClasses.accentHover} text-white rounded-xl flex items-center space-x-2 transition-colors backdrop-blur-sm`}
                                     >
-                                        Sign In
+                                        <Filter className={themeClasses.iconSizeSmall} />
+                                        <span>{t('filters')}</span>
                                     </button>
-                                )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stats Bar */}
+                        <div className={`max-w-4xl mx-auto ${themeClasses.compactMode ? 'mt-8' : 'mt-12'}`}>
+                            <div className={`grid grid-cols-1 md:grid-cols-3 ${themeClasses.gap}`}>
+                                <div className={`text-center ${themeClasses.isDarkMode ? themeClasses.backgroundCard : 'bg-black/20'} backdrop-blur-sm rounded-2xl ${themeClasses.compactMode ? 'p-4' : 'p-6'} border ${themeClasses.isDarkMode ? themeClasses.borderCard : 'border-black/10'}`}>
+                                    <div className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.compactMode ? 'mb-2' : 'mb-2'} drop-shadow-sm`}>{events.length}</div>
+                                    <div className={`text-white/90 ${themeClasses.fontSize.text} drop-shadow-sm`}>{t('totalEvents')}</div>
+                                </div>
+                                <div className={`text-center ${themeClasses.isDarkMode ? themeClasses.backgroundCard : 'bg-black/20'} backdrop-blur-sm rounded-2xl ${themeClasses.compactMode ? 'p-4' : 'p-6'} border ${themeClasses.isDarkMode ? themeClasses.borderCard : 'border-black/10'}`}>
+                                    <div className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.compactMode ? 'mb-1' : 'mb-2'} drop-shadow-sm`}>{categories.length}</div>
+                                    <div className={`text-white/90 ${themeClasses.fontSize.text} drop-shadow-sm`}>{t('categories')}</div>
+                                </div>
+                                <div className={`text-center ${themeClasses.isDarkMode ? themeClasses.backgroundCard : 'bg-black/20'} backdrop-blur-sm rounded-2xl ${themeClasses.compactMode ? 'p-4' : 'p-6'} border ${themeClasses.isDarkMode ? themeClasses.borderCard : 'border-black/10'}`}>
+                                    <div className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.compactMode ? 'mb-1' : 'mb-2'} drop-shadow-sm`}>{venues.length}</div>
+                                    <div className={`text-white/90 ${themeClasses.fontSize.text} drop-shadow-sm`}>{t('venues')}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Mobile My Tickets Button */}
-                    {user && (
-                        <div className={`sm:hidden ${themeClasses.paddingSmall}`}>
-                            <button
-                                onClick={() => router.push('/mytickets')}
-                                className={`w-full flex items-center justify-center bg-green-600 hover:bg-green-700 text-white rounded-lg ${themeClasses.buttonPadding} transition-colors duration-200 font-medium ${themeClasses.fontSize.button}`}
-                            >
-                                <Ticket className={`${themeClasses.iconSizeSmall} mr-2`} />
-                                My Tickets
-                                {myTicketCount > 0 && (
-                                    <span className={`ml-2 bg-white/20 text-white ${themeClasses.fontSize.subtitle} px-2 py-1 rounded-full`}>
-                                        {myTicketCount}
-                                    </span>
-                                )}
-                            </button>
+                <div className="max-w-full mx-auto px-6 lg:px-8 py-8">
+                    {/* Image Gallery Slideshow Section */}
+                    {slideshowImages.length > 0 && (
+                        <div className={themeClasses.marginSection}>
+                            <div className={`text-center ${themeClasses.marginLarge}`}>
+                                <h2 className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.marginSmall} drop-shadow-lg`}>
+                                   {t('galleryShowcase')}
+                                </h2>
+                                <p className={`text-white/80 ${themeClasses.fontSize.heading} drop-shadow`}>{t('featuredEventsAndVenues')}</p>
+                            </div>
+
+                            <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-3xl ${themeClasses.paddingLarge} border ${themeClasses.borderCard} ${themeClasses.shadow}`}>
+                                <EventGallerySlideshow images={slideshowImages} autoPlay={true} themeClasses={themeClasses} />
+                            </div>
                         </div>
                     )}
-                </div>
-            </div>
 
-            {/* Hero Section - Clean with proper spacing */}
-            <div className="text-gray-900">
-                <div className={`max-w-full mx-auto px-6 lg:px-8 ${themeClasses.compactMode ? 'py-12' : 'py-16'}`}>
-                    <div className="text-center">
-                        <h2 className={`${themeClasses.fontSize.hero} font-bold text-white ${themeClasses.compactMode ? 'mb-3' : 'mb-4'} drop-shadow-lg`}>
-                            Discover Events
-                        </h2>
-                        <p className={`${themeClasses.fontSize.heading} text-white/90 ${themeClasses.compactMode ? 'mb-8' : 'mb-12'} max-w-2xl mx-auto drop-shadow`}>
-                            {filteredEvents.length} events across {categories.length} categories
-                        </p>
 
-                        {/* Search Bar - Floating with theming */}
-                        <div className="max-w-2xl mx-auto">
-                            <div className="relative">
-                                <Search className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${themeClasses.iconSize} text-gray-400`} />
-                                <input
-                                    type="text"
-                                    placeholder="Search events, venues, organizers..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className={`w-full pl-14 pr-20 ${themeClasses.compactMode ? 'py-3' : 'py-4'} text-gray-900 ${themeClasses.backgroundInput} backdrop-blur-sm border ${themeClasses.borderCard} rounded-2xl ${themeClasses.accentRing} ${themeClasses.shadow} ${themeClasses.fontSize.heading}`}
-                                />
-                                <button
-                                    onClick={() => setShowFilters(!showFilters)}
-                                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${themeClasses.buttonPadding} ${themeClasses.accent} ${themeClasses.accentHover} text-white rounded-xl flex items-center space-x-2 transition-colors backdrop-blur-sm`}
-                                >
-                                    <Filter className={themeClasses.iconSizeSmall} />
-                                    <span>Filters</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Stats Bar with proper spacing */}
-                    <div className={`max-w-4xl mx-auto ${themeClasses.compactMode ? 'mt-8' : 'mt-12'}`}>
-                        <div className={`grid grid-cols-1 md:grid-cols-3 ${themeClasses.gap}`}>
-                            <div className={`text-center ${themeClasses.backgroundCard} backdrop-blur-sm rounded-2xl ${themeClasses.compactMode ? 'p-4' : 'p-6'} border ${themeClasses.borderCard}`}>
-                                <div className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.compactMode ? 'mb-1' : 'mb-2'}`}>{events.length}</div>
-                                <div className={`text-white/80 ${themeClasses.fontSize.text}`}>Total Events</div>
-                            </div>
-                            <div className={`text-center ${themeClasses.backgroundCard} backdrop-blur-sm rounded-2xl ${themeClasses.compactMode ? 'p-4' : 'p-6'} border ${themeClasses.borderCard}`}>
-                                <div className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.compactMode ? 'mb-1' : 'mb-2'}`}>{categories.length}</div>
-                                <div className={`text-white/80 ${themeClasses.fontSize.text}`}>Categories</div>
-                            </div>
-                            <div className={`text-center ${themeClasses.backgroundCard} backdrop-blur-sm rounded-2xl ${themeClasses.compactMode ? 'p-4' : 'p-6'} border ${themeClasses.borderCard}`}>
-                                <div className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.compactMode ? 'mb-1' : 'mb-2'}`}>{venues.length}</div>
-                                <div className={`text-white/80 ${themeClasses.fontSize.text}`}>Venues</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="max-w-full mx-auto px-6 lg:px-8 py-8">
-                {/* Image Gallery Slideshow Section */}
-                {slideshowImages.length > 0 && (
+                    {/* All Events Grid */}
                     <div className={themeClasses.marginSection}>
                         <div className={`text-center ${themeClasses.marginLarge}`}>
                             <h2 className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.marginSmall} drop-shadow-lg`}>
-                                Gallery Showcase
+                                {searchTerm ? `${t('searchResults')} (${filteredEvents.length})` : `${t('allEvents')} (${filteredEvents.length})`}
                             </h2>
-                            <p className={`text-white/80 ${themeClasses.fontSize.heading} drop-shadow`}>Featured events and venues</p>
-                        </div>
-
-                        <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-3xl ${themeClasses.paddingLarge} border ${themeClasses.borderCard} ${themeClasses.shadow}`}>
-                            <EventGallerySlideshow images={slideshowImages} autoPlay={true} themeClasses={themeClasses} />
-                        </div>
-                    </div>
-                )}
-
-
-                {/* All Events Grid */}
-                <div className={themeClasses.marginSection}>
-                    <div className={`text-center ${themeClasses.marginLarge}`}>
-                        <h2 className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.marginSmall} drop-shadow-lg`}>
-                            {searchTerm ? `Search Results (${filteredEvents.length})` : `All Events (${filteredEvents.length})`}
-                        </h2>
-                        <p className={`text-white/80 ${themeClasses.fontSize.heading} drop-shadow`}>
-                            {searchTerm ? `Results for "${searchTerm}"` : 'Explore all events'}
-                        </p>
-                    </div>
-
-                    {filteredEvents.length === 0 ? (
-                        <div className={`text-center ${themeClasses.paddingSection} ${themeClasses.backgroundCard} backdrop-blur-sm rounded-3xl border ${themeClasses.borderCard} ${themeClasses.shadow}`}>
-                            <Calendar className={`${themeClasses.iconSizeLarge} text-white/50 mx-auto ${themeClasses.marginLarge}`} />
-                            <h3 className={`${themeClasses.fontSize.title} font-semibold text-white ${themeClasses.marginSmall} drop-shadow`}>
-                                {searchTerm ? 'No events found' : 'No events available'}
-                            </h3>
-                            <p className={`text-white/80 ${themeClasses.marginLarge} ${themeClasses.fontSize.heading} drop-shadow`}>
-                                {searchTerm ? 'Try adjusting your search' : 'Events will appear here soon'}
+                            <p className={`text-white/80 ${themeClasses.fontSize.heading} drop-shadow`}>
+                                {searchTerm ? t('resultsFor', { term: searchTerm }) : t('exploreAllEvents')}
                             </p>
-                            {searchTerm && (
-                                <button
-                                    onClick={clearFilters}
-                                    className={`${themeClasses.backgroundCard} ${themeClasses.hover} text-white ${themeClasses.buttonPadding} rounded-2xl transition-colors backdrop-blur-sm border ${themeClasses.borderCard}`}
-                                >
-                                    Clear Search
-                                </button>
-                            )}
-                        </div>
-                    ) : (
-                        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${themeClasses.gap}`}>
-                            {filteredEvents.map((event: Event, index: number) => {
-                                const venue = getVenueInfo(event.venueId);
-                                const daysUntil = getDaysUntilEvent(event.startDateTime);
-                                const imageUrl = getImageUrl(event.bannerImageUrl || event.imageUrl);
-
-                                return (
-                                    <div key={event.eventId} className={`${themeClasses.backgroundCard} backdrop-blur-sm ${themeClasses.hover} rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} overflow-hidden transition-all duration-300 transform hover:-translate-y-2 hover:${themeClasses.backgroundCard}`}>
-                                        <div className="relative">
-                                            <div className="h-48 bg-gradient-to-r from-blue-400 to-purple-500">
-                                                {imageUrl ? (
-                                                    <img
-                                                        src={imageUrl}
-                                                        alt={event.title}
-                                                        className="w-full h-full object-cover"
-                                                        loading="lazy"
-                                                        onError={(e) => {
-                                                            const target = e.target as HTMLImageElement;
-                                                            target.style.display = 'none';
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <Calendar className={`${themeClasses.iconSizeLarge} text-white opacity-50`} />
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {daysUntil <= 3 && daysUntil >= 0 && (
-                                                <div className="absolute top-3 left-3">
-                                                    <span className={`${themeClasses.buttonPaddingSmall} bg-red-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
-                                                        {daysUntil === 0 ? 'Today!' : daysUntil === 1 ? 'Tomorrow' : 'Soon!'}
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            <div className="absolute top-3 right-3 flex space-x-2">
-                                                <button
-                                                    onClick={() => toggleLike(event.eventId)}
-                                                    className={`${themeClasses.paddingSmall} rounded-full ${likedEvents.has(event.eventId) ? 'text-red-500 bg-white/90' : 'text-white hover:text-red-500'} bg-black/20 hover:bg-white/90 transition-all backdrop-blur-sm`}
-                                                >
-                                                    <Heart className={`${themeClasses.iconSizeSmall} ${likedEvents.has(event.eventId) ? 'fill-current' : ''}`} />
-                                                </button>
-                                                <button
-                                                    onClick={() => shareEvent(event)}
-                                                    className={`${themeClasses.paddingSmall} rounded-full text-white hover:text-blue-400 bg-black/20 hover:bg-white/90 transition-all backdrop-blur-sm`}
-                                                >
-                                                    <Share className={themeClasses.iconSizeSmall} />
-                                                </button>
-                                            </div>
-
-                                            {event.isFeatured && (
-                                                <div className="absolute bottom-3 left-3">
-                                                    <Star className={`${themeClasses.iconSize} text-yellow-400 fill-current`} />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className={themeClasses.padding}>
-                                            <div className={`flex items-center space-x-2 ${themeClasses.marginSmall}`}>
-                                                <span className={`${themeClasses.buttonPaddingSmall} ${themeClasses.accentLight} ${themeClasses.accentText} ${themeClasses.fontSize.subtitle} font-medium rounded-full`}>
-                                                    {event.categoryName}
-                                                </span>
-                                                {event.isOnline && (
-                                                    <span className={`${themeClasses.buttonPaddingSmall} bg-green-100/80 text-green-800 ${themeClasses.fontSize.subtitle} font-medium rounded-full flex items-center space-x-1`}>
-                                                        <Globe className={themeClasses.iconSizeSmall} />
-                                                        <span>Online</span>
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall} line-clamp-2`}>
-                                                {event.title}
-                                            </h3>
-
-                                            <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.subtitle} ${themeClasses.marginSmall} line-clamp-2`}>
-                                                {event.shortDescription || event.description}
-                                            </p>
-
-                                            <div className={`${themeClasses.spacing} ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} ${themeClasses.marginSmall}`}>
-                                                <div className="flex items-center space-x-2">
-                                                    <Calendar className={themeClasses.iconSizeSmall} />
-                                                    <span>{formatDate(event.startDateTime)} at {formatTime(event.startDateTime)}</span>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <MapPin className={themeClasses.iconSizeSmall} />
-                                                    <span className="line-clamp-1">{event.isOnline ? 'Online Event' : `${event.venueName}, ${event.venueCity}`}</span>
-                                                </div>
-
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-2">
-                                                        <DollarSign className={themeClasses.iconSizeSmall} />
-                                                        <span>From ${event.basePrice}</span>
-                                                    </div>
-                                                    {event.availableTickets < 50 && event.availableTickets > 0 && (
-                                                        <span className={`text-orange-600 ${themeClasses.fontSize.subtitle} font-medium`}>
-                                                            Limited!
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <Link
-                                                href={`/events/${event.eventId}`}
-                                                className={`block w-full bg-gradient-to-r ${themeClasses.accentGradient} hover:from-blue-700 hover:to-purple-700 text-white font-semibold ${themeClasses.buttonPadding} rounded-xl text-center transition-all duration-200 transform hover:scale-105 ${themeClasses.fontSize.text}`}
-                                            >
-                                                View & Book
-                                            </Link>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* Popular Venues Section */}
-                {popularVenues.length > 0 && (
-                    <div className={`${themeClasses.marginSection} ${themeClasses.marginSection}`}>
-                        <div className={`text-center ${themeClasses.marginLarge}`}>
-                            <h2 className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.marginSmall} drop-shadow-lg`}>
-                                Premier Venues
-                            </h2>
-                            <p className={`text-white/80 ${themeClasses.fontSize.heading} drop-shadow`}>Top event locations</p>
                         </div>
 
-                        <div className="overflow-x-auto pb-4">
-                            <div className="flex space-x-6" style={{ width: `${popularVenues.length * 280}px` }}>
-                                {popularVenues.map((venue: Venue, index: number) => {
-                                    const venueImageUrl = getImageUrl(venue.imageUrl);
+                        {filteredEvents.length === 0 ? (
+                            <div className={`text-center ${themeClasses.paddingSection} ${themeClasses.backgroundCard} backdrop-blur-sm rounded-3xl border ${themeClasses.borderCard} ${themeClasses.shadow}`}>
+                                <Calendar className={`${themeClasses.iconSizeLarge} text-white/50 mx-auto ${themeClasses.marginLarge}`} />
+                                <h3 className={`${themeClasses.fontSize.title} font-semibold text-white ${themeClasses.marginSmall} drop-shadow`}>
+                                    {searchTerm ? t('noEventsFound') : t('noEventsAvailable')}
+                                </h3>
+                                <p className={`text-white/80 ${themeClasses.marginLarge} ${themeClasses.fontSize.heading} drop-shadow`}>
+                                    {searchTerm ? t('adjustSearchOrFilterCriteria') : t('eventsWillAppearSoon')}
+                                </p>
+                                {searchTerm && (
+                                    <button
+                                        onClick={clearFilters}
+                                        className={`${themeClasses.backgroundCard} ${themeClasses.hover} text-white ${themeClasses.buttonPadding} rounded-2xl transition-colors backdrop-blur-sm border ${themeClasses.borderCard}`}
+                                    >
+                                        {t('clearSearch')}
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 ${themeClasses.gap}`}>
+                                {filteredEvents.map((event: Event, index: number) => {
+                                    const venue = getVenueInfo(event.venueId);
+                                    const daysUntil = getDaysUntilEvent(event.startDateTime);
+                                    const imageUrl = getImageUrl(event.bannerImageUrl || event.imageUrl);
 
                                     return (
-                                        <Link
-                                            key={venue.venueId}
-                                            href={`/venues/${venue.venueId}`}
-                                            className={`block w-64 ${themeClasses.backgroundCard} backdrop-blur-sm ${themeClasses.hover} rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} overflow-hidden transition-all duration-300 transform hover:-translate-y-2 hover:${themeClasses.backgroundCard} cursor-pointer group`}
-                                        >
+                                        <div key={event.eventId} className={`${themeClasses.backgroundCard} backdrop-blur-sm ${themeClasses.hover} rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} overflow-hidden transition-all duration-300 transform hover:-translate-y-2 hover:${themeClasses.backgroundCard}`}>
                                             <div className="relative">
-                                                <div className="h-36 bg-gradient-to-r from-purple-400 to-pink-500">
-                                                    {venueImageUrl ? (
+                                                <div className="h-48 bg-gradient-to-r from-blue-400 to-purple-500">
+                                                    {imageUrl ? (
                                                         <img
-                                                            src={venueImageUrl}
-                                                            alt={venue.name}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            src={imageUrl}
+                                                            alt={event.title}
+                                                            className="w-full h-full object-cover"
                                                             loading="lazy"
                                                             onError={(e) => {
                                                                 const target = e.target as HTMLImageElement;
@@ -1301,182 +1530,309 @@ export default function EventsHomepage() {
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center">
-                                                            <Building className={`${themeClasses.iconSizeLarge} text-white opacity-50`} />
+                                                            <Calendar className={`${themeClasses.iconSizeLarge} text-white opacity-50`} />
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="absolute top-3 right-3">
-                                                    <span className={`${themeClasses.buttonPaddingSmall} ${themeClasses.backgroundCard} ${themeClasses.accentText} ${themeClasses.fontSize.subtitle} font-medium rounded-full backdrop-blur-sm`}>
-                                                        {(venue.eventCount || 0) > 10 ? 'Hot' : 'Popular'}
-                                                    </span>
-                                                </div>
-                                                {/* Hover overlay */}
-                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                                                    <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-full ${themeClasses.paddingSmall}`}>
-                                                        <ArrowRight className={`${themeClasses.iconSize} ${themeClasses.accentText}`} />
+
+                                                {daysUntil <= 3 && daysUntil >= 0 && (
+                                                    <div className="absolute top-3 left-3">
+                                                        <span className={`${themeClasses.buttonPaddingSmall} bg-red-500/90 text-white ${themeClasses.fontSize.subtitle} font-bold rounded-full backdrop-blur-sm`}>
+                                                            {daysUntil === 0 ? t('today') : daysUntil === 1 ? t('tomorrow') : t('soon')}
+                                                        </span>
                                                     </div>
+                                                )}
+
+                                                <div className="absolute top-3 right-3 flex space-x-2">
+                                                    <button
+                                                        onClick={() => shareEvent(event)}
+                                                        className={`${themeClasses.paddingSmall} rounded-full text-white hover:text-blue-400 bg-black/20 hover:bg-white/90 transition-all backdrop-blur-sm`}
+                                                    >
+                                                        <Share className={themeClasses.iconSizeSmall} />
+                                                    </button>
                                                 </div>
+
+                                                {event.isFeatured && (
+                                                    <div className="absolute bottom-3 left-3">
+                                                        <Star className={`${themeClasses.iconSize} text-yellow-400 fill-current`} />
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            <div className={themeClasses.paddingSmall}>
-                                                <h3 className={`font-semibold ${themeClasses.text} ${themeClasses.marginSmall} line-clamp-1 group-hover:${themeClasses.accentText} transition-colors ${themeClasses.fontSize.text}`}>
-                                                    {venue.name}
-                                                </h3>
-                                                <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} ${themeClasses.marginSmall} flex items-center space-x-1`}>
-                                                    <MapPin className={themeClasses.iconSizeSmall} />
-                                                    <span>{venue.city}, {venue.state}</span>
-                                                </p>
-                                                <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted} ${themeClasses.marginSmall} flex items-center space-x-1`}>
-                                                    <Users className={themeClasses.iconSizeSmall} />
-                                                    <span>{venue.capacity.toLocaleString()} capacity</span>
+                                            <div className={themeClasses.padding}>
+                                                <div className={`flex items-center space-x-2 ${themeClasses.marginSmall}`}>
+                                                    <span className={`${themeClasses.buttonPaddingSmall} ${themeClasses.accentLight} ${themeClasses.accentText} ${themeClasses.fontSize.subtitle} font-medium rounded-full`}>
+                                                        {event.categoryName}
+                                                    </span>
+                                                    {event.isOnline && (
+                                                        <span className={`${themeClasses.buttonPaddingSmall} bg-green-100/80 text-green-800 ${themeClasses.fontSize.subtitle} font-medium rounded-full flex items-center space-x-1`}>
+                                                            <Globe className={themeClasses.iconSizeSmall} />
+                                                            <span>Online</span>
+                                                        </span>
+                                                    )}
                                                 </div>
+
+                                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall} line-clamp-2`}>
+                                                    {event.title}
+                                                </h3>
+
+                                                <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.subtitle} ${themeClasses.marginSmall} line-clamp-2`}>
+                                                    {event.shortDescription || event.description}
+                                                </p>
+
+                                                <div className={`${themeClasses.spacing} ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} ${themeClasses.marginSmall}`}>
+                                                    <div className="flex items-center space-x-2">
+                                                        <Calendar className={themeClasses.iconSizeSmall} />
+                                                        <span>
+                                                            {formatEventDateTime(event.startDateTime, preferences, currentLangData, t)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <MapPin className={themeClasses.iconSizeSmall} />
+                                                        <span className="line-clamp-1">{event.isOnline ? t('onlineEvent') : `${event.venueName}, ${event.venueCity}`}</span>
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center space-x-2">
+                                                            <DollarSign className={themeClasses.iconSizeSmall} />
+                                                            <span>{t('from')} {convertAndFormatCurrency(event.basePrice, event.currency, preferences, currentLangData)}</span>
+                                                        </div>
+                                                        {event.availableTickets < 50 && event.availableTickets > 0 && (
+                                                            <span className={`text-orange-600 ${themeClasses.fontSize.subtitle} font-medium`}>
+                                                                {t('limited')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <Link
+                                                    href={`/events/${event.eventId}`}
+                                                    className={`block w-full bg-gradient-to-r ${themeClasses.accentGradient} hover:from-blue-700 hover:to-purple-700 text-white font-semibold ${themeClasses.buttonPadding} rounded-xl text-center transition-all duration-200 transform hover:scale-105 ${themeClasses.fontSize.text}`}
+                                                >
+                                                    {t('viewAndBook')}
+                                                </Link>
                                             </div>
-                                        </Link>
+                                        </div>
                                     );
                                 })}
                             </div>
-                        </div>
+                        )}
                     </div>
-                )}
 
-            </div>
+                    {/* Popular Venues Section */}
+                    {popularVenues.length > 0 && (
+                        <div className={`${themeClasses.marginSection} ${themeClasses.marginSection}`}>
+                            <div className={`text-center ${themeClasses.marginLarge}`}>
+                                <h2 className={`${themeClasses.fontSize.section} font-bold text-white ${themeClasses.marginSmall} drop-shadow-lg`}>
+                                    {t('premierVenues')}
+                                </h2>
+                                <p className={`text-white/80 ${themeClasses.fontSize.heading} drop-shadow`}>{t('topEventLocations')}</p>
+                            </div>
+
+                            <div className="overflow-x-auto pb-4">
+                                <div className="flex space-x-6" style={{ width: `${popularVenues.length * 280}px` }}>
+                                    {popularVenues.map((venue: Venue, index: number) => {
+                                        const venueImageUrl = getImageUrl(venue.imageUrl);
+
+                                        return (
+                                            <Link
+                                                key={venue.venueId}
+                                                href={`/venues/${venue.venueId}`}
+                                                className={`block w-64 ${themeClasses.backgroundCard} backdrop-blur-sm ${themeClasses.hover} rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} overflow-hidden transition-all duration-300 transform hover:-translate-y-2 hover:${themeClasses.backgroundCard} cursor-pointer group`}
+                                            >
+                                                <div className="relative">
+                                                    <div className="h-36 bg-gradient-to-r from-purple-400 to-pink-500">
+                                                        {venueImageUrl ? (
+                                                            <img
+                                                                src={venueImageUrl}
+                                                                alt={venue.name}
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                                loading="lazy"
+                                                                onError={(e) => {
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                <Building className={`${themeClasses.iconSizeLarge} text-white opacity-50`} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="absolute top-3 right-3">
+                                                        <span className={`${themeClasses.buttonPaddingSmall} ${themeClasses.backgroundCard} ${themeClasses.accentText} ${themeClasses.fontSize.subtitle} font-medium rounded-full backdrop-blur-sm`}>
+                                                            {(venue.eventCount || 0) > 10 ? t('hot') : t('popular')}
+                                                        </span>
+                                                    </div>
+                                                    {/* Hover overlay */}
+                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                                        <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-full ${themeClasses.paddingSmall}`}>
+                                                            <ArrowRight className={`${themeClasses.iconSize} ${themeClasses.accentText}`} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className={themeClasses.paddingSmall}>
+                                                    <h3 className={`font-semibold ${themeClasses.text} ${themeClasses.marginSmall} line-clamp-1 group-hover:${themeClasses.accentText} transition-colors ${themeClasses.fontSize.text}`}>
+                                                        {venue.name}
+                                                    </h3>
+                                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} ${themeClasses.marginSmall} flex items-center space-x-1`}>
+                                                        <MapPin className={themeClasses.iconSizeSmall} />
+                                                        <span>{venue.city}, {venue.state}</span>
+                                                    </p>
+                                                    <div className={`${themeClasses.fontSize.subtitle} ${themeClasses.textMuted} ${themeClasses.marginSmall} flex items-center space-x-1`}>
+                                                        <Users className={themeClasses.iconSizeSmall} />
+                                                        <span>{venue.capacity.toLocaleString()} {t('capacity')}</span>
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            </main>
 
             {/* Footer */}
-            <footer className={`${themeClasses.backgroundFooter} ${themeClasses.text} ${themeClasses.marginSection} ${themeClasses.shadow} border-t ${themeClasses.border}`} style={{ backgroundColor: themeClasses.isDarkMode ? undefined : 'white' }}>
-                <div className={`max-w-7xl mx-auto px-6 lg:px-8 ${themeClasses.paddingLarge}`}>
-                    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ${themeClasses.gap}`}>
-                        {/* Company Info */}
-                        <div className="lg:col-span-1">
-                            <div className={`flex items-center ${themeClasses.marginSmall}`}>
-                                <Calendar className={`${themeClasses.iconSizeLarge} ${themeClasses.accentText} mr-3`} />
-                                <h3 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>EventHub</h3>
-                            </div>
-                            <p className={`${themeClasses.textSecondary} ${themeClasses.marginLarge} ${themeClasses.fontSize.text}`}>
-                                Your premier destination for discovering and booking amazing events.
-                                Connect with experiences that matter to you.
-                            </p>
-                            <div className="flex space-x-4">
-                                <a href="#" className={`${themeClasses.textSecondary} hover:${themeClasses.accentText} transition-colors`}>
-                                    <svg className={`${themeClasses.iconSize}`} fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-                                    </svg>
-                                </a>
-                                <a href="#" className={`${themeClasses.textSecondary} hover:${themeClasses.accentText} transition-colors`}>
-                                    <svg className={`${themeClasses.iconSize}`} fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
-                                    </svg>
-                                </a>
-                                <a href="#" className={`${themeClasses.textSecondary} hover:${themeClasses.accentText} transition-colors`}>
-                                    <svg className={`${themeClasses.iconSize}`} fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.748.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z" />
-                                    </svg>
-                                </a>
-                                <a href="#" className={`${themeClasses.textSecondary} hover:${themeClasses.accentText} transition-colors`}>
-                                    <svg className={`${themeClasses.iconSize}`} fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12.002 2.005c2.405 0 2.688.009 3.637.052.877.04 1.354.187 1.671.31.42.163.72.358 1.035.673.315.315.51.615.673 1.035.123.317.27.794.31 1.671.043.949.052 1.232.052 3.637s-.009 2.688-.052 3.637c-.04.877-.187 1.354-.31 1.671-.163.42-.358.72-.673 1.035-.315.315-.615.51-1.035.673-.317.123-.794.27-1.671.31-.949.043-1.232.052-3.637.052s-2.688-.009-3.637-.052c-.877-.04-1.354-.187-1.671-.31-.42-.163-.72-.358-1.035-.673-.315-.315-.51-.615-.673-1.035-.123-.317-.27-.794-.31-1.671-.043-.949-.052-1.232-.052-3.637s.009-2.688.052-3.637c.04-.877.187-1.354.31-1.671.163-.42.358-.72.673-1.035.315-.315.615-.51 1.035-.673.317-.123.794-.27 1.671-.31.949-.043 1.232-.052 3.637-.052zm0-2.003c-2.444 0-2.751.01-3.712.054s-1.614.196-2.185.418c-.592.23-1.094.538-1.594 1.040-.502.502-.81 1.002-1.040 1.594-.222.571-.374 1.224-.418 2.185C3.012 7.254 3.002 7.561 3.002 10.005s.01 2.751.054 3.712.196 1.614.418 2.185c.23.592.538 1.094 1.040 1.594.502.502 1.002.81 1.594 1.040.571.222 1.224.374 2.185.418.961.044 1.268.054 3.712.054s2.751-.01 3.712-.054 1.614-.196 2.185-.418c.592-.23 1.094-.538 1.594-1.040.502-.502.81-1.002 1.040-1.594.222-.571.374-1.224.418-2.185.044-.961.054-1.268.054-3.712s-.01-2.751-.054-3.712-.196-1.614-.418-2.185c-.23-.592-.538-1.094-1.040-1.594-.502-.502-1.002-.81-1.594-1.040-.571-.222-1.224-.374-2.185-.418C14.753.015 14.446.005 12.002.005z" />
-                                        <path d="M12.002 7.338a2.667 2.667 0 1 0 0 5.334 2.667 2.667 0 0 0 0-5.334zm0 4.394a1.727 1.727 0 1 1 0-3.454 1.727 1.727 0 0 1 0 3.454z" />
-                                        <circle cx="14.692" cy="7.338" r=".533" />
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Quick Links */}
-                        <div>
-                            <h4 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.marginSmall} ${themeClasses.text}`}>Quick Links</h4>
-                            <ul className={themeClasses.spacing}>
-                                <li><a href="/" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Home</a></li>
-                                <li><a href="/events" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Browse Events</a></li>
-                                <li><a href="/categories" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Categories</a></li>
-                                <li><a href="/venues" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Venues</a></li>
-                                <li><a href="/organizer" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Become an Organizer</a></li>
-                            </ul>
-                        </div>
-
-                        {/* Contact Info */}
-                        <div>
-                            <h4 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.marginSmall} ${themeClasses.text}`}>Contact Us</h4>
-                            <div className={themeClasses.spacing}>
-                                <div className="flex items-start space-x-3">
-                                    <MapPin className={`${themeClasses.iconSize} ${themeClasses.accentText} flex-shrink-0 mt-0.5`} />
-                                    <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>
-                                        123 Event Street<br />
-                                        Shah Alam, Selangor 40150<br />
-                                        Malaysia
-                                    </span>
+            <footer className={`${themeClasses.backgroundFooter} ${themeClasses.text} border-t ${themeClasses.border}`}>
+                <footer className={`${themeClasses.backgroundFooter} ${themeClasses.text} ${themeClasses.marginSection} ${themeClasses.shadow} border-t ${themeClasses.border}`} style={{ backgroundColor: themeClasses.isDarkMode ? undefined : 'white' }}>
+                    <div className={`max-w-7xl mx-auto px-6 lg:px-8 ${themeClasses.paddingLarge}`}>
+                        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 ${themeClasses.gap}`}>
+                            {/* Company Info */}
+                            <div className="lg:col-span-1">
+                                <div className={`flex items-center ${themeClasses.marginSmall}`}>
+                                    <Calendar className={`${themeClasses.iconSizeLarge} ${themeClasses.accentText} mr-3`} />
+                                    <h3 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>EventHub</h3>
                                 </div>
-                                <div className="flex items-center space-x-3">
-                                    <svg className={`${themeClasses.iconSize} ${themeClasses.accentText} flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                    </svg>
-                                    <a href="tel:+60123456789" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>
-                                        +60 12-345 6789
-                                    </a>
-                                </div>
-                                <div className="flex items-center space-x-3">
-                                    <svg className={`${themeClasses.iconSize} ${themeClasses.accentText} flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    <a href="mailto:info@eventhub.com" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>
-                                        info@eventhub.com
-                                    </a>
-                                </div>
-                                <div className="flex items-start space-x-3">
-                                    <Clock className={`${themeClasses.iconSize} ${themeClasses.accentText} flex-shrink-0 mt-0.5`} />
-                                    <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>
-                                        Mon - Fri: 9:00 AM - 6:00 PM<br />
-                                        Sat - Sun: 10:00 AM - 4:00 PM
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Support */}
-                        <div>
-                            <h4 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.marginSmall} ${themeClasses.text}`}>Support</h4>
-                            <ul className={themeClasses.spacing}>
-                                <li><a href="/help" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Help Center</a></li>
-                                <li><a href="/faq" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>FAQ</a></li>
-                                <li><a href="/contact" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Contact Support</a></li>
-                                <li><a href="/privacy" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Privacy Policy</a></li>
-                                <li><a href="/terms" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>Terms of Service</a></li>
-                            </ul>
-
-                            {/* Newsletter Signup */}
-                            <div className={themeClasses.marginLarge}>
-                                <h5 className={`${themeClasses.fontSize.subtitle} font-semibold ${themeClasses.marginSmall} ${themeClasses.text}`}>Stay Updated</h5>
-                                <div className="flex">
-                                    <input
-                                        type="email"
-                                        placeholder="Enter your email"
-                                        className={`flex-1 ${themeClasses.buttonPaddingSmall} ${themeClasses.backgroundInput} border ${themeClasses.border} rounded-l-lg ${themeClasses.text} ${themeClasses.fontSize.subtitle} ${themeClasses.accentRing}`}
-                                    />
-                                    <button className={`${themeClasses.buttonPaddingSmall} ${themeClasses.accent} ${themeClasses.accentHover} text-white rounded-r-lg transition-colors`}>
-                                        <svg className={themeClasses.iconSizeSmall} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                <p className={`${themeClasses.textSecondary} ${themeClasses.marginLarge} ${themeClasses.fontSize.text}`}>
+                                    {t('yourPremierDestination')} {t('connectWithExperiences')}
+                                </p>
+                                <div className="flex space-x-4">
+                                    <a href="#" className={`${themeClasses.textSecondary} hover:${themeClasses.accentText} transition-colors`}>
+                                        <svg className={`${themeClasses.iconSize}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
                                         </svg>
-                                    </button>
+                                    </a>
+                                    <a href="#" className={`${themeClasses.textSecondary} hover:${themeClasses.accentText} transition-colors`}>
+                                        <svg className={`${themeClasses.iconSize}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
+                                        </svg>
+                                    </a>
+                                    <a href="#" className={`${themeClasses.textSecondary} hover:${themeClasses.accentText} transition-colors`}>
+                                        <svg className={`${themeClasses.iconSize}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.748.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z" />
+                                        </svg>
+                                    </a>
+                                    <a href="#" className={`${themeClasses.textSecondary} hover:${themeClasses.accentText} transition-colors`}>
+                                        <svg className={`${themeClasses.iconSize}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12.002 2.005c2.405 0 2.688.009 3.637.052.877.04 1.354.187 1.671.31.42.163.72.358 1.035.673.315.315.51.615.673 1.035.123.317.27.794.31 1.671.043.949.052 1.232.052 3.637s-.009 2.688-.052 3.637c-.04.877-.187 1.354-.31 1.671-.163.42-.358.72-.673 1.035-.315.315-.615.51-1.035.673-.317.123-.794.27-1.671.31-.949.043-1.232.052-3.637.052s-2.688-.009-3.637-.052c-.877-.04-1.354-.187-1.671-.31-.42-.163-.72-.358-1.035-.673-.315-.315-.51-.615-.673-1.035-.123-.317-.27-.794-.31-1.671-.043-.949-.052-1.232-.052-3.637s.009-2.688.052-3.637c.04-.877.187-1.354.31-1.671.163-.42.358-.72.673-1.035.315-.315.615-.51 1.035-.673.317-.123.794-.27 1.671-.31.949-.043 1.232-.052 3.637-.052zm0-2.003c-2.444 0-2.751.01-3.712.054s-1.614.196-2.185.418c-.592.23-1.094.538-1.594 1.040-.502.502-.81 1.002-1.040 1.594-.222.571-.374 1.224-.418 2.185C3.012 7.254 3.002 7.561 3.002 10.005s.01 2.751.054 3.712.196 1.614.418 2.185c.23.592.538 1.094 1.040 1.594.502.502 1.002.81 1.594 1.040.571.222 1.224.374 2.185.418.961.044 1.268.054 3.712.054s2.751-.01 3.712-.054 1.614-.196 2.185-.418c.592-.23 1.094-.538 1.594-1.040.502-.502.81-1.002 1.040-1.594.222-.571.374-1.224.418-2.185.044-.961.054-1.268.054-3.712s-.01-2.751-.054-3.712-.196-1.614-.418-2.185c-.23-.592-.538-1.094-1.040-1.594-.502-.502-1.002-.81-1.594-1.040-.571-.222-1.224-.374-2.185-.418C14.753.015 14.446.005 12.002.005z" />
+                                            <path d="M12.002 7.338a2.667 2.667 0 1 0 0 5.334 2.667 2.667 0 0 0 0-5.334zm0 4.394a1.727 1.727 0 1 1 0-3.454 1.727 1.727 0 0 1 0 3.454z" />
+                                            <circle cx="14.692" cy="7.338" r=".533" />
+                                        </svg>
+                                    </a>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    {/* Bottom Bar */}
-                    <div className={`border-t ${themeClasses.border} ${themeClasses.marginLarge} ${themeClasses.paddingLarge}`}>
-                        <div className="flex flex-col md:flex-row justify-between items-center">
-                            <div className={`${themeClasses.textSecondary} ${themeClasses.fontSize.subtitle} mb-4 md:mb-0`}>
-                                © {new Date().getFullYear()} EventHub. All rights reserved.
+                            {/* Quick Links */}
+                            <div>
+                                <h4 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.marginSmall} ${themeClasses.text}`}>{t('quickLinks')}</h4>
+                                <ul className={themeClasses.spacing}>
+                                    <li><a href="/" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('home')}</a></li>
+                                    <li><a href="/events" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('browseEvents')}</a></li>
+                                    <li><a href="/categories" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('categories')}</a></li>
+                                    <li><a href="/venues" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('venues')}</a></li>
+                                    <li><a href="/organizer" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('becomeAnOrganizer')}</a></li>
+                                </ul>
                             </div>
-                            <div className={`flex items-center space-x-6 ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
-                                <div className="flex items-center space-x-2">
-                                    <Globe className={themeClasses.iconSizeSmall} />
-                                    <span>Available Worldwide</span>
+
+                            {/* Contact Info */}
+                            <div>
+                                <h4 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.marginSmall} ${themeClasses.text}`}>{t('contactUs')}</h4>
+                                <div className={themeClasses.spacing}>
+                                    <div className="flex items-start space-x-3">
+                                        <MapPin className={`${themeClasses.iconSize} ${themeClasses.accentText} flex-shrink-0 mt-0.5`} />
+                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>
+                                            {t('eventStreet')}<br />{t('shahAlam')}<br />{t('malaysia')}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                        <svg className={`${themeClasses.iconSize} ${themeClasses.accentText} flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                        </svg>
+                                        <a href="tel:+60123456789" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>
+                                            +60 12-345 6789
+                                        </a>
+                                    </div>
+                                    <div className="flex items-center space-x-3">
+                                        <svg className={`${themeClasses.iconSize} ${themeClasses.accentText} flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <a href="mailto:info@eventhub.com" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>
+                                            info@eventhub.com
+                                        </a>
+                                    </div>
+                                    <div className="flex items-start space-x-3">
+                                        <Clock className={`${themeClasses.iconSize} ${themeClasses.accentText} flex-shrink-0 mt-0.5`} />
+                                        <span className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>
+                                            {t('monFriHours')}<br />{t('satSunHours')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Support */}
+                            <div>
+                                <h4 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.marginSmall} ${themeClasses.text}`}>{t('support')}</h4>
+                                <ul className={themeClasses.spacing}>
+                                    <li><a href="/help" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('helpCenter')}</a></li>
+                                    <li><a href="/faq" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('faq')}</a></li>
+                                    <li><a href="/contact" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('contactSupport')}</a></li>
+                                    <li><a href="/privacy" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('privacyPolicy')}</a></li>
+                                    <li><a href="/terms" className={`${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}>{t('termsOfService')}</a></li>
+                                </ul>
+
+                                {/* Newsletter Signup */}
+                                <div className={themeClasses.marginLarge}>
+                                    <h5 className={`${themeClasses.fontSize.subtitle} font-semibold ${themeClasses.marginSmall} ${themeClasses.text}`}>{t('stayUpdated')}</h5>
+                                    <div className="flex">
+                                        <input
+                                            type="email"
+                                            className={`flex-1 ${themeClasses.buttonPaddingSmall} ${themeClasses.backgroundInput} border ${themeClasses.border} rounded-l-lg ${themeClasses.text} ${themeClasses.fontSize.subtitle} ${themeClasses.accentRing}`}
+                                        />
+                                        <button className={`${themeClasses.buttonPaddingSmall} ${themeClasses.accent} ${themeClasses.accentHover} text-white rounded-r-lg transition-colors`}>
+                                            <svg className={themeClasses.iconSizeSmall} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bottom Bar */}
+                        <div className={`border-t ${themeClasses.border} ${themeClasses.marginLarge} ${themeClasses.paddingLarge}`}>
+                            <div className="flex flex-col md:flex-row justify-between items-center">
+                                <div className={`${themeClasses.textSecondary} ${themeClasses.fontSize.subtitle} mb-4 md:mb-0`}>
+                                    © {new Date().getFullYear()} EventHub. {t('allRightsReserved')}.
+                                </div>
+                                <div className={`flex items-center space-x-6 ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
+                                    <div className="flex items-center space-x-2">
+                                        <Globe className={themeClasses.iconSizeSmall} />
+                                        <span>{t('availableWorldwide')}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </footer>
             </footer>
-        </div>
+
+            
+            </div>
+
     );
 }
+

@@ -1,4 +1,5 @@
-﻿/* eslint-disable @typescript-eslint/no-unused-vars */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -25,6 +26,9 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { userApi } from '@/lib/api';
+import { useI18n } from '@/components/providers/I18nProvider';
+import { DollarSign } from 'lucide-react';
+import { useI18nContext } from '@/components/providers/I18nProvider';
 
 interface TicketData {
     ticketId: number;
@@ -35,6 +39,7 @@ interface TicketData {
     ticketNumber: string;
     qrCode: string;
     pricePaid: number;
+    currency?: string; 
     status: string;
     purchaseDate: string;
     checkInDate?: string;
@@ -47,16 +52,17 @@ interface TicketData {
 }
 
 interface UserPreferences {
-    emailNotifications: boolean;
-    sessionTimeout: number;
-    theme: string;
-    language: string;
-    dateFormat: string;
-    timeFormat: string;
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
     defaultTimeZone?: string;
     accentColor?: string;
     fontSize?: string;
     compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';  
 }
 
 const getThemeClasses = (preferences: UserPreferences | null) => {
@@ -211,9 +217,254 @@ const getThemeClasses = (preferences: UserPreferences | null) => {
     };
 };
 
+const getTimeZoneAbbreviation = (timeZone: string): string => {
+    const abbreviations: { [key: string]: string } = {
+        'UTC': 'UTC',
+        'America/New_York': 'EST/EDT',
+        'America/Chicago': 'CST/CDT',
+        'America/Denver': 'MST/MDT',
+        'America/Los_Angeles': 'PST/PDT',
+        'Asia/Kuala_Lumpur': 'MYT',
+        'Europe/London': 'GMT/BST',
+        'Europe/Paris': 'CET/CEST',
+        'Asia/Tokyo': 'JST',
+        'Australia/Sydney': 'AEST/AEDT'
+    };
+
+    return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+};
+
+const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+    const currency = preferences?.currency ?? 'USD';
+    const locale = currentLangData?.region ?? 'en-US';
+
+    try {
+        // Use Intl.NumberFormat for proper currency formatting
+        const formatter = new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+            maximumFractionDigits: currency === 'JPY' ? 0 : 2
+        });
+
+        return formatter.format(amount);
+    } catch (error) {
+        // Fallback: Simple symbol mapping
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'JPY': '¥'
+        };
+
+        const symbol = symbols[currency] || '$';
+
+        // For JPY, don't show decimal places
+        if (currency === 'JPY') {
+            const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${wholeAmount}`;
+        }
+
+        // For other currencies, show 2 decimal places
+        const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return `${symbol}${formattedAmount}`;
+    }
+};
+
+const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+    // Ensure we always have a valid user currency
+    const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+        ? preferences.currency
+        : 'USD';
+
+    // If currencies match, just format
+    if (fromCurrency === userCurrency) {
+        return formatCurrencyWithUserPreference(amount, {
+            ...preferences,
+            currency: userCurrency
+        } as UserPreferences, currentLangData);
+    }
+
+    // Conversion rates for your 4 supported currencies (approximate rates)
+    const conversionRates: { [key: string]: { [key: string]: number } } = {
+        'USD': {
+            'USD': 1,
+            'EUR': 0.92,  // 1 USD = 0.92 EUR
+            'GBP': 0.79,  // 1 USD = 0.79 GBP
+            'JPY': 149    // 1 USD = 149 JPY
+        },
+        'EUR': {
+            'USD': 1.09,  // 1 EUR = 1.09 USD
+            'EUR': 1,
+            'GBP': 0.86,  // 1 EUR = 0.86 GBP
+            'JPY': 162    // 1 EUR = 162 JPY
+        },
+        'GBP': {
+            'USD': 1.27,  // 1 GBP = 1.27 USD
+            'EUR': 1.16,  // 1 GBP = 1.16 EUR
+            'GBP': 1,
+            'JPY': 189    // 1 GBP = 189 JPY
+        },
+        'JPY': {
+            'USD': 0.0067, // 1 JPY = 0.0067 USD
+            'EUR': 0.0062, // 1 JPY = 0.0062 EUR
+            'GBP': 0.0053, // 1 JPY = 0.0053 GBP
+            'JPY': 1
+        }
+    };
+
+    const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+    const convertedAmount = amount * rate;
+
+    return formatCurrencyWithUserPreference(convertedAmount, {
+        ...preferences,
+        currency: userCurrency
+    } as UserPreferences, currentLangData);
+};
+
+const getCurrencySymbol = (currency: string) => {
+    const symbols: { [key: string]: string } = {
+        'USD': '$',  // US Dollar
+        'EUR': '€',  // Euro
+        'GBP': '£',  // British Pound
+        'JPY': '¥'   // Japanese Yen
+    };
+
+    return symbols[currency] || '$';
+};
+
+const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+    const timeFormat = preferences?.timeFormat || '12h';
+
+    console.log('📅 Formatting date with preferences:', {
+        dateFormat,
+        timeFormat,
+        userTimeZone,
+        originalDate: dateTimeString
+    });
+
+    // Create date in user's timezone
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    // Extract date components
+    const year = zonedDate.getFullYear();
+    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(zonedDate.getDate()).padStart(2, '0');
+
+    // Month names for text formats
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthShort = monthNames[zonedDate.getMonth()];
+
+    // Weekday names
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekday = weekdays[zonedDate.getDay()];
+
+    // Format date according to user preference - INDEPENDENT OF LOCALE
+    let formattedDate: string;
+    switch (dateFormat) {
+        case 'dd/MM/yyyy':
+            formattedDate = `${weekday}, ${day}/${month}/${year}`;
+            break;
+        case 'yyyy-MM-dd':
+            formattedDate = `${weekday}, ${year}-${month}-${day}`;
+            break;
+        case 'MMM dd, yyyy':
+            formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+            break;
+        case 'dd MMM yyyy':
+            formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+            break;
+        default: // MM/dd/yyyy
+            formattedDate = `${weekday}, ${month}/${day}/${year}`;
+    }
+
+    // Format time - also independent of locale
+    const hours24 = zonedDate.getHours();
+    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+    let formattedTime: string;
+    if (timeFormat === '24h') {
+        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    } else {
+        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+        const ampm = hours24 >= 12 ? 'PM' : 'AM';
+        formattedTime = `${hours12}:${minutes} ${ampm}`;
+    }
+
+    // Add timezone abbreviation
+    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+    formattedTime += ` ${timeZoneAbbr}`;
+
+    const result = `${formattedDate} ${t('at')} ${formattedTime}`;
+
+    console.log('📅 Final formatted result:', result);
+    return result;
+};
+
+const formatEventDateOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    const year = zonedDate.getFullYear();
+    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(zonedDate.getDate()).padStart(2, '0');
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthShort = monthNames[zonedDate.getMonth()];
+
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekday = weekdays[zonedDate.getDay()];
+
+    switch (dateFormat) {
+        case 'dd/MM/yyyy':
+            return `${weekday}, ${day}/${month}/${year}`;
+        case 'yyyy-MM-dd':
+            return `${weekday}, ${year}-${month}-${day}`;
+        case 'MMM dd, yyyy':
+            return `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+        case 'dd MMM yyyy':
+            return `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+        default: // MM/dd/yyyy
+            return `${weekday}, ${month}/${day}/${year}`;
+    }
+};
+
+const formatEventTimeOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const timeFormat = preferences?.timeFormat || '12h';
+
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    const hours24 = zonedDate.getHours();
+    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+    let formattedTime: string;
+    if (timeFormat === '24h') {
+        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    } else {
+        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+        const ampm = hours24 >= 12 ? 'PM' : 'AM';
+        formattedTime = `${hours12}:${minutes} ${ampm}`;
+    }
+
+    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+    return `${formattedTime} ${timeZoneAbbr}`;
+};
+
 export default function MyTicketsPage() {
     const router = useRouter();
+    const { t } = useI18nContext();
     const [tickets, setTickets] = useState<TicketData[]>([]);
+    const { formatCurrency, currentLangData } = useI18n();
     const [filteredTickets, setFilteredTickets] = useState<TicketData[]>([]);
     const [preferences, setPreferences] = useState<UserPreferences | null>(null);
     const [loading, setLoading] = useState(true);
@@ -249,16 +500,19 @@ export default function MyTicketsPage() {
         try {
             const prefsData = await userApi.getPreferences();
             setPreferences({
-                emailNotifications: prefsData.emailNotifications || true,
-                sessionTimeout: prefsData.sessionTimeout || 30,
-                theme: prefsData.theme || 'light',
-                language: prefsData.language || 'en',
-                dateFormat: prefsData.dateFormat || 'MM/dd/yyyy',
-                timeFormat: prefsData.timeFormat || '12h',
-                defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
-                accentColor: prefsData.accentColor || 'blue',
-                fontSize: prefsData.fontSize || 'medium',
-                compactMode: prefsData.compactMode || false
+                emailNotifications: prefsData.emailNotifications ?? true,
+                sessionTimeout: prefsData.sessionTimeout ?? 30,
+                theme: prefsData.theme ?? 'light',
+                language: prefsData.language ?? 'en',
+                dateFormat: prefsData.dateFormat ?? 'MM/dd/yyyy',
+                timeFormat: prefsData.timeFormat ?? '12h',
+                defaultTimeZone: prefsData.defaultTimeZone ?? 'UTC',
+                accentColor: prefsData.accentColor ?? 'blue',
+                fontSize: prefsData.fontSize ?? 'medium',
+                compactMode: prefsData.compactMode ?? false,
+                currency: (prefsData.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(prefsData.currency))
+                    ? prefsData.currency as 'USD' | 'EUR' | 'GBP' | 'JPY'
+                    : 'USD'
             });
         } catch (error) {
             console.log('No preferences found, using defaults');
@@ -272,7 +526,8 @@ export default function MyTicketsPage() {
                 defaultTimeZone: 'UTC',
                 accentColor: 'blue',
                 fontSize: 'medium',
-                compactMode: false
+                compactMode: false,
+                currency: 'USD'
             });
         }
     };
@@ -341,7 +596,7 @@ export default function MyTicketsPage() {
                 return <AlertCircle className={`${themeClasses.iconSize} text-yellow-500`} />;
         }
     };
-
+     
     const getStatusColor = (status: string) => {
         switch (status.toLowerCase()) {
             case 'valid':
@@ -355,37 +610,26 @@ export default function MyTicketsPage() {
         }
     };
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const format = preferences?.dateFormat || 'MM/dd/yyyy';
-
-        switch (format) {
-            case 'dd/MM/yyyy':
-                return date.toLocaleDateString('en-GB');
-            case 'yyyy-MM-dd':
-                return date.toISOString().split('T')[0];
-            default:
-                return date.toLocaleDateString('en-US');
+    const formatDate = (dateString: string): string => {
+        if (preferences) {
+            return formatEventDateOnly(dateString, preferences);
         }
+        // Fallback for when preferences aren't loaded yet
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US');
     };
 
-    const formatTime = (dateString: string) => {
-        const date = new Date(dateString);
-        const format = preferences?.timeFormat || '12h';
-
-        if (format === '24h') {
-            return date.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            });
-        } else {
-            return date.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
+    const formatTime = (dateString: string): string => {
+        if (preferences) {
+            return formatEventTimeOnly(dateString, preferences);
         }
+        // Fallback for when preferences aren't loaded yet
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
     };
 
     const isEventUpcoming = (eventDate: string) => {
@@ -440,7 +684,7 @@ export default function MyTicketsPage() {
                 <div className={`${themeClasses?.backgroundCard || 'bg-white/80'} backdrop-blur-xl rounded-2xl ${themeClasses?.paddingLarge || 'p-8'} ${themeClasses?.shadow || 'shadow-2xl'} border ${themeClasses?.borderCard || 'border-white/30'}`}>
                     <div className="text-center">
                         <div className={`animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto ${themeClasses?.marginSmall || 'mb-4'}`}></div>
-                        <p className={`${themeClasses?.fontSize?.text || 'text-base'} ${themeClasses?.textSecondary || 'text-gray-600'}`}>Loading your tickets...</p>
+                        <p className={`${themeClasses?.fontSize?.text || 'text-base'} ${themeClasses?.textSecondary || 'text-gray-600'}`}>{t('loading')}</p>
                     </div>
                 </div>
             </div>
@@ -467,14 +711,45 @@ export default function MyTicketsPage() {
                             className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} ${themeClasses.marginSmall} transition-colors ${themeClasses.fontSize.text}`}
                         >
                             <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
-                            Back to Events
+                            {t('back')}
                         </button>
-                        <h1 className={`${themeClasses.fontSize.display} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>My Tickets</h1>
-                        <p className={`${themeClasses.fontSize.text} text-subtle`}>View and manage all your event tickets</p>
+                        <h1 className={`${themeClasses.fontSize.display} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>{t('myTickets')}</h1>
+                        <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary}`}>{t('manageTickets')}</p>
+                        {/* Enhanced user preference indicators */}
+                        <div className={`text-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-3 space-y-1`}>
+                            {preferences?.currency && (
+                                <div className="flex items-center justify-center">
+                                    <span className="mr-1">{getCurrencySymbol(preferences.currency)}</span>
+                                    {t('currency')}: {preferences.currency === 'USD' ? 'US Dollar' :
+                                        preferences.currency === 'EUR' ? 'Euro' :
+                                            preferences.currency === 'GBP' ? 'British Pound' :
+                                                preferences.currency === 'JPY' ? 'Japanese Yen' : preferences.currency}
+                                </div>
+                            )}
+                            {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
+                                <div className="flex items-center justify-center">
+                                    <span className="mr-1">🌍</span>
+                                    {t('timezone')}: {preferences.defaultTimeZone.replace('_', ' ').replace('/', ', ')}
+                                </div>
+                            )}
+                            {preferences?.dateFormat && (
+                                <div className="flex items-center justify-center">
+                                    <span className="mr-1">📅</span>
+                                    {t('dateFormat')}: {preferences.dateFormat}
+                                </div>
+                            )}
+                            {preferences?.timeFormat && (
+                                <div className="flex items-center justify-center">
+                                    <span className="mr-1">🕒</span>
+                                    {t('timeFormat')}: {preferences.timeFormat === '12h' ? '12-hour' : '24-hour'}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Filters with glass effect */}
                     <div className={`${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding} ${themeClasses.marginLarge}`}>
+
                         <div className={`flex flex-col sm:flex-row ${themeClasses.gap}`}>
                             {/* Search */}
                             <div className="flex-1">
@@ -482,7 +757,7 @@ export default function MyTicketsPage() {
                                     <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${themeClasses.iconSize} ${themeClasses.textMuted}`} />
                                     <input
                                         type="text"
-                                        placeholder="Search tickets..."
+                                        placeholder={t('searchEvents')}
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className={`w-full pl-10 pr-4 py-2 border ${themeClasses.border} rounded-lg ${themeClasses.accentRing} ${themeClasses.backgroundInput} backdrop-blur-sm ${themeClasses.text} ${themeClasses.fontSize.text} ${themeClasses.inputHeight}`}
@@ -496,10 +771,10 @@ export default function MyTicketsPage() {
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className={`${themeClasses.buttonPadding} border ${themeClasses.border} rounded-lg ${themeClasses.accentRing} ${themeClasses.backgroundInput} backdrop-blur-sm ${themeClasses.text} ${themeClasses.fontSize.text}`}
                             >
-                                <option value="all">All Status</option>
-                                <option value="valid">Valid</option>
-                                <option value="used">Used</option>
-                                <option value="cancelled">Cancelled</option>
+                                <option value="all">{t('allStatus')}</option>
+                                <option value="valid">{t('valid')}</option>
+                                <option value="used">{t('used')}</option>
+                                <option value="cancelled">{t('cancelled')}</option>
                             </select>
 
                             {/* Date Filter */}
@@ -508,9 +783,9 @@ export default function MyTicketsPage() {
                                 onChange={(e) => setDateFilter(e.target.value)}
                                 className={`${themeClasses.buttonPadding} border ${themeClasses.border} rounded-lg ${themeClasses.accentRing} ${themeClasses.backgroundInput} backdrop-blur-sm ${themeClasses.text} ${themeClasses.fontSize.text}`}
                             >
-                                <option value="all">All Events</option>
-                                <option value="upcoming">Upcoming</option>
-                                <option value="past">Past Events</option>
+                                <option value="all">{t('allEvents')}</option>
+                                <option value="upcoming">{t('upcoming')}</option>
+                                <option value="past">{t('pastEvents')}</option>
                             </select>
                         </div>
                     </div>
@@ -522,7 +797,7 @@ export default function MyTicketsPage() {
                                 <Ticket className={`${themeClasses.iconSizeLarge} ${themeClasses.accentText} mr-3`} />
                                 <div>
                                     <p className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>{tickets.length}</p>
-                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Total Tickets</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>{t('totalEvents')}</p>
                                 </div>
                             </div>
                         </div>
@@ -533,7 +808,7 @@ export default function MyTicketsPage() {
                                     <p className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
                                         {tickets.filter(t => isEventUpcoming(t.eventStartDateTime)).length}
                                     </p>
-                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Upcoming Events</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>{t('upcomingEvents')}</p>
                                 </div>
                             </div>
                         </div>
@@ -544,7 +819,7 @@ export default function MyTicketsPage() {
                                     <p className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
                                         {tickets.filter(t => t.status.toLowerCase() === 'used').length}
                                     </p>
-                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Events Attended</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>{t('attended')}</p>
                                 </div>
                             </div>
                         </div>
@@ -554,20 +829,23 @@ export default function MyTicketsPage() {
                     {filteredTickets.length === 0 ? (
                         <div className={`text-center py-12 ${themeClasses.backgroundCard} backdrop-blur-xl rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard}`}>
                             <Ticket className={`h-12 w-12 ${themeClasses.textMuted} mx-auto mb-4`} />
-                            <h3 className={`card-title`}>No tickets found</h3>
-                            <p className={`card-description mb-4`}>
+                            <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} mb-2`}>
+                                {t('noEventsYet')}
+                            </h3>
+                            <p className={`${themeClasses.fontSize.text} ${themeClasses.textSecondary} mb-4`}>
                                 {tickets.length === 0
-                                    ? "You haven't purchased any tickets yet."
-                                    : "No tickets match your current filters."
+                                    ? t('noEventsYet')
+                                    : t('noEventsMatchSearch')
                                 }
                             </p>
                             <Link
                                 href="/events"
                                 className={`inline-flex items-center ${themeClasses.accent} ${themeClasses.accentHover} text-white px-6 py-3 rounded-lg font-semibold transition-colors`}
                             >
-                                Browse Events
+                                {t('browseEvents')}
                             </Link>
                         </div>
+
                     ) : (
                         <div className="space-y-4">
                             {filteredTickets.map((ticket) => (
@@ -580,7 +858,7 @@ export default function MyTicketsPage() {
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
                                                 <div className="flex items-center flex-wrap gap-3 mb-2">
-                                                    <h3 className={`card-title`}>
+                                                    <h3 className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text}`}>
                                                         {ticket.eventTitle}
                                                     </h3>
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
@@ -589,34 +867,43 @@ export default function MyTicketsPage() {
                                                     </span>
                                                     {isEventUpcoming(ticket.eventStartDateTime) && (
                                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                            Upcoming
+                                                            {t('upcoming')}
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 text-body-small text-subtle`}>
+                                                <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>
                                                     <div className="flex items-center">
-                                                        <Calendar className="h-4 w-4 mr-2" />
-                                                        <span>{formatDate(ticket.eventStartDateTime)}</span>
+                                                        <Calendar className={`${themeClasses.iconSizeSmall} mr-2 ${themeClasses.accentText}`} />
+                                                        <span className={`${themeClasses.text} font-medium`}>
+                                                            {formatDate(ticket.eventStartDateTime)}
+                                                        </span>
                                                     </div>
                                                     <div className="flex items-center">
-                                                        <Clock className="h-4 w-4 mr-2" />
-                                                        <span>{formatTime(ticket.eventStartDateTime)}</span>
+                                                        <Clock className={`${themeClasses.iconSizeSmall} mr-2 ${themeClasses.accentText}`} />
+                                                        <span className={`${themeClasses.text} font-medium`}>
+                                                            {formatTime(ticket.eventStartDateTime)}
+                                                        </span>
                                                     </div>
                                                     <div className="flex items-center">
-                                                        <MapPin className="h-4 w-4 mr-2" />
-                                                        <span>{ticket.venueName}</span>
+                                                        <MapPin className={`${themeClasses.iconSizeSmall} mr-2 ${themeClasses.accentText}`} />
+                                                        <span className={`${themeClasses.text} font-medium`}>
+                                                            {ticket.venueName}
+                                                        </span>
                                                     </div>
                                                 </div>
 
-                                                <div className="mt-3 flex items-center space-x-4 text-sm">
+                                                <div className={`mt-3 flex items-center space-x-4 ${themeClasses.fontSize.text}`}>
                                                     <span className={`font-medium ${themeClasses.text}`}>
                                                         {ticket.ticketTypeName}
                                                     </span>
-                                                    <span className={themeClasses.textSecondary}>
-                                                        ${ticket.pricePaid.toFixed(2)}
+                                                    <span className={`${themeClasses.textSecondary} font-semibold`}>
+                                                        {ticket.currency ?
+                                                            convertAndFormatCurrency(ticket.pricePaid, ticket.currency, preferences, currentLangData) :
+                                                            formatCurrencyWithUserPreference(ticket.pricePaid, preferences, currentLangData)
+                                                        }
                                                     </span>
-                                                    <span className={`${themeClasses.textMuted} font-mono text-xs`}>
+                                                    <span className={`${themeClasses.textMuted} font-mono ${themeClasses.fontSize.subtitle}`}>
                                                         {ticket.ticketNumber}
                                                     </span>
                                                 </div>
@@ -630,7 +917,7 @@ export default function MyTicketsPage() {
                                                         className={`flex items-center px-3 py-2 text-sm ${themeClasses.accent} ${themeClasses.accentHover} text-white rounded-lg transition-colors`}
                                                     >
                                                         <Download className="h-4 w-4 mr-1" />
-                                                        Download
+                                                        {t('download')}
                                                     </button>
                                                     <button
                                                         onClick={() => setExpandedTicket(
@@ -643,7 +930,7 @@ export default function MyTicketsPage() {
                                                         ) : (
                                                             <ChevronDown className="h-4 w-4 mr-1" />
                                                         )}
-                                                        Details
+                                                        {t('details')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -658,18 +945,18 @@ export default function MyTicketsPage() {
                                                 <div>
                                                     <h4 className={`font-medium ${themeClasses.text} mb-3 flex items-center`}>
                                                         <User className="h-4 w-4 mr-2" />
-                                                        Attendee Information
+                                                        {t('attendeeInformation')}
                                                     </h4>
                                                     <div className="space-y-2 text-sm">
                                                         <div>
-                                                            <span className={themeClasses.textSecondary}>Name:</span>
+                                                            <span className={themeClasses.textSecondary}>{t('firstName')}:</span>
                                                             <span className={`ml-2 font-medium ${themeClasses.text}`}>
                                                                 {ticket.attendeeFirstName} {ticket.attendeeLastName}
                                                             </span>
                                                         </div>
                                                         <div className="flex items-center">
                                                             <Mail className={`h-4 w-4 ${themeClasses.textMuted} mr-1`} />
-                                                            <span className={themeClasses.textSecondary}>Email:</span>
+                                                            <span className={themeClasses.textSecondary}>{t('email')}:</span>
                                                             <span className={`ml-2 ${themeClasses.text}`}>{ticket.attendeeEmail}</span>
                                                         </div>
                                                     </div>
@@ -679,15 +966,15 @@ export default function MyTicketsPage() {
                                                 <div>
                                                     <h4 className={`font-medium ${themeClasses.text} mb-3 flex items-center`}>
                                                         <MapPin className="h-4 w-4 mr-2" />
-                                                        Event Location
+                                                        {t('eventLocation')}
                                                     </h4>
                                                     <div className="space-y-2 text-sm">
                                                         <div>
-                                                            <span className={themeClasses.textSecondary}>Venue:</span>
+                                                            <span className={themeClasses.textSecondary}>{t('venue')}:</span>
                                                             <span className={`ml-2 font-medium ${themeClasses.text}`}>{ticket.venueName}</span>
                                                         </div>
                                                         <div>
-                                                            <span className={themeClasses.textSecondary}>Address:</span>
+                                                            <span className={themeClasses.textSecondary}>{t('address')}:</span>
                                                             <span className={`ml-2 ${themeClasses.text}`}>{ticket.venueAddress}</span>
                                                         </div>
                                                     </div>
@@ -695,19 +982,24 @@ export default function MyTicketsPage() {
 
                                                 {/* Purchase Information */}
                                                 <div>
-                                                    <h4 className={`font-medium ${themeClasses.text} mb-3`}>Purchase Details</h4>
+                                                    <h4 className={`font-medium ${themeClasses.text} mb-3`}>{t('purchaseDetails')}</h4>
                                                     <div className="space-y-2 text-sm">
                                                         <div>
-                                                            <span className={themeClasses.textSecondary}>Purchase Date:</span>
+                                                            <span className={themeClasses.textSecondary}>{t('purchaseDate')}:</span>
                                                             <span className={`ml-2 ${themeClasses.text}`}>{formatDate(ticket.purchaseDate)}</span>
                                                         </div>
                                                         <div>
-                                                            <span className={themeClasses.textSecondary}>Price Paid:</span>
-                                                            <span className={`ml-2 font-medium ${themeClasses.text}`}>${ticket.pricePaid.toFixed(2)}</span>
+                                                            <span className={themeClasses.textSecondary}>{t('ticketPrice')}:</span>
+                                                            <span className={`ml-2 font-medium ${themeClasses.text}`}>
+                                                                {ticket.currency ?
+                                                                    convertAndFormatCurrency(ticket.pricePaid, ticket.currency, preferences, currentLangData) :
+                                                                    formatCurrencyWithUserPreference(ticket.pricePaid, preferences, currentLangData)
+                                                                }
+                                                            </span>
                                                         </div>
                                                         {ticket.checkInDate && (
                                                             <div>
-                                                                <span className={themeClasses.textSecondary}>Check-in Date:</span>
+                                                                <span className={themeClasses.textSecondary}>{t('checkInDate')}:</span>
                                                                 <span className={`ml-2 ${themeClasses.text}`}>{formatDate(ticket.checkInDate)}</span>
                                                             </div>
                                                         )}
@@ -716,14 +1008,14 @@ export default function MyTicketsPage() {
 
                                                 {/* Actions */}
                                                 <div>
-                                                    <h4 className={`font-medium ${themeClasses.text} mb-3`}>Actions</h4>
+                                                    <h4 className={`font-medium ${themeClasses.text} mb-3`}>{t('actions')}</h4>
                                                     <div className="space-y-2">
                                                         <Link
                                                             href={`/events/${ticket.eventId}`}
                                                             className={`inline-flex items-center text-sm ${themeClasses.accentText} ${themeClasses.accentHover}`}
                                                         >
                                                             <ExternalLink className="h-4 w-4 mr-1" />
-                                                            View Event Details
+                                                            {t('viewEventDetails')}
                                                         </Link>
                                                     </div>
                                                 </div>

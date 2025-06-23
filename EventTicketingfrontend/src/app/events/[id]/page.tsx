@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { userApi } from '@/lib/api';
-
+import { useI18nContext } from '@/components/providers/I18nProvider';
 // Types
 interface Event {
     eventId: number;
@@ -56,11 +56,11 @@ interface Event {
     tags?: string;
     maxAttendees: number;
     basePrice: number;
-    currency: string;
     isOnline: boolean;
     onlineUrl?: string;
     ticketsSold: number;
     availableTickets: number;
+    currency?: string;
 }
 
 interface TicketType {
@@ -129,6 +129,7 @@ interface UserPreferences {
     accentColor?: string;
     fontSize?: string;
     compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
 }
 
 // Enhanced theming system - UNIFIED across all pages
@@ -302,6 +303,240 @@ const getThemeClasses = (preferences: UserPreferences | null) => {
     };
 };
 
+// Currency conversion functions
+const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+    const currency = preferences?.currency ?? 'USD';
+    const locale = currentLangData?.region ?? 'en-US';
+
+    try {
+        const formatter = new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+            maximumFractionDigits: currency === 'JPY' ? 0 : 2
+        });
+
+        return formatter.format(amount);
+    } catch (error) {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'JPY': '¥'
+        };
+
+        const symbol = symbols[currency] || '$';
+
+        if (currency === 'JPY') {
+            const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${wholeAmount}`;
+        }
+
+        const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return `${symbol}${formattedAmount}`;
+    }
+};
+
+const getCurrencySymbol = (currency: string) => {
+    const symbols: { [key: string]: string } = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥'
+    };
+
+    return symbols[currency] || '$';
+};
+
+const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+    const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+        ? preferences.currency
+        : 'USD';
+
+    console.log('💱 Converting:', amount, fromCurrency, '→', userCurrency);
+
+    if (fromCurrency === userCurrency) {
+        return formatCurrencyWithUserPreference(amount, preferences, currentLangData);
+    }
+
+    const conversionRates: { [key: string]: { [key: string]: number } } = {
+        'USD': {
+            'USD': 1,
+            'EUR': 0.92,
+            'GBP': 0.79,
+            'JPY': 149
+        },
+        'EUR': {
+            'USD': 1.09,
+            'EUR': 1,
+            'GBP': 0.86,
+            'JPY': 162
+        },
+        'GBP': {
+            'USD': 1.27,
+            'EUR': 1.16,
+            'GBP': 1,
+            'JPY': 189
+        },
+        'JPY': {
+            'USD': 0.0067,
+            'EUR': 0.0062,
+            'GBP': 0.0053,
+            'JPY': 1
+        }
+    };
+
+    const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+    const convertedAmount = amount * rate;
+
+    return formatCurrencyWithUserPreference(convertedAmount, preferences, currentLangData);
+};
+
+
+const getTimeZoneAbbreviation = (timeZone: string): string => {
+    const abbreviations: { [key: string]: string } = {
+        'UTC': 'UTC',
+        'America/New_York': 'EST/EDT',
+        'America/Chicago': 'CST/CDT',
+        'America/Denver': 'MST/MDT',
+        'America/Los_Angeles': 'PST/PDT',
+        'Asia/Kuala_Lumpur': 'MYT',
+        'Europe/London': 'GMT/BST',
+        'Europe/Paris': 'CET/CEST',
+        'Asia/Tokyo': 'JST',
+        'Australia/Sydney': 'AEST/AEDT'
+    };
+
+    return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+};
+
+const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+    const timeFormat = preferences?.timeFormat || '12h';
+
+    console.log('📅 Formatting date with preferences:', {
+        dateFormat,
+        timeFormat,
+        userTimeZone,
+        originalDate: dateTimeString
+    });
+
+    // Create date in user's timezone
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    // Extract date components
+    const year = zonedDate.getFullYear();
+    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(zonedDate.getDate()).padStart(2, '0');
+
+    // Month names for text formats
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthShort = monthNames[zonedDate.getMonth()];
+
+    // Weekday names
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekday = weekdays[zonedDate.getDay()];
+
+    // Format date according to user preference - INDEPENDENT OF LOCALE
+    let formattedDate: string;
+    switch (dateFormat) {
+        case 'dd/MM/yyyy':
+            formattedDate = `${weekday}, ${day}/${month}/${year}`;
+            break;
+        case 'yyyy-MM-dd':
+            formattedDate = `${weekday}, ${year}-${month}-${day}`;
+            break;
+        case 'MMM dd, yyyy':
+            formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+            break;
+        case 'dd MMM yyyy':
+            formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+            break;
+        default: // MM/dd/yyyy
+            formattedDate = `${weekday}, ${month}/${day}/${year}`;
+    }
+
+    // Format time - also independent of locale
+    const hours24 = zonedDate.getHours();
+    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+    let formattedTime: string;
+    if (timeFormat === '24h') {
+        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    } else {
+        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+        const ampm = hours24 >= 12 ? 'PM' : 'AM';
+        formattedTime = `${hours12}:${minutes} ${ampm}`;
+    }
+
+    // Add timezone abbreviation
+    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+    formattedTime += ` ${timeZoneAbbr}`;
+
+    const result = `${formattedDate} ${t('at')} ${formattedTime}`;
+
+    console.log('📅 Final formatted result:', result);
+    return result;
+};
+
+const formatEventDateOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    const year = zonedDate.getFullYear();
+    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(zonedDate.getDate()).padStart(2, '0');
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthShort = monthNames[zonedDate.getMonth()];
+
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekday = weekdays[zonedDate.getDay()];
+
+    switch (dateFormat) {
+        case 'dd/MM/yyyy':
+            return `${weekday}, ${day}/${month}/${year}`;
+        case 'yyyy-MM-dd':
+            return `${weekday}, ${year}-${month}-${day}`;
+        case 'MMM dd, yyyy':
+            return `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+        case 'dd MMM yyyy':
+            return `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+        default: // MM/dd/yyyy
+            return `${weekday}, ${month}/${day}/${year}`;
+    }
+};
+
+const formatEventTimeOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const timeFormat = preferences?.timeFormat || '12h';
+
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    const hours24 = zonedDate.getHours();
+    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+    let formattedTime: string;
+    if (timeFormat === '24h') {
+        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    } else {
+        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+        const ampm = hours24 >= 12 ? 'PM' : 'AM';
+        formattedTime = `${hours12}:${minutes} ${ampm}`;
+    }
+
+    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+    return `${formattedTime} ${timeZoneAbbr}`;
+};
+
 // Hero Slideshow Component with theming
 const EventHeroSlideshow = ({ images, autoPlay = true, themeClasses }: {
     images: SlideImage[],
@@ -312,7 +547,7 @@ const EventHeroSlideshow = ({ images, autoPlay = true, themeClasses }: {
     const [isPlaying, setIsPlaying] = useState(autoPlay);
     const [showModal, setShowModal] = useState(false);
     const [imageError, setImageError] = useState<Set<number>>(new Set());
-
+    const { t } = useI18nContext();
     useEffect(() => {
         if (!isPlaying || images.length <= 1) return;
 
@@ -383,8 +618,8 @@ const EventHeroSlideshow = ({ images, autoPlay = true, themeClasses }: {
                         <span className={`${themeClasses.buttonPaddingSmall} rounded-full ${themeClasses.fontSize.subtitle} font-medium ${currentImage.type === 'event-banner' ? 'bg-yellow-500' :
                             currentImage.type === 'event-image' ? 'bg-blue-500' : 'bg-green-500'
                             } text-white`}>
-                            {currentImage.type === 'event-banner' ? 'Event Banner' :
-                                currentImage.type === 'event-image' ? 'Event Gallery' : 'Venue'}
+                            {currentImage.type === 'event-banner' ? t('eventBanner') :
+                                currentImage.type === 'event-image' ? t('eventGallery') : t('venue')}
                         </span>
                     </div>
 
@@ -490,7 +725,7 @@ export default function EventDetailsPage() {
     const router = useRouter();
     const { isAuthenticated, user } = useAuth();
     const eventId = params.id as string;
-
+    const { t } = useI18nContext();
     const [event, setEvent] = useState<Event | null>(null);
     const [venue, setVenue] = useState<Venue | null>(null);
     const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
@@ -569,7 +804,10 @@ export default function EventDetailsPage() {
                 defaultTimeZone: prefsData.defaultTimeZone || 'UTC',
                 accentColor: prefsData.accentColor || 'blue',
                 fontSize: prefsData.fontSize || 'medium',
-                compactMode: prefsData.compactMode || false
+                compactMode: prefsData.compactMode || false,
+                currency: (prefsData.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(prefsData.currency))
+                    ? prefsData.currency as 'USD' | 'EUR' | 'GBP' | 'JPY'
+                    : 'USD'
             });
         } catch (error) {
             console.log('No preferences found, using defaults');
@@ -583,7 +821,8 @@ export default function EventDetailsPage() {
                 defaultTimeZone: 'UTC',
                 accentColor: 'blue',
                 fontSize: 'medium',
-                compactMode: false
+                compactMode: false,
+                currency: 'USD'
             });
         }
     };
@@ -823,6 +1062,10 @@ export default function EventDetailsPage() {
     };
 
     const formatDate = (dateString: string) => {
+        if (preferences) {
+            return formatEventDateOnly(dateString, preferences);
+        }
+        // Fallback for when preferences aren't loaded yet
         return new Date(dateString).toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -832,9 +1075,15 @@ export default function EventDetailsPage() {
     };
 
     const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
+        if (preferences) {
+            return formatEventTimeOnly(dateString, preferences);
+        }
+        // Fallback for when preferences aren't loaded yet
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
         });
     };
 
@@ -870,7 +1119,7 @@ export default function EventDetailsPage() {
                 <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-2xl ${themeClasses.paddingLarge} ${themeClasses.shadow} border ${themeClasses.borderCard}`}>
                     <div className="text-center">
                         <div className={`animate-spin rounded-full ${themeClasses.iconSizeLarge} border-b-2 border-blue-600 mx-auto ${themeClasses.marginSmall}`}></div>
-                        <p className={`${themeClasses.text} ${themeClasses.fontSize.heading}`}>Loading event...</p>
+                        <p className={`${themeClasses.text} ${themeClasses.fontSize.heading}`}>{t('loadingevents')}</p>
                     </div>
                 </div>
             </div>
@@ -891,13 +1140,13 @@ export default function EventDetailsPage() {
             >
                 <div className={`${themeClasses.backgroundCard} backdrop-blur-sm rounded-2xl ${themeClasses.paddingLarge} ${themeClasses.shadow} border ${themeClasses.borderCard}`}>
                     <div className="text-center">
-                        <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Event Not Found</h1>
+                        <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>{t('eventNotFound')}</h1>
                         <p className={`${themeClasses.textSecondary} ${themeClasses.marginLarge}`}>{error}</p>
                         <button
                             onClick={() => router.push('/events')}
                             className={`${themeClasses.accent} ${themeClasses.accentHover} text-white ${themeClasses.buttonPadding} rounded-lg ${themeClasses.fontSize.button}`}
                         >
-                            Back to Events
+                            {t('backToEvents')}
                         </button>
                     </div>
                 </div>
@@ -925,7 +1174,7 @@ export default function EventDetailsPage() {
                             className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}
                         >
                             <ArrowLeft className={`${themeClasses.iconSize} mr-2`} />
-                            Back to Events
+                            {t('backToEvents')}
                         </button>
 
                         <div className="flex items-center space-x-4">
@@ -968,7 +1217,7 @@ export default function EventDetailsPage() {
                                 {event.isFeatured && (
                                     <div className="flex items-center">
                                         <Star className={`${themeClasses.iconSize} mr-1 fill-current text-yellow-400`} />
-                                        <span className={themeClasses.fontSize.subtitle}>Featured</span>
+                                        <span className={themeClasses.fontSize.subtitle}>{t('featured')}</span>
                                     </div>
                                 )}
                             </div>
@@ -976,11 +1225,7 @@ export default function EventDetailsPage() {
                             <div className={`flex flex-wrap items-center ${themeClasses.gap} ${themeClasses.fontSize.heading} drop-shadow`}>
                                 <div className="flex items-center">
                                     <Calendar className={`${themeClasses.iconSize} mr-2`} />
-                                    <span>{formatDate(event.startDateTime)}</span>
-                                </div>
-                                <div className="flex items-center">
-                                    <Clock className={`${themeClasses.iconSize} mr-2`} />
-                                    <span>{formatTime(event.startDateTime)}</span>
+                                    <span>{formatEventDateTime(event.startDateTime, preferences, { region: 'en-US' }, t)}</span>
                                 </div>
                                 <div className="flex items-center">
                                     <MapPin className={`${themeClasses.iconSize} mr-2`} />
@@ -998,7 +1243,7 @@ export default function EventDetailsPage() {
                     {/* Event Details */}
                     <div className="lg:col-span-2">
                         <div className={`${themeClasses.backgroundCard} backdrop-blur-md rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding} ${themeClasses.marginLarge}`}>
-                            <h2 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>About This Event</h2>
+                            <h2 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>{t('aboutThisEvent')}</h2>
                             <div className="prose max-w-none">
                                 <p className={`${themeClasses.textSecondary} leading-relaxed whitespace-pre-line ${themeClasses.fontSize.text}`}>{event.description}</p>
                             </div>
@@ -1007,9 +1252,9 @@ export default function EventDetailsPage() {
                                 <div className={`${themeClasses.marginLarge} ${themeClasses.paddingSmall} ${themeClasses.accentLight} border ${themeClasses.accentBorder} rounded-xl backdrop-blur-sm`}>
                                     <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.accentText} ${themeClasses.marginSmall} flex items-center`}>
                                         <Globe className={`${themeClasses.iconSize} mr-2`} />
-                                        Online Event
+                                        {t('onlineEvent')}
                                     </h3>
-                                    <p className={`${themeClasses.accentText} ${themeClasses.fontSize.text}`}>This event will be held online. Access details will be provided after purchase.</p>
+                                    <p className={`${themeClasses.accentText} ${themeClasses.fontSize.text}`}>{t('onlineEventNote')}</p>
                                 </div>
                             )}
 
@@ -1029,14 +1274,14 @@ export default function EventDetailsPage() {
 
                         {/* Organizer Info */}
                         <div className={`${themeClasses.backgroundCard} backdrop-blur-md rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding} ${themeClasses.marginLarge}`}>
-                            <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Event Organizer</h3>
+                            <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>{t('eventOrganizer')}</h3>
                             <div className="flex items-center">
                                 <div className={`${themeClasses.iconSizeLarge} ${themeClasses.accentLight} rounded-full flex items-center justify-center backdrop-blur-sm`}>
                                     <Users className={`${themeClasses.iconSize} ${themeClasses.accentText}`} />
                                 </div>
                                 <div className="ml-4">
                                     <p className={`font-medium ${themeClasses.text} ${themeClasses.fontSize.text}`}>{event.organizerName}</p>
-                                    <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>Event Organizer</p>
+                                    <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>{t('eventOrganizer')}</p>
                                 </div>
                             </div>
                         </div>
@@ -1044,7 +1289,7 @@ export default function EventDetailsPage() {
                         {/* Venue Info */}
                         {venue && !event.isOnline && (
                             <div className={`${themeClasses.backgroundCard} backdrop-blur-md rounded-2xl ${themeClasses.shadow} border ${themeClasses.borderCard} ${themeClasses.padding}`}>
-                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>Venue Information</h3>
+                                <h3 className={`${themeClasses.fontSize.heading} font-semibold ${themeClasses.text} ${themeClasses.marginSmall}`}>{t('venueInformation')}</h3>
                                 <div className="flex items-start">
                                     <div className={`${themeClasses.iconSizeLarge} ${themeClasses.accentLight} rounded-full flex items-center justify-center flex-shrink-0 backdrop-blur-sm`}>
                                         <Building className={`${themeClasses.iconSize} ${themeClasses.accentText}`} />
@@ -1055,7 +1300,7 @@ export default function EventDetailsPage() {
                                         <p className={`${themeClasses.textSecondary} ${themeClasses.marginSmall} ${themeClasses.fontSize.text}`}>{venue.city}, {venue.state} {venue.zipCode}</p>
                                         <div className={`flex items-center ${themeClasses.fontSize.subtitle} ${themeClasses.textMuted} ${themeClasses.marginSmall}`}>
                                             <Users className={`${themeClasses.iconSizeSmall} mr-1`} />
-                                            <span>Capacity: {venue.capacity.toLocaleString()}</span>
+                                            <span>{t('capacity')}: {venue.capacity.toLocaleString()}</span>
                                         </div>
                                         {venue.website && (
                                             <a
@@ -1065,7 +1310,7 @@ export default function EventDetailsPage() {
                                                 className={`inline-flex items-center ${themeClasses.accentText} hover:${themeClasses.accentHover} ${themeClasses.fontSize.subtitle} font-medium`}
                                             >
                                                 <Globe className={`${themeClasses.iconSizeSmall} mr-1`} />
-                                                Visit Website
+                                                {t('visitWebsite')}
                                             </a>
                                         )}
                                     </div>
@@ -1083,21 +1328,22 @@ export default function EventDetailsPage() {
                                     <div className={`flex items-center justify-between ${themeClasses.marginSmall}`}>
                                         <h4 className={`font-semibold text-green-900 flex items-center ${themeClasses.fontSize.text}`}>
                                             <ShoppingCart className={`${themeClasses.iconSizeSmall} mr-2`} />
-                                            In Your Cart
+                                            {t('inYourCart')}
                                         </h4>
-                                        <span className={`${themeClasses.fontSize.subtitle} text-green-800`}>{getTotalItems()} items</span>
+                                        <span className={`${themeClasses.fontSize.subtitle} text-green-800`}>{getTotalItems()} {t('items')}
+</span>
                                     </div>
                                     <div className={themeClasses.spacing}>
                                         {cart.map((item) => (
                                             <div key={item.ticketTypeId} className={`flex justify-between items-center ${themeClasses.fontSize.subtitle}`}>
                                                 <span className="text-green-800">{item.name} x{item.quantity}</span>
                                                 <div className="flex items-center space-x-2">
-                                                    <span className="font-semibold text-green-900">${(item.price * item.quantity).toFixed(2)}</span>
+                                                    <span className="font-semibold text-green-900">{convertAndFormatCurrency(item.price * item.quantity, event?.currency || 'USD', preferences, { region: 'en-US' })}</span>
                                                     <button
                                                         onClick={() => removeFromCart(item.ticketTypeId)}
                                                         className="text-red-500 hover:text-red-700 text-xs"
                                                     >
-                                                        Remove
+                                                        {t('remove')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -1105,23 +1351,23 @@ export default function EventDetailsPage() {
                                     </div>
                                     <div className="border-t border-green-200/50 pt-2 mt-2">
                                         <div className="flex justify-between font-bold text-green-900">
-                                            <span>Total: ${getTotalPrice().toFixed(2)}</span>
+                                            <span>{t('total')}: {convertAndFormatCurrency(getTotalPrice(), event?.currency || 'USD', preferences, { region: 'en-US' })}</span>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            <h3 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>Get Tickets</h3>
+                            <h3 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text} ${themeClasses.marginSmall}`}>{t('getTickets')}</h3>
 
                             {/* Event Stats */}
                             <div className={`grid grid-cols-2 ${themeClasses.gap} ${themeClasses.marginLarge}`}>
                                 <div className={`text-center ${themeClasses.paddingSmall} ${themeClasses.accentLight} rounded-xl backdrop-blur-sm border ${themeClasses.accentBorder}`}>
                                     <p className={`${themeClasses.fontSize.title} font-bold ${themeClasses.accentText}`}>{event.ticketsSold}</p>
-                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Tickets Sold</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>{t('ticketsSold')}</p>
                                 </div>
                                 <div className={`text-center ${themeClasses.paddingSmall} bg-green-50/70 rounded-xl backdrop-blur-sm border border-green-100/40`}>
                                     <p className={`${themeClasses.fontSize.title} font-bold text-green-600`}>{event.availableTickets}</p>
-                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>Available</p>
+                                    <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary}`}>{t('available')}</p>
                                 </div>
                             </div>
 
@@ -1129,7 +1375,7 @@ export default function EventDetailsPage() {
                             <div className={themeClasses.spacing}>
                                 {ticketTypes.length === 0 ? (
                                     <div className={`text-center ${themeClasses.paddingLarge}`}>
-                                        <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>No tickets available yet</p>
+                                        <p className={`${themeClasses.textSecondary} ${themeClasses.fontSize.text}`}>{t('noTicketsAvailable')}</p>
                                     </div>
                                 ) : (
                                     ticketTypes.map((ticketType) => (
@@ -1142,20 +1388,20 @@ export default function EventDetailsPage() {
                                                     )}
                                                 </div>
                                                 <p className={`${themeClasses.fontSize.heading} font-bold ${themeClasses.text} ml-4`}>
-                                                    ${ticketType.price.toFixed(2)}
+                                                    {convertAndFormatCurrency(ticketType.price, event?.currency || 'USD', preferences, { region: 'en-US' })}
                                                 </p>
                                             </div>
 
                                             <div className={`flex justify-between items-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} ${themeClasses.marginSmall}`}>
-                                                <span>{ticketType.quantityRemaining} remaining</span>
-                                                <span>Max {ticketType.maxQuantityPerOrder} per order</span>
+                                                <span>{ticketType.quantityRemaining} {t('remaining')}</span>
+                                                <span>{t('maxPerOrder', { max: ticketType.maxQuantityPerOrder })}</span>
                                             </div>
 
                                             {ticketType.isOnSale && ticketType.quantityRemaining > 0 ? (
                                                 <div className={themeClasses.spacing}>
                                                     {/* Quantity Selector */}
                                                     <div className="flex items-center justify-between">
-                                                        <span className={`${themeClasses.fontSize.subtitle} font-medium ${themeClasses.text}`}>Quantity:</span>
+                                                        <span className={`${themeClasses.fontSize.subtitle} font-medium ${themeClasses.text}`}>{t('quantity')}:</span>
                                                         <div className="flex items-center space-x-2">
                                                             <button
                                                                 onClick={() => updateQuantity(ticketType.ticketTypeId, -1)}
@@ -1184,7 +1430,7 @@ export default function EventDetailsPage() {
                                                         className={`w-full ${themeClasses.accent} ${themeClasses.accentHover} disabled:bg-gray-300/70 disabled:cursor-not-allowed text-white font-semibold ${themeClasses.buttonPadding} rounded-lg transition-colors duration-200 flex items-center justify-center backdrop-blur-sm ${themeClasses.fontSize.text}`}
                                                     >
                                                         <ShoppingCart className={`${themeClasses.iconSizeSmall} mr-2`} />
-                                                        Add to Cart
+                                                        {t('addToCart')}
                                                     </button>
                                                 </div>
                                             ) : (
@@ -1192,7 +1438,7 @@ export default function EventDetailsPage() {
                                                     disabled
                                                     className={`w-full bg-gray-300/70 ${themeClasses.textMuted} ${themeClasses.buttonPadding} rounded-lg cursor-not-allowed backdrop-blur-sm ${themeClasses.fontSize.text}`}
                                                 >
-                                                    {ticketType.quantityRemaining === 0 ? 'Sold Out' : 'Not Available'}
+                                                        {ticketType.quantityRemaining === 0 ? t('soldOut') : t('notAvailable')}
                                                 </button>
                                             )}
                                         </div>
@@ -1208,13 +1454,45 @@ export default function EventDetailsPage() {
                                         className={`w-full bg-gradient-to-r from-green-600/90 to-green-700/90 hover:from-green-700 hover:to-green-800 text-white font-bold ${themeClasses.buttonPadding} rounded-xl transition-all duration-200 flex items-center justify-center ${themeClasses.fontSize.heading} transform hover:scale-105 backdrop-blur-sm`}
                                     >
                                         <ShoppingCart className={`${themeClasses.iconSize} mr-2`} />
-                                        Proceed to Checkout
+                                        {t('proceedToCheckout')}
                                     </button>
                                     <p className={`${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} text-center mt-2`}>
-                                        Total: ${getTotalPrice().toFixed(2)} ({getTotalItems()} tickets)
+                                        {t('total')}: {convertAndFormatCurrency(getTotalPrice(), event?.currency || 'USD', preferences, { region: 'en-US' })} ({getTotalItems()} {t('tickets')})
                                     </p>
                                 </div>
                             )}
+
+                            {/* Enhanced user preference indicators */}
+                            <div className={`text-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-3 space-y-1`}>
+                                {preferences?.currency && (
+                                    <div className="flex items-center justify-center">
+                                        <span className="mr-1">{getCurrencySymbol(preferences.currency)}</span>
+                                        {t('currency')}: {preferences.currency === 'USD' ? 'US Dollar' :
+                                            preferences.currency === 'EUR' ? 'Euro' :
+                                                preferences.currency === 'GBP' ? 'British Pound' :
+                                                    preferences.currency === 'JPY' ? 'Japanese Yen' : preferences.currency}
+                                    </div>
+                                )}
+                                {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
+                                    <div className="flex items-center justify-center">
+                                        <span className="mr-1">🌍</span>
+                                        {t('timezone')}: {preferences.defaultTimeZone.replace('_', ' ').replace('/', ', ')}
+                                    </div>
+                                )}
+                                {preferences?.dateFormat && (
+                                    <div className="flex items-center justify-center">
+                                        <span className="mr-1">📅</span>
+                                        {t('dateFormat')}: {preferences.dateFormat}
+                                    </div>
+                                )}
+                                {preferences?.timeFormat && (
+                                    <div className="flex items-center justify-center">
+                                        <span className="mr-1">🕒</span>
+                                        {t('timeFormat')}: {preferences.timeFormat === '12h' ? '12-hour' : '24-hour'}
+                                    </div>
+                                )}
+                            </div>
+
                         </div>
                     </div>
                 </div>

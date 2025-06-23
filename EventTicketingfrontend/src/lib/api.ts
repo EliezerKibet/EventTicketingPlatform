@@ -1092,11 +1092,41 @@ export const userApi = {
     updatePreferences: async (preferences: Partial<UpdateUserPreferencesDto>): Promise<UserPreferences> => {
         try {
             console.log('⚙️ Updating user preferences:', preferences);
+
+            // Add detailed request logging
+            console.log('🔧 Preferences payload type check:');
+            Object.entries(preferences).forEach(([key, value]) => {
+                console.log(`🔧   ${key}: ${value} (${typeof value})`);
+            });
+
             const response = await api.put('/user/preferences', preferences);
+            console.log('✅ API Response: PUT /user/preferences');
             console.log('⚙️ Successfully updated user preferences');
             return response.data;
         } catch (error: any) {
-            console.error('⚙️ Error updating preferences:', {
+            console.error('❌ API Error: PUT /user/preferences', error.message);
+
+            // Enhanced error logging
+            if (error.response) {
+                console.error('❌ Error Status:', error.response.status);
+                console.error('❌ Error Data:', error.response.data);
+                console.error('❌ Error Headers:', error.response.headers);
+                console.error('❌ Request Data Sent:', preferences);
+
+                // Try to extract specific validation errors
+                if (error.response.data?.errors) {
+                    console.error('❌ Validation Errors:', error.response.data.errors);
+                }
+                if (error.response.data?.details) {
+                    console.error('❌ Error Details:', error.response.data.details);
+                }
+            } else if (error.request) {
+                console.error('❌ No response received:', error.request);
+            } else {
+                console.error('❌ Request setup error:', error.message);
+            }
+
+            console.log('⚙️ Error updating preferences:', {
                 message: error.message,
                 status: error.response?.status,
                 data: error.response?.data,

@@ -550,6 +550,7 @@ namespace EventTicketing.API.Services
                 TicketNumber = ticket.TicketNumber,
                 QrCode = ticket.QrCode,
                 PricePaid = ticket.PricePaid,
+                Currency = ticket.Event?.Currency ?? "USD",
                 Status = ticket.Status.ToString(),
                 PurchaseDate = ticket.PurchaseDate,
                 CheckInDate = ticket.CheckInDate,
