@@ -25,4 +25,4 @@ jobs:
       run: dotnet build EventTicketing.API/ --no-restore
       
     - name: Test
-      run: dotnet test EventTicketing.API/EventTicketing.Tests/ --no-build --verbosity normal
+      run: dotnet test ./EventTicketing.API/EventTicketing.Tests/EventTicketing.Tests.csproj --verbosity normal
