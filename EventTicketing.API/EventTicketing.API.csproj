@@ -7,13 +7,13 @@
 		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 		<WarningsAsErrors />
 		<NoWarn>CS8618;CS8601;CS8629;CS8602;CS8604;CS1998;CS8625;CS0266</NoWarn>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<!-- Core packages -->
-		<PackageReference Include="FluentAssertions" Version="8.4.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.6" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+		<PackageReference Include="MSTest.TestFramework" Version="3.9.3" />
 		<PackageReference Include="QRCoder" Version="1.6.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.2" />
 
@@ -39,8 +39,6 @@
 
 		<!-- PDF Generation -->
 		<PackageReference Include="iTextSharp" Version="5.5.13.3" />
-		<PackageReference Include="xunit.abstractions" Version="2.0.3" />
-		<PackageReference Include="xunit.assert" Version="2.9.3" />
 		<PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
 	</ItemGroup>
 

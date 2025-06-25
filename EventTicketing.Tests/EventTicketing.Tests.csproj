@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EventTicketing.API.csproj" />
+	  <ProjectReference Include="..\EventTicketing.API\EventTicketing.API.csproj" />
   </ItemGroup>
 
 </Project>
