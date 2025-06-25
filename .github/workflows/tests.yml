@@ -19,10 +19,16 @@ jobs:
         dotnet-version: '9.0.x'
         
     - name: Restore dependencies
-      run: dotnet restore EventTicketing.API/
+      run: dotnet restore EventTicketing.Tests/
       
-    - name: Build
-      run: dotnet build EventTicketing.API/ --no-restore
+    - name: Build Test Project
+      run: dotnet build EventTicketing.Tests/ --no-restore
       
-    - name: Test
-      run: dotnet test ./EventTicketing.API/EventTicketing.Tests/EventTicketing.Tests.csproj --verbosity normal
+    - name: Run Tests
+      run: dotnet test EventTicketing.Tests/ --verbosity normal --logger trx --results-directory "TestResults"
+      
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: TestResults/**/*.trx
