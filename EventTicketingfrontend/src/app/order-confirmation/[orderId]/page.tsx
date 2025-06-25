@@ -651,37 +651,6 @@ export default function OrderConfirmationPage() {
                         <p className={`${themeClasses.fontSize.heading} ${themeClasses.textLight} drop-shadow`}>
                             {t('ticketsConfirmedSentEmail')}
                         </p>
-
-                        <div className={`text-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-3 space-y-1`}>
-                            {preferences?.currency && (
-                                <div className="flex items-center justify-center">
-                                    <span className="mr-1">{getCurrencySymbol(preferences.currency)}</span>
-                                    {t('currency')}: {preferences.currency === 'USD' ? 'US Dollar' :
-                                        preferences.currency === 'EUR' ? 'Euro' :
-                                            preferences.currency === 'GBP' ? 'British Pound' :
-                                                preferences.currency === 'JPY' ? 'Japanese Yen' : preferences.currency}
-                                </div>
-                            )}
-                            {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
-                                <div className="flex items-center justify-center">
-                                    <span className="mr-1">🌍</span>
-                                    {t('timezone')}: {preferences.defaultTimeZone.replace('_', ' ').replace('/', ', ')}
-                                </div>
-                            )}
-                            {preferences?.dateFormat && (
-                                <div className="flex items-center justify-center">
-                                    <span className="mr-1">📅</span>
-                                    {t('dateFormat')}: {preferences.dateFormat}
-                                </div>
-                            )}
-                            {preferences?.timeFormat && (
-                                <div className="flex items-center justify-center">
-                                    <span className="mr-1">🕒</span>
-                                    {t('timeFormat')}: {preferences.timeFormat === '12h' ? '12-hour' : '24-hour'}
-                                </div>
-                            )}
-                        </div>
-
                     </div>
 
                     {/* Event Info Banner */}

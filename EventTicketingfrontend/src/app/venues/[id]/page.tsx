@@ -542,36 +542,6 @@ export default function VenueDetailPage() {
                             {t('back')}
                         </button>
                         <div className="flex items-center space-x-4">
-                            {/* User Preferences Display */}
-                            <div className={`hidden md:flex flex-col items-end ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} space-y-1`}>
-                                {preferences?.currency && (
-                                    <div className="flex items-center">
-                                        <span className="mr-1">{getCurrencySymbol(preferences.currency)}</span>
-                                        {t('currency')}: {preferences.currency === 'USD' ? 'US Dollar' :
-                                            preferences.currency === 'EUR' ? 'Euro' :
-                                                preferences.currency === 'GBP' ? 'British Pound' :
-                                                    preferences.currency === 'JPY' ? 'Japanese Yen' : preferences.currency}
-                                    </div>
-                                )}
-                                {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
-                                    <div className="flex items-center">
-                                        <span className="mr-1">🌍</span>
-                                        {t('timezone')}: {preferences.defaultTimeZone.replace('_', ' ').replace('/', ', ')}
-                                    </div>
-                                )}
-                                {preferences?.dateFormat && (
-                                    <div className="flex items-center">
-                                        <span className="mr-1">📅</span>
-                                        {t('dateFormat')}: {preferences.dateFormat}
-                                    </div>
-                                )}
-                                {preferences?.timeFormat && (
-                                    <div className="flex items-center">
-                                        <span className="mr-1">🕒</span>
-                                        {t('timeFormat')}: {preferences.timeFormat === '12h' ? '12-hour' : '24-hour'}
-                                    </div>
-                                )}
-                            </div>
                             <button
                                 onClick={shareVenue}
                                 className={`flex items-center ${themeClasses.textSecondary} hover:${themeClasses.text} transition-colors ${themeClasses.fontSize.text}`}

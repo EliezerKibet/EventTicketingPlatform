@@ -50,7 +50,6 @@ import Link from 'next/link';
 import { useI18nContext } from '@/components/providers/I18nProvider';
 import { useI18n } from '../../hooks/useSafeI18n';
 
-// Your existing interfaces
 interface Event {
     eventId: number;
     title: string;
@@ -334,12 +333,7 @@ const formatEventDateTime = (dateTimeString: string, preferences: UserPreference
     const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
     const timeFormat = preferences?.timeFormat || '12h';
 
-    console.log('📅 Formatting date with preferences:', {
-        dateFormat,
-        timeFormat,
-        userTimeZone,
-        originalDate: dateTimeString
-    });
+    
 
     // Create date in user's timezone
     const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
@@ -1282,37 +1276,6 @@ export default function EventsHomepage() {
                                 <Calendar className={`${themeClasses.iconSizeLarge} ${themeClasses.accentText} mr-3`} />
                                 <h1 className={`${themeClasses.fontSize.title} font-bold ${themeClasses.text}`}>EventHub</h1>
                             </div>
-
-                            {/* Enhanced user preference indicators */}
-                            <div className={`text-center ${themeClasses.fontSize.subtitle} ${themeClasses.textSecondary} mt-3 space-y-1`}>
-                                {preferences?.currency && (
-                                    <div className="flex items-center justify-center">
-                                        <span className="mr-1">{getCurrencySymbol(preferences.currency)}</span>
-                                        {t('currency')}: {preferences.currency === 'USD' ? 'US Dollar' :
-                                            preferences.currency === 'EUR' ? 'Euro' :
-                                                preferences.currency === 'GBP' ? 'British Pound' :
-                                                    preferences.currency === 'JPY' ? 'Japanese Yen' : preferences.currency}
-                                    </div>
-                                )}
-                                {preferences?.defaultTimeZone && preferences.defaultTimeZone !== 'UTC' && (
-                                    <div className="flex items-center justify-center">
-                                        <span className="mr-1">🌍</span>
-                                        {t('timezone')}: {preferences.defaultTimeZone.replace('_', ' ').replace('/', ', ')}
-                                    </div>
-                                )}
-                                {preferences?.dateFormat && (
-                                    <div className="flex items-center justify-center">
-                                        <span className="mr-1">📅</span>
-                                        {t('dateFormat')}: {preferences.dateFormat}
-                                    </div>
-                                )}
-                                {preferences?.timeFormat && (
-                                    <div className="flex items-center justify-center">
-                                        <span className="mr-1">🕒</span>
-                                        {t('timeFormat')}: {preferences.timeFormat === '12h' ? '12-hour' : '24-hour'}
-                                    </div>
-                                )}
-                            </div> 
 
                             <div className="flex items-center space-x-6">
                                 {/* User welcome message */}
