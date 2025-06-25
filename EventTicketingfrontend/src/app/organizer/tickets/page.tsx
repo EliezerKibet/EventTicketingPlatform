@@ -78,6 +78,21 @@ interface CreateTicketTypeData {
     quantity: string;
 }
 
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
+
 const TicketsPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
@@ -108,6 +123,10 @@ const TicketsPage = () => {
     const [checkInResult, setCheckInResult] = useState<any>(null);
     const [checkingIn, setCheckingIn] = useState(false);
 
+    //Currency
+    const [userPreferences, setUserPreferences] = useState<any>(null);
+    const [userCurrency, setUserCurrency] = useState<Currency>('USD');
+
     const [formData, setFormData] = useState<CreateTicketTypeData>({
         eventId: '',
         name: '',
@@ -115,6 +134,151 @@ const TicketsPage = () => {
         price: '',
         quantity: ''
     });
+
+    const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+        const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+            ? preferences.currency
+            : 'USD';
+
+
+        if (fromCurrency === userCurrency) {
+            return formatCurrencyWithUserPreference(amount, preferences, currentLangData);
+        }
+
+        const conversionRates: { [key: string]: { [key: string]: number } } = {
+            'USD': {
+                'USD': 1,
+                'EUR': 0.92,  // 1 USD = 0.92 EUR
+                'GBP': 0.79,  // 1 USD = 0.79 GBP
+                'JPY': 149    // 1 USD = 149 JPY
+            },
+            'EUR': {
+                'USD': 1.09,  // 1 EUR = 1.09 USD
+                'EUR': 1,
+                'GBP': 0.86,  // 1 EUR = 0.86 GBP
+                'JPY': 162    // 1 EUR = 162 JPY
+            },
+            'GBP': {
+                'USD': 1.27,  // 1 GBP = 1.27 USD
+                'EUR': 1.16,  // 1 GBP = 1.16 EUR
+                'GBP': 1,
+                'JPY': 189    // 1 GBP = 189 JPY
+            },
+            'JPY': {
+                'USD': 0.0067, // 1 JPY = 0.0067 USD
+                'EUR': 0.0062, // 1 JPY = 0.0062 EUR
+                'GBP': 0.0053, // 1 JPY = 0.0053 GBP
+                'JPY': 1
+            }
+        };
+
+        const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+        const convertedAmount = amount * rate;
+
+        return formatCurrencyWithUserPreference(convertedAmount, preferences, currentLangData);
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+        const currency = preferences?.currency ?? 'USD';
+        const locale = currentLangData?.region ?? 'en-US';
+
+        try {
+            const formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '\u20AC', // Euro symbol
+                'GBP': '\u00A3', // Pound symbol
+                'JPY': '\u00A5'  // Yen symbol
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '\u20AC', // Euro symbol
+            'GBP': '\u00A3', // Pound symbol
+            'JPY': '\u00A5'  // Yen symbol
+        };
+
+        return symbols[currency] || '$';
+    };
+
+    const CURRENCIES = {
+        USD: { symbol: '$', name: 'US Dollar', code: 'USD' },
+        EUR: { symbol: '€', name: 'Euro', code: 'EUR' },
+        GBP: { symbol: '£', name: 'British Pound', code: 'GBP' },
+        JPY: { symbol: '¥', name: 'Japanese Yen', code: 'JPY' }
+    };
+
+    const EXCHANGE_RATES = {
+        USD: 1.00,
+        EUR: 0.92,
+        GBP: 0.79,
+        JPY: 149.0
+    };
+
+    const convertFromUSD = (usdAmount: number, toCurrency: string): number => {
+        const rate = EXCHANGE_RATES[toCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return usdAmount * rate;
+    };
+
+    const convertToUSD = (amount: number, fromCurrency: string): number => {
+        const rate = EXCHANGE_RATES[fromCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return amount / rate;
+    };
+
+    type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY';
+
+    function isCurrency(value: unknown): value is Currency {
+        return typeof value === 'string' &&
+            ['USD', 'EUR', 'GBP', 'JPY'].includes(value);
+    }
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`http://localhost:5251/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const preferences = await response.json();
+                setUserPreferences(preferences);
+
+                // Use type guard for safe currency assignment
+                const currency: Currency = isCurrency(preferences.currency)
+                    ? preferences.currency
+                    : 'USD';
+                setUserCurrency(currency);
+            } else {
+                setUserCurrency('USD');
+            }
+        } catch (error) {
+            console.error('Failed to fetch user preferences:', error);
+            setUserCurrency('USD');
+        }
+    };
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -128,6 +292,7 @@ const TicketsPage = () => {
     // Fetch initial data
     useEffect(() => {
         if (user && isOrganizer) {
+            fetchUserPreferences();
             fetchEvents();
         }
     }, [user, isOrganizer]);
@@ -157,11 +322,9 @@ const TicketsPage = () => {
                     venue: event.venueName || event.venue || 'TBD'
                 })));
             } else {
-                console.error('Failed to fetch events:', response.status);
                 setError(t('failedToFetchVenues'));
             }
         } catch (error) {
-            console.error('Error fetching events:', error);
             setError(t('failedToFetchVenues'));
         }
     };
@@ -194,7 +357,6 @@ const TicketsPage = () => {
 
             setTicketTypes(allTicketTypes);
         } catch (error) {
-            console.error('Error fetching ticket types:', error);
             setError(t('failedToCreateTicketType'));
         } finally {
             setLoading(false);
@@ -252,7 +414,6 @@ const TicketsPage = () => {
                 quantity: parseInt(formData.quantity)
             };
 
-            console.log('🚀 Creating ticket type with payload:', JSON.stringify(payload, null, 2));
 
             const response = await fetch('http://localhost:5251/api/tickets/ticket-types', {
                 method: 'POST',
@@ -264,7 +425,6 @@ const TicketsPage = () => {
             });
 
             const responseText = await response.text();
-            console.log('📄 Raw response:', responseText);
 
             let errorData;
             try {
@@ -274,13 +434,11 @@ const TicketsPage = () => {
             }
 
             if (response.ok) {
-                console.log('✅ Created ticket type:', errorData);
                 setSuccess(t('ticketTypeCreatedSuccessfully'));
                 await fetchTicketTypes();
                 resetForm();
                 setTimeout(() => setSuccess(''), 3000);
             } else {
-                console.error('❌ Ticket type creation failed:', errorData);
 
                 if (response.status === 400) {
                     setError(`${t('error')}: ${errorData.message || t('invalidInput')}`);
@@ -295,7 +453,6 @@ const TicketsPage = () => {
                 }
             }
         } catch (error) {
-            console.error('💥 Network error creating ticket type:', error);
             setError(t('loadError'));
         } finally {
             setFormLoading(false);
@@ -367,7 +524,6 @@ const TicketsPage = () => {
                 setError(errorData.message || t('error'));
             }
         } catch (error) {
-            console.error('Error checking in ticket:', error);
             setError(t('error'));
         } finally {
             setCheckingIn(false);
@@ -382,7 +538,6 @@ const TicketsPage = () => {
         return matchesSearch && matchesEvent;
     });
 
-    // Get theme-aware input styles
     const getInputStyles = (hasError = false) => {
         const baseStyles = `w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-opacity-60`;
         const themeStyles = isDark
@@ -392,7 +547,6 @@ const TicketsPage = () => {
         return `${baseStyles} ${themeStyles} ${errorStyles}`;
     };
 
-    // Get theme-aware tab styles
     const getTabStyles = (isActive: boolean) => {
         if (isActive) {
             return 'border-blue-500 text-blue-600 dark:text-blue-400';
@@ -581,8 +735,10 @@ const TicketsPage = () => {
                                                     {t('event')}
                                                 </th>
                                                 <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
-                                                    {t('price')}
-                                                </th>
+                                                            {t('price')} ({CURRENCIES[userCurrency as keyof typeof CURRENCIES]?.symbol || '$'})
+                                                            <span className="text-xs normal-case ml-1 opacity-75">
+                                                                {userCurrency !== 'USD' && '(converted from USD)'}
+                                                            </span>                                                </th>
                                                 <th className={`px-6 py-3 text-left text-xs font-medium ${themeClasses.textMuted} uppercase tracking-wider`}>
                                                     {t('availability')}
                                                 </th>
@@ -608,7 +764,11 @@ const TicketsPage = () => {
                                                     <td className="px-6 py-4">
                                                         <div className={`flex items-center text-sm ${themeClasses.text}`}>
                                                             <DollarSign className={`h-4 w-4 ${themeClasses.textMuted} mr-1`} />
-                                                            {ticketType.price.toFixed(2)}
+                                                            {formatCurrencyWithUserPreference(
+                                                                convertFromUSD(ticketType.price, userCurrency),
+                                                                { currency: userCurrency },
+                                                                { region: 'en-US' }
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">

@@ -32,14 +32,12 @@ export const useTheme = () => {
     const [isCompact, setIsCompact] = useState(false);
     const isInitialized = useRef(false);
 
-    // Apply theme to document
     const applyTheme = useCallback((newSettings: ThemeSettings) => {
         if (typeof window === 'undefined') return;
 
         const root = document.documentElement;
         const body = document.body;
 
-        // Handle theme class
         const shouldBeDark = newSettings.theme === 'dark' ||
             (newSettings.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
@@ -47,36 +45,29 @@ export const useTheme = () => {
         body.classList.toggle('dark', shouldBeDark);
         root.classList.toggle('dark', shouldBeDark);
 
-        // Handle font size
         body.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
         body.classList.add(`text-size-${newSettings.fontSize}`);
         root.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
         root.classList.add(`text-size-${newSettings.fontSize}`);
 
-        // Handle compact mode
         setIsCompact(newSettings.compactMode);
         body.classList.toggle('compact', newSettings.compactMode);
         root.classList.toggle('compact', newSettings.compactMode);
 
-        // Set CSS custom properties for accent color
         const accentColor = ACCENT_COLORS[newSettings.accentColor as keyof typeof ACCENT_COLORS] || ACCENT_COLORS.blue;
         root.style.setProperty('--color-primary', accentColor);
 
-        // Emit custom event for other components
         window.dispatchEvent(new CustomEvent('themeChanged', {
             detail: { ...newSettings, isDark: shouldBeDark }
         }));
     }, []);
 
-    // Update theme settings
     const updateTheme = useCallback((newSettings: Partial<ThemeSettings>) => {
         setSettings(prevSettings => {
             const updatedSettings = { ...prevSettings, ...newSettings };
 
-            // Apply theme immediately
             applyTheme(updatedSettings);
 
-            // Save to localStorage
             try {
                 localStorage.setItem('themeSettings', JSON.stringify(updatedSettings));
             } catch (error) {
@@ -87,14 +78,12 @@ export const useTheme = () => {
         });
     }, [applyTheme]);
 
-    // Initialize theme on mount
     useEffect(() => {
         if (isInitialized.current || typeof window === 'undefined') return;
         isInitialized.current = true;
 
         let initialSettings = defaultSettings;
 
-        // Load from localStorage
         try {
             const saved = localStorage.getItem('themeSettings');
             if (saved) {
@@ -105,11 +94,9 @@ export const useTheme = () => {
             console.error('Error loading theme settings:', error);
         }
 
-        // Set state and apply theme
         setSettings(initialSettings);
         applyTheme(initialSettings);
 
-        // Listen for system theme changes
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
         const handleChange = () => {
             if (initialSettings.theme === 'auto') {
@@ -124,7 +111,6 @@ export const useTheme = () => {
         };
     }, [applyTheme]);
 
-    // Initialize theme function for compatibility
     const initializeTheme = useCallback(() => {
         if (typeof window !== 'undefined') {
             applyTheme(settings);
@@ -161,10 +147,8 @@ export const useThemeClasses = () => {
             setIsCompact(prev => prev !== currentIsCompact ? currentIsCompact : prev);
         };
 
-        // Initial state update
         setTimeout(updateThemeState, 0);
 
-        // Observe class changes on both html and body
         if (observerRef.current) {
             observerRef.current.disconnect();
         }
@@ -178,7 +162,6 @@ export const useThemeClasses = () => {
             }
         });
 
-        // Observe both documentElement and body
         observerRef.current.observe(document.documentElement, {
             attributes: true,
             attributeFilter: ['class']
@@ -189,7 +172,6 @@ export const useThemeClasses = () => {
             attributeFilter: ['class']
         });
 
-        // Listen for theme change events
         const handleThemeChange = () => {
             setTimeout(updateThemeState, 0);
         };
@@ -205,27 +187,21 @@ export const useThemeClasses = () => {
     }, []);
 
     return {
-        // Theme state
         isDark,
         isCompact,
 
-        // Background classes
         themeBg: isDark ? 'bg-gray-900' : 'bg-gray-50',
         themeCard: isDark ? 'bg-gray-800' : 'bg-white',
         themeMuted: isDark ? 'bg-gray-700' : 'bg-gray-100',
 
-        // Text color classes
         themeFg: isDark ? 'text-gray-100' : 'text-gray-900',
         themeCardFg: isDark ? 'text-gray-100' : 'text-gray-900',
         themeMutedFg: isDark ? 'text-gray-400' : 'text-gray-600',
 
-        // Border classes
         themeBorder: isDark ? 'border-gray-700' : 'border-gray-200',
 
-        // Hover classes
         hover: isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100',
 
-        // Responsive text size classes
         textXs: 'text-xs',
         textSm: 'text-responsive-sm text-sm',
         textBase: 'text-responsive-base text-base',
@@ -234,27 +210,23 @@ export const useThemeClasses = () => {
         text2Xl: 'text-responsive-2xl text-2xl',
         text3Xl: 'text-responsive-3xl text-3xl',
 
-        // Compact mode classes
         compactCard: isCompact ? 'p-3' : 'p-6',
         compactInput: isCompact ? 'py-1.5 px-3' : 'py-2 px-4',
         compactButton: isCompact ? 'py-1.5 px-3' : 'py-2 px-4',
         compactGap: isCompact ? 'gap-2' : 'gap-4',
         compactSpace: isCompact ? 'space-y-2' : 'space-y-4',
 
-        // Legacy classes for backward compatibility
         background: isDark ? 'bg-gray-900' : 'bg-gray-50',
         card: isDark ? 'bg-gray-800' : 'bg-white',
         text: isDark ? 'text-gray-100' : 'text-gray-900',
         textMuted: isDark ? 'text-gray-400' : 'text-gray-600',
         border: isDark ? 'border-gray-700' : 'border-gray-200',
 
-        // Button classes
         btnAccent: `bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors ${isCompact ? 'text-sm' : ''}`,
         btnAccentOutline: `border-2 border-blue-600 text-blue-600 bg-transparent px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-colors ${isCompact ? 'text-sm' : ''}`
     };
 };
 
-// Additional utility hook for theme-aware styling
 export const useThemeUtils = () => {
     const { isDark, isCompact } = useTheme();
     const themeClasses = useThemeClasses();

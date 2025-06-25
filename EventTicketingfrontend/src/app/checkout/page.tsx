@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useI18n } from '@/components/providers/I18nProvider';
 import { ArrowLeft, CreditCard, User, Mail, Phone, Lock, ShoppingCart, Check, X, AlertCircle } from 'lucide-react';
-import { promoCodesApi, userApi } from '@/lib/api'; // Import user API for preferences
+import { promoCodesApi, userApi } from '@/lib/api'; 
 
 interface TicketType {
     ticketTypeId: number;
@@ -45,20 +45,19 @@ interface PromoCodeValidation {
 }
 
 interface UserPreferences {
-    emailNotifications?: boolean;  // Add ? to make it optional
-    sessionTimeout?: number;       // Add ? to make it optional
-    theme?: string;               // Add ? to make it optional
-    language?: string;            // Add ? to make it optional
-    dateFormat?: string;          // Add ? to make it optional
-    timeFormat?: string;          // Add ? to make it optional
+    emailNotifications?: boolean;  
+    sessionTimeout?: number;       
+    theme?: string;               
+    language?: string;            
+    dateFormat?: string;          
+    timeFormat?: string;          
     defaultTimeZone?: string;
     accentColor?: string;
     fontSize?: string;
     compactMode?: boolean;
-    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';  // Update this line
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';  
 }
 
-// Enhanced theme system from profile page
 const getThemeClasses = (preferences: UserPreferences | null) => {
     const isDarkMode = preferences?.theme === 'dark' ||
         (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -67,7 +66,6 @@ const getThemeClasses = (preferences: UserPreferences | null) => {
     const fontSize = preferences?.fontSize || 'medium';
     const compactMode = preferences?.compactMode || false;
 
-    // Accent color configurations
     const accentColors = {
         blue: {
             primary: 'bg-blue-600',
@@ -113,7 +111,6 @@ const getThemeClasses = (preferences: UserPreferences | null) => {
 
     const currentAccent = accentColors[accentColor as keyof typeof accentColors] || accentColors.blue;
 
-    // Font size configurations
     const fontSizes = {
         small: {
             text: 'text-sm',
@@ -243,13 +240,11 @@ export default function CheckoutPage() {
     const [error, setError] = useState('');
     const [preferences, setPreferences] = useState<UserPreferences | null>(null);
 
-    // Promo code state
     const [promoCodeInput, setPromoCodeInput] = useState('');
     const [appliedPromoCode, setAppliedPromoCode] = useState<PromoCodeValidation | null>(null);
     const [promoCodeValidating, setPromoCodeValidating] = useState(false);
     const [promoCodeError, setPromoCodeError] = useState('');
 
-    // Form state
     const [formData, setFormData] = useState({
         billingFirstName: user?.firstName || '',
         billingLastName: user?.lastName || '',
@@ -270,28 +265,23 @@ export default function CheckoutPage() {
         const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
         const timeFormat = preferences?.timeFormat || '12h';
 
-        console.log('📅 Formatting date with preferences:', {
-            dateFormat,
-            timeFormat,
-            userTimeZone,
-            originalDate: dateTimeString
-        });
-
-        // Create date in user's timezone
         const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
 
-        // Extract date components
         const year = zonedDate.getFullYear();
         const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
         const day = String(zonedDate.getDate()).padStart(2, '0');
 
-        // Month names for text formats
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthNames = [
+            t('january'), t('february'), t('march'), t('april'),
+            t('may'), t('june'), t('july'), t('august'),
+            t('september'), t('october'), t('november'), t('december')
+        ];
         const monthShort = monthNames[zonedDate.getMonth()];
 
-        // Weekday names
-        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weekdays = [
+            t('sunday'), t('monday'), t('tuesday'), t('wednesday'),
+            t('thursday'), t('friday'), t('saturday')
+        ];
         const weekday = weekdays[zonedDate.getDay()];
 
         // Format date according to user preference - INDEPENDENT OF LOCALE
@@ -332,11 +322,9 @@ export default function CheckoutPage() {
 
         const result = `${formattedDate} ${t('at')} ${formattedTime}`;
 
-        console.log('📅 Final formatted result:', result);
         return result;
     };
 
-    // Helper function to get timezone abbreviations
     const getTimeZoneAbbreviation = (timeZone: string): string => {
         const abbreviations: { [key: string]: string } = {
             'UTC': 'UTC',
@@ -369,7 +357,6 @@ export default function CheckoutPage() {
 
             return formatter.format(amount);
         } catch (error) {
-            // Fallback: Simple symbol mapping
             const symbols: { [key: string]: string } = {
                 'USD': '$',
                 'EUR': '€',
@@ -379,20 +366,17 @@ export default function CheckoutPage() {
 
             const symbol = symbols[currency] || '$';
 
-            // For JPY, don't show decimal places
             if (currency === 'JPY') {
                 const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                 return `${symbol}${wholeAmount}`;
             }
 
-            // For other currencies, show 2 decimal places
             const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             return `${symbol}${formattedAmount}`;
         }
     };
 
 
-    // Get currency symbol for display purposes
     const getCurrencySymbol = (currency: string) => {
         const symbols: { [key: string]: string } = {
             'USD': '$',
@@ -405,20 +389,15 @@ export default function CheckoutPage() {
     };
 
     const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
-        // Ensure we always have a valid user currency
         const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
             ? preferences.currency
             : 'USD';
 
-        // Add debugging
-        console.log('💱 Converting:', amount, fromCurrency, '→', userCurrency);
 
-        // If currencies match, just format
         if (fromCurrency === userCurrency) {
             return formatCurrencyWithUserPreference(amount, preferences, currentLangData);
         }
 
-        // Conversion rates for your 4 supported currencies (approximate rates)
         const conversionRates: { [key: string]: { [key: string]: number } } = {
             'USD': {
                 'USD': 1,
@@ -467,7 +446,6 @@ export default function CheckoutPage() {
         fetchEventData();
     }, [eventId, isAuthenticated]);
 
-    // Apply theme to document body
     useEffect(() => {
         if (preferences) {
             const isDarkMode = preferences.theme === 'dark' ||
@@ -487,9 +465,6 @@ export default function CheckoutPage() {
         try {
             const prefsData = await userApi.getPreferences();
 
-            // Add extra debugging
-            console.log('🔧 Raw preferences from API:', prefsData);
-            console.log('🔧 Currency from API:', prefsData.currency);
 
             // Validate and set preferences with fallbacks
             const validatedPrefs: UserPreferences = {
@@ -503,7 +478,6 @@ export default function CheckoutPage() {
                 accentColor: prefsData.accentColor ?? 'blue',
                 fontSize: prefsData.fontSize ?? 'medium',
                 compactMode: prefsData.compactMode ?? false,
-                // Fix: Ensure currency always has a valid value
                 currency: (prefsData.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(prefsData.currency))
                     ? prefsData.currency as 'USD' | 'EUR' | 'GBP' | 'JPY'
                     : 'USD'
@@ -511,12 +485,7 @@ export default function CheckoutPage() {
 
             setPreferences(validatedPrefs);
 
-            // Log user preferences for debugging
-            console.log('🔧 User preferences loaded:', validatedPrefs);
-
         } catch (error) {
-            console.error('❌ Failed to load user preferences:', error);
-            // Use comprehensive defaults if preferences can't be loaded
             setPreferences({
                 emailNotifications: true,
                 sessionTimeout: 30,
@@ -612,12 +581,6 @@ export default function CheckoutPage() {
         try {
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-            console.log('🔍 === PROMO CODE VALIDATION DEBUG START ===');
-            console.log('🔍 Sending validation request:');
-            console.log('🔍 Code:', code.trim());
-            console.log('🔍 EventId:', parseInt(eventId!));
-            console.log('🔍 Order Subtotal:', subtotal);
-            console.log('🔍 Cart items:', cart);
 
             const requestPayload = {
                 code: code.trim(),
@@ -625,11 +588,8 @@ export default function CheckoutPage() {
                 orderSubtotal: subtotal
             };
 
-            console.log('🔍 Request payload:', requestPayload);
-
             const validation = await promoCodesApi.validatePromoCode(requestPayload);
 
-            // Convert discount amount to user's preferred currency for display
             if (validation.isValid && validation.discountAmount) {
                 const convertedDiscount = convertAndFormatCurrency(
                     Number(validation.discountAmount),
@@ -637,50 +597,25 @@ export default function CheckoutPage() {
                     preferences,
                     currentLangData
                 );
-                // Update the formatted discount to show in user's currency
                 validation.formattedDiscount = convertedDiscount;
             } 
 
-            console.log('🔍 === VALIDATION RESPONSE RECEIVED ===');
-            console.log('🔍 Raw validation response:', validation);
-            console.log('🔍 IsValid:', validation.isValid);
-            console.log('🔍 Discount Amount (raw):', validation.discountAmount);
-            console.log('🔍 Discount Amount (type):', typeof validation.discountAmount);
-            console.log('🔍 Formatted Discount:', validation.formattedDiscount);
-            console.log('🔍 Message:', validation.message);
-
-            const discountAsNumber = Number(validation.discountAmount);
-            console.log('🔍 Discount as Number:', discountAsNumber);
-            console.log('🔍 Is discount NaN?', isNaN(discountAsNumber));
-            console.log('🔍 Is discount 0?', discountAsNumber === 0);
 
             if (validation.promoCode) {
-                console.log('🔍 PromoCode object:', validation.promoCode);
-                console.log('🔍 PromoCode Type:', validation.promoCode.type);
-                console.log('🔍 PromoCode Value:', validation.promoCode.value);
             }
 
             if (validation.isValid) {
-                console.log('🔍 ✅ Promo code is valid, applying...');
                 setAppliedPromoCode(validation);
                 setFormData(prev => ({ ...prev, promoCode: code.trim() }));
                 setPromoCodeInput('');
                 setPromoCodeError('');
 
-                console.log('🔍 Applied promo code state will be:', validation);
             } else {
-                console.log('🔍 ❌ Promo code is invalid:', validation.message);
                 setPromoCodeError(validation.message);
                 setAppliedPromoCode(null);
             }
 
-            console.log('🔍 === PROMO CODE VALIDATION DEBUG END ===');
-
         } catch (error: any) {
-            console.error('🔍 === VALIDATION ERROR ===');
-            console.error('🔍 Error object:', error);
-            console.error('🔍 Error message:', error.message);
-            console.error('🔍 Error stack:', error.stack);
             setPromoCodeError(error.message || t('failedToLoadPromoCodes'));
             setAppliedPromoCode(null);
         } finally {
@@ -704,27 +639,15 @@ export default function CheckoutPage() {
         const serviceFee = subtotal * 0.05; // 5% service fee
         const tax = subtotal * 0.08; // 8% tax
 
-        console.log('🔍 === ORDER SUMMARY CALCULATION ===');
-        console.log('🔍 Subtotal:', subtotal);
-        console.log('🔍 Service Fee:', serviceFee);
-        console.log('🔍 Tax:', tax);
-        console.log('🔍 Applied Promo Code:', appliedPromoCode);
 
         let discount = 0;
         if (appliedPromoCode?.isValid) {
             discount = Number(appliedPromoCode.discountAmount) || 0;
-            console.log('🔍 Discount from promo code:', discount);
-            console.log('🔍 Discount type:', typeof discount);
-            console.log('🔍 Original discountAmount:', appliedPromoCode.discountAmount);
-            console.log('🔍 Original discountAmount type:', typeof appliedPromoCode.discountAmount);
-        } else {
-            console.log('🔍 No valid promo code applied');
-        }
+        } 
 
         const total = subtotal + serviceFee + tax - discount;
 
         const summary = { subtotal, serviceFee, tax, discount, total };
-        console.log('🔍 Final order summary:', summary);
 
         return summary;
     };

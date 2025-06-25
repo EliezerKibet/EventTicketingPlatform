@@ -1,6 +1,5 @@
 namespace EventTicketing.API.Models.DTOs
 {
-    // Revenue Analytics DTOs
     public class RevenueAnalyticsDto
     {
         public decimal TotalRevenue { get; set; }
@@ -19,7 +18,6 @@ namespace EventTicketing.API.Models.DTOs
         public int TicketsSold { get; set; }
     }
 
-    // Payment Method Analytics DTOs
     public class PaymentMethodAnalyticsDto
     {
         public List<PaymentMethodDto> Methods { get; set; } = new();
@@ -33,7 +31,6 @@ namespace EventTicketing.API.Models.DTOs
         public decimal TotalAmount { get; set; }
     }
 
-    // Capacity Analytics DTOs
     public class CapacityAnalyticsDto
     {
         public List<CapacityEventDto> Events { get; set; } = new();
@@ -48,7 +45,6 @@ namespace EventTicketing.API.Models.DTOs
         public decimal UtilizationPercentage { get; set; }
     }
 
-    // Demographics Analytics DTOs
     public class DemographicsAnalyticsDto
     {
         public List<AgeGroupDto> AgeDistribution { get; set; } = new();
@@ -69,7 +65,6 @@ namespace EventTicketing.API.Models.DTOs
         public decimal Percentage { get; set; }
     }
 
-    // Check-in Analytics DTOs
     public class CheckInAnalyticsDto
     {
         public List<CheckInHourlyDto> HourlyPattern { get; set; } = new();
@@ -85,7 +80,6 @@ namespace EventTicketing.API.Models.DTOs
         public int CumulativeCount { get; set; }
     }
 
-    // Venue Analytics DTOs
     public class VenueAnalyticsDto
     {
         public List<VenuePerformanceDto> Performance { get; set; } = new();
@@ -101,7 +95,6 @@ namespace EventTicketing.API.Models.DTOs
         public decimal AvgRating { get; set; }
     }
 
-    // Seasonal Analytics DTOs
     public class SeasonalAnalyticsDto
     {
         public List<SeasonalTrendDto> MonthlyTrends { get; set; } = new();
@@ -115,7 +108,6 @@ namespace EventTicketing.API.Models.DTOs
         public int TotalAttendance { get; set; }
     }
 
-    // Low Attendance Analytics DTOs
     public class LowAttendanceAnalyticsDto
     {
         public List<LowAttendanceEventDto> Events { get; set; } = new();

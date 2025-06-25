@@ -19,13 +19,10 @@ const ConditionalLayout: React.FC<ConditionalLayoutProps> = ({ children }) => {
     const { user, logout } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
 
-    // Check if we're in the organizer section
     const isOrganizerRoute = pathname?.startsWith('/organizer');
 
-    // Check if we're on the dashboard page specifically
     const isDashboardPage = pathname === '/organizer' || pathname === '/organizer/dashboard';
 
-    // Check if we're on auth pages (login/register)
     const isAuthPage = pathname?.includes('/login') || pathname?.includes('/register');
 
     const handleSignOut = async () => {
@@ -39,7 +36,6 @@ const ConditionalLayout: React.FC<ConditionalLayoutProps> = ({ children }) => {
     };
 
     if (isOrganizerRoute) {
-        // For organizer dashboard, render without header
         if (isDashboardPage) {
             return (
                 <div className="min-h-screen">
@@ -50,7 +46,6 @@ const ConditionalLayout: React.FC<ConditionalLayoutProps> = ({ children }) => {
             );
         }
 
-        // For other organizer routes, use the organizer layout with header functionality
         return (
             <div className="min-h-screen">
 
@@ -71,11 +66,9 @@ const ConditionalLayout: React.FC<ConditionalLayoutProps> = ({ children }) => {
     }
 
     if (isAuthPage) {
-        // For auth pages, render without any layout
         return <>{children}</>;
     }
 
-    // For regular pages (like events homepage), render without header
     return <>{children}</>;
 };
 

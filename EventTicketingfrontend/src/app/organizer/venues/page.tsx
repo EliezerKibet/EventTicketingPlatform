@@ -67,7 +67,6 @@ const VenuesPage = () => {
     const themeClasses = useThemeClasses();
     const { isDark } = useTheme();
 
-    // Extended translation support for missing keys
     const translateWithFallback = (key: string, fallback: string) => {
         try {
             const translated = t(key);
@@ -114,14 +113,12 @@ const VenuesPage = () => {
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    // Check if user is authorized
     useEffect(() => {
         if (user && !isOrganizer) {
             router.push('/');
         }
     }, [user, isOrganizer, router]);
 
-    // Fetch venues
     useEffect(() => {
         if (user && isOrganizer) {
             fetchVenues();
@@ -144,14 +141,12 @@ const VenuesPage = () => {
                 setError(t('failedToFetchVenues'));
             }
         } catch (error) {
-            console.error('Error fetching venues:', error);
             setError(t('failedToFetchVenues'));
         } finally {
             setLoading(false);
         }
     };
 
-    // Filter venues
     const filteredVenues = venues.filter(venue => {
         const matchesSearch = venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             venue.address.toLowerCase().includes(searchTerm.toLowerCase());
@@ -159,17 +154,14 @@ const VenuesPage = () => {
         return matchesSearch && matchesCity;
     });
 
-    // Get unique cities for filter
     const cities = [...new Set(venues.map(venue => venue.city))].sort();
 
-    // Image handling functions - ADDED
     const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
         setImageUploadError('');
 
-        // Validate image
         const validation = imageApi.validateImageFile(file);
         if (!validation.isValid) {
             setImageUploadError(validation.error || 'Invalid image file');
@@ -178,12 +170,10 @@ const VenuesPage = () => {
 
         setSelectedImageFile(file);
 
-        // Create preview
         try {
             const preview = await imageUtils.resizeImageForPreview(file);
             setImagePreview(preview);
         } catch (error) {
-            console.error('Error creating image preview:', error);
             setImagePreview(URL.createObjectURL(file));
         }
     };
@@ -193,7 +183,6 @@ const VenuesPage = () => {
         setImagePreview(null);
         setImageUploadError('');
 
-        // Reset file input
         const fileInput = document.getElementById('venue-image-input') as HTMLInputElement;
         if (fileInput) {
             fileInput.value = '';
@@ -215,7 +204,6 @@ const VenuesPage = () => {
         if (imageFile) {
             setImageUploadError('');
 
-            // Validate image
             const validation = imageApi.validateImageFile(imageFile);
             if (!validation.isValid) {
                 setImageUploadError(validation.error || 'Invalid image file');
@@ -224,12 +212,10 @@ const VenuesPage = () => {
 
             setSelectedImageFile(imageFile);
 
-            // Create preview
             try {
                 const preview = await imageUtils.resizeImageForPreview(imageFile);
                 setImagePreview(preview);
             } catch (error) {
-                console.error('Error creating image preview:', error);
                 setImagePreview(URL.createObjectURL(imageFile));
             }
         } else {
@@ -237,7 +223,6 @@ const VenuesPage = () => {
         }
     };
 
-    // Edit image functions - ADDED
     const handleEditImage = (venue: Venue) => {
         setEditingVenue(venue);
         setSelectedImageFile(null);
@@ -264,16 +249,14 @@ const VenuesPage = () => {
         setImageUploadError('');
 
         try {
-            console.log(`Uploading image for venue ${editingVenue.venueId}`);
             const result = await imageApi.uploadVenueImage(editingVenue.venueId, selectedImageFile);
 
             setSuccess(translateWithFallback('venueImageUpdated', 'Venue image updated successfully!'));
-            await fetchVenues(); // Refresh the venues list
+            await fetchVenues(); 
             handleCloseImageEdit();
 
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            console.error('Error uploading venue image:', error);
             setImageUploadError(error.message || 'Failed to upload image');
         } finally {
             setImageEditLoading(false);
@@ -291,23 +274,20 @@ const VenuesPage = () => {
         setImageUploadError('');
 
         try {
-            console.log(`Deleting image for venue ${editingVenue.venueId}`);
             await imageApi.deleteVenueImage(editingVenue.venueId);
 
             setSuccess(translateWithFallback('venueImageDeleted', 'Venue image deleted successfully!'));
-            await fetchVenues(); // Refresh the venues list
+            await fetchVenues();
             handleCloseImageEdit();
 
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            console.error('Error deleting venue image:', error);
             setImageUploadError(error.message || 'Failed to delete image');
         } finally {
             setImageEditLoading(false);
         }
     };
 
-    // Form handling
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
 
@@ -316,7 +296,6 @@ const VenuesPage = () => {
             [name]: value
         }));
 
-        // Clear error when field is updated
         if (formErrors[name]) {
             setFormErrors(prev => ({
                 ...prev,
@@ -337,7 +316,7 @@ const VenuesPage = () => {
         }
 
         if (!formData.city.trim()) {
-            errors.city = t('categoryRequired'); // Reusing city validation message
+            errors.city = t('categoryRequired'); 
         }
 
         if (!formData.country.trim()) {
@@ -352,7 +331,6 @@ const VenuesPage = () => {
             errors.contactEmail = t('validEmailRequired');
         }
 
-        // Validate latitude and longitude only if provided
         if (formData.latitude) {
             const lat = parseFloat(formData.latitude);
             if (isNaN(lat) || lat < -90 || lat > 90) {
@@ -389,7 +367,6 @@ const VenuesPage = () => {
         });
         setFormErrors({});
         setShowCreateForm(false);
-        // Reset image states - ADDED
         handleRemoveImage();
     };
 
@@ -421,9 +398,7 @@ const VenuesPage = () => {
                 website: formData.website.trim() || undefined
             };
 
-            console.log('Creating venue with payload:', payload);
 
-            // Create venue first
             const response = await fetch('http://localhost:5251/api/venues', {
                 method: 'POST',
                 headers: {
@@ -435,16 +410,11 @@ const VenuesPage = () => {
 
             if (response.ok) {
                 const createdVenue = await response.json();
-                console.log('Venue created:', createdVenue);
 
-                // Upload image if provided
                 if (selectedImageFile) {
                     try {
-                        console.log('Uploading venue image...');
                         await imageApi.uploadVenueImage(createdVenue.venueId, selectedImageFile);
-                        console.log('Venue image uploaded successfully');
                     } catch (imageError: any) {
-                        console.warn('Image upload failed, but venue was created:', imageError.message);
                     }
                 }
 
@@ -455,18 +425,15 @@ const VenuesPage = () => {
                 setTimeout(() => setSuccess(''), 3000);
             } else {
                 const errorData = await response.json();
-                console.error('Venue creation error:', errorData);
                 setError(errorData.message || t('failedToCreateVenue'));
             }
         } catch (error: any) {
-            console.error('Error creating venue:', error);
             setError(t('failedToCreateVenue'));
         } finally {
             setFormLoading(false);
         }
     };
 
-    // Get theme-aware input styles
     const getInputStyles = (hasError = false) => {
         const baseStyles = `w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-opacity-60`;
         const themeStyles = isDark

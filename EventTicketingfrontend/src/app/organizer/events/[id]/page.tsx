@@ -96,7 +96,6 @@ export default function EventDetailsPage() {
                 const cartData = JSON.parse(savedCart);
                 setCart(cartData);
             } catch (error) {
-                console.error('Failed to load cart from storage:', error);
             }
         }
     };
@@ -127,7 +126,6 @@ export default function EventDetailsPage() {
             if (response.ok) {
                 const data = await response.json();
                 setTicketTypes(data);
-                // Initialize quantities
                 const initialQuantities: { [key: number]: number } = {};
                 data.forEach((ticket: TicketType) => {
                     initialQuantities[ticket.ticketTypeId] = 0;
@@ -135,7 +133,6 @@ export default function EventDetailsPage() {
                 setQuantities(initialQuantities);
             }
         } catch (error) {
-            console.error('Failed to fetch ticket types:', error);
         }
     };
 
@@ -181,7 +178,6 @@ export default function EventDetailsPage() {
             return newCart;
         });
 
-        // Reset quantity after adding
         setQuantities(prev => ({ ...prev, [ticketType.ticketTypeId]: 0 }));
     };
 
@@ -256,10 +252,8 @@ export default function EventDetailsPage() {
                     url: window.location.href,
                 });
             } catch (error) {
-                console.log('Error sharing:', error);
             }
         } else {
-            // Fallback: copy to clipboard
             navigator.clipboard.writeText(window.location.href);
             alert('Event link copied to clipboard!');
         }

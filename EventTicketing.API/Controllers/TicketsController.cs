@@ -1,6 +1,4 @@
-﻿// COMPLETE WORKING VERSION - Replace your TicketsController.cs with this:
-
-using EventTicketing.API.Models.DTOs;
+﻿using EventTicketing.API.Models.DTOs;
 using EventTicketing.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -226,7 +224,6 @@ namespace EventTicketing.API.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"PDF generation error: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -253,7 +250,57 @@ namespace EventTicketing.API.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"QR data error: {ex.Message}");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ENHANCED: Comprehensive event revenue endpoint
+        [HttpGet("event/{eventId}/revenue")]
+        [Authorize]
+        public async Task<ActionResult<object>> GetEventRevenue(int eventId)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var revenueAnalytics = await _ticketService.GetEventRevenueAnalyticsAsync(eventId, userId);
+                return Ok(revenueAnalytics);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // NEW: Detailed revenue breakdown endpoint
+        [HttpGet("event/{eventId}/revenue/detailed")]
+        [Authorize]
+        public async Task<ActionResult<object>> GetDetailedEventRevenue(int eventId)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var detailedRevenue = await _ticketService.GetDetailedEventRevenueAsync(eventId, userId);
+                return Ok(detailedRevenue);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // NEW: Revenue by time period endpoint
+        [HttpGet("event/{eventId}/revenue/timeline")]
+        [Authorize]
+        public async Task<ActionResult<object>> GetEventRevenueTimeline(int eventId, [FromQuery] string period = "daily")
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var timeline = await _ticketService.GetEventRevenueTimelineAsync(eventId, userId, period);
+                return Ok(timeline);
+            }
+            catch (Exception ex)
+            {
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -388,7 +435,6 @@ namespace EventTicketing.API.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"QR generation error: {ex.Message}");
                 return System.Text.Encoding.UTF8.GetBytes($"QR_ERROR:{ticketNumber}");
             }
         }

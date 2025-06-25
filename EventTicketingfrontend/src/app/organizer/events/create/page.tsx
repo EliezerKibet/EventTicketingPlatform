@@ -1,4 +1,5 @@
-﻿/* eslint-disable @typescript-eslint/no-unused-vars */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,9 @@ import { useI18n } from '@/components/providers/I18nProvider'; // Add this impor
 import { Calendar, MapPin, Globe, Users, DollarSign, Plus, Trash2, Save, ArrowLeft, AlertCircle, Clock } from 'lucide-react';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 
-// Local interfaces to avoid import issues
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
+
 interface Category {
     categoryId: number;
     name: string;
@@ -47,10 +50,51 @@ interface EventFormData {
     isPublished: boolean;
 }
 
+interface Event {
+    eventDate: string | number | Date;
+    revenue: number;
+    actualRevenue?: number;
+    eventId: number;
+    title: string;
+    description: string;
+    shortDescription?: string;
+    organizerId: number;
+    organizerName: string;
+    venueId: number;
+    venueName: string;
+    venueCity: string;
+    categoryId: number;
+    categoryName: string;
+    startDateTime: string;
+    endDateTime: string;
+    imageUrl?: string;
+    basePrice: number;
+    currency: string;
+    isOnline: boolean;
+    ticketsSold: number;
+    availableTickets: number;
+    status: string;
+    isPublished: boolean;
+}
+
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
 const CreateEventPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
-    const { t } = useI18n(); // Add this hook
+    const { t } = useI18n(); 
     const themeClasses = useThemeClasses();
 
     const [loading, setLoading] = useState(false);
@@ -58,8 +102,8 @@ const CreateEventPage = () => {
     const [venues, setVenues] = useState<Venue[]>([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-
-    // Form state
+    const [userPreferences, setUserPreferences] = useState<any>(null);
+    const [userCurrency, setUserCurrency] = useState<Currency>('USD');
     const [formData, setFormData] = useState<EventFormData>({
         title: '',
         description: '',
@@ -75,7 +119,6 @@ const CreateEventPage = () => {
         isPublished: false
     });
 
-    // Ticket types state
     const [ticketTypes, setTicketTypes] = useState<TicketTypeFormData[]>([
         {
             name: 'General Admission',
@@ -88,18 +131,164 @@ const CreateEventPage = () => {
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    // Fetch initial data
     useEffect(() => {
         if (user && isOrganizer) {
+            fetchUserPreferences();
             fetchInitialData();
         } else if (user && !isOrganizer) {
             router.push('/');
         }
     }, [user, isOrganizer, router]);
 
+    const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+        const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+            ? preferences.currency
+            : 'USD';
+
+
+        if (fromCurrency === userCurrency) {
+            return formatCurrencyWithUserPreference(amount, preferences, currentLangData);
+        }
+
+        const conversionRates: { [key: string]: { [key: string]: number } } = {
+            'USD': {
+                'USD': 1,
+                'EUR': 0.92,  // 1 USD = 0.92 EUR
+                'GBP': 0.79,  // 1 USD = 0.79 GBP
+                'JPY': 149    // 1 USD = 149 JPY
+            },
+            'EUR': {
+                'USD': 1.09,  // 1 EUR = 1.09 USD
+                'EUR': 1,
+                'GBP': 0.86,  // 1 EUR = 0.86 GBP
+                'JPY': 162    // 1 EUR = 162 JPY
+            },
+            'GBP': {
+                'USD': 1.27,  // 1 GBP = 1.27 USD
+                'EUR': 1.16,  // 1 GBP = 1.16 EUR
+                'GBP': 1,
+                'JPY': 189    // 1 GBP = 189 JPY
+            },
+            'JPY': {
+                'USD': 0.0067, // 1 JPY = 0.0067 USD
+                'EUR': 0.0062, // 1 JPY = 0.0062 EUR
+                'GBP': 0.0053, // 1 JPY = 0.0053 GBP
+                'JPY': 1
+            }
+        };
+
+        const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+        const convertedAmount = amount * rate;
+
+        return formatCurrencyWithUserPreference(convertedAmount, preferences, currentLangData);
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+        const currency = preferences?.currency ?? 'USD';
+        const locale = currentLangData?.region ?? 'en-US';
+
+        try {
+            const formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '\u20AC', // Euro symbol
+                'GBP': '\u00A3', // Pound symbol
+                'JPY': '\u00A5'  // Yen symbol
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '\u20AC', // Euro symbol
+            'GBP': '\u00A3', // Pound symbol
+            'JPY': '\u00A5'  // Yen symbol
+        };
+
+        return symbols[currency] || '$';
+    };
+
+    const CURRENCIES = {
+        USD: { symbol: '$', name: 'US Dollar', code: 'USD' },
+        EUR: { symbol: '€', name: 'Euro', code: 'EUR' },
+        GBP: { symbol: '£', name: 'British Pound', code: 'GBP' },
+        JPY: { symbol: '¥', name: 'Japanese Yen', code: 'JPY' }
+    };
+
+    const EXCHANGE_RATES = {
+        USD: 1.00,
+        EUR: 0.92,
+        GBP: 0.79,
+        JPY: 149.0
+    };
+
+    const convertFromUSD = (usdAmount: number, toCurrency: string): number => {
+        const rate = EXCHANGE_RATES[toCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return usdAmount * rate;
+    };
+
+    const convertToUSD = (amount: number, fromCurrency: string): number => {
+        const rate = EXCHANGE_RATES[fromCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return amount / rate;
+    };
+
+
+
+    type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY';
+
+    function isCurrency(value: unknown): value is Currency {
+        return typeof value === 'string' &&
+            ['USD', 'EUR', 'GBP', 'JPY'].includes(value);
+    }
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`http://localhost:5251/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const preferences = await response.json();
+                setUserPreferences(preferences);
+
+                // Use type guard for safe currency assignment
+                const currency: Currency = isCurrency(preferences.currency)
+                    ? preferences.currency
+                    : 'USD';
+                setUserCurrency(currency);
+            } else {
+                setUserCurrency('USD');
+            }
+        } catch (error) {
+            console.error('Failed to fetch user preferences:', error);
+            setUserCurrency('USD');
+        }
+    };
+
     const fetchInitialData = async () => {
         try {
-            // Fetch categories from your API
             const categoriesResponse = await fetch('http://localhost:5251/api/categories', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -110,7 +299,6 @@ const CreateEventPage = () => {
                 const categoriesData = await categoriesResponse.json();
                 setCategories(categoriesData);
             } else {
-                // Fallback to mock data if API fails
                 const mockCategories: Category[] = [
                     { categoryId: 1, name: t('technology'), description: 'Tech events' },
                     { categoryId: 2, name: t('business'), description: 'Business events' },
@@ -121,7 +309,6 @@ const CreateEventPage = () => {
                 setCategories(mockCategories);
             }
 
-            // Fetch venues from your API
             const venuesResponse = await fetch('http://localhost:5251/api/venues', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -132,7 +319,6 @@ const CreateEventPage = () => {
                 const venuesData = await venuesResponse.json();
                 setVenues(venuesData);
             } else {
-                // Fallback to mock data if API fails
                 const mockVenues: Venue[] = [
                     { venueId: 1, name: 'KLCC Convention Center', address: 'Kuala Lumpur City Centre', city: 'Kuala Lumpur', capacity: 1000 },
                     { venueId: 2, name: 'Sunway Convention Centre', address: 'Bandar Sunway', city: 'Petaling Jaya', capacity: 800 },
@@ -143,10 +329,8 @@ const CreateEventPage = () => {
             }
 
         } catch (error) {
-            console.error('Error fetching initial data:', error);
             setError(t('loadError'));
 
-            // Set fallback mock data
             setCategories([
                 { categoryId: 1, name: t('technology'), description: 'Tech events' },
                 { categoryId: 2, name: t('business'), description: 'Business events' },
@@ -203,7 +387,6 @@ const CreateEventPage = () => {
         }
     };
 
-    // Helper function to check if event spans multiple days
     const isMultiDayEvent = () => {
         if (!formData.eventDate || !formData.endDate) return false;
 
@@ -213,7 +396,6 @@ const CreateEventPage = () => {
         return start.toDateString() !== end.toDateString();
     };
 
-    // Helper function to calculate event duration
     const getEventDuration = () => {
         if (!formData.eventDate || !formData.endDate) return null;
 
@@ -240,7 +422,6 @@ const CreateEventPage = () => {
             errors.eventDate = t('startDateTimeRequired');
         }
 
-        // Validate end date if provided
         if (formData.endDate && formData.eventDate) {
             const start = new Date(formData.eventDate);
             const end = new Date(formData.endDate);
@@ -262,7 +443,6 @@ const CreateEventPage = () => {
             errors.maxCapacity = t('maxCapacityRequired');
         }
 
-        // Validate registration deadline
         if (formData.registrationDeadline && formData.eventDate) {
             const regDeadline = new Date(formData.registrationDeadline);
             const eventStart = new Date(formData.eventDate);
@@ -272,7 +452,6 @@ const CreateEventPage = () => {
             }
         }
 
-        // Validate ticket types
         ticketTypes.forEach((ticket, index) => {
             if (!ticket.name.trim()) {
                 errors[`ticketName_${index}`] = t('ticketTypeNameRequired');
@@ -286,7 +465,6 @@ const CreateEventPage = () => {
         return Object.keys(errors).length === 0;
     };
 
-    // Updated ticket creation payload to match your DTO
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -328,9 +506,6 @@ const CreateEventPage = () => {
                 registrationDeadline: formData.registrationDeadline ? formatDateForApi(formData.registrationDeadline) : null
             };
 
-            console.log('Creating event with payload:', eventPayload);
-
-            // Create event
             const eventResponse = await fetch('http://localhost:5251/api/events', {
                 method: 'POST',
                 headers: {
@@ -347,15 +522,11 @@ const CreateEventPage = () => {
             }
 
             const createdEvent = await eventResponse.json();
-            console.log('Event created successfully:', createdEvent);
-
-            // Create ticket types with corrected payload structure
             const ticketCreationResults = [];
             let failedTickets = 0;
 
             for (const [index, ticketType] of ticketTypes.entries()) {
                 try {
-                    // Fixed payload to match CreateTicketTypeDto
                     const ticketPayload = {
                         eventId: createdEvent.eventId,
                         name: ticketType.name.trim(),
@@ -369,7 +540,6 @@ const CreateEventPage = () => {
                         sortOrder: index
                     };
 
-                    // Validate the payload before sending
                     if (!ticketPayload.name) {
                         throw new Error(`Ticket ${index + 1}: ${t('ticketTypeNameRequired')}`);
                     }
@@ -380,7 +550,6 @@ const CreateEventPage = () => {
                         throw new Error(`Ticket ${index + 1}: ${t('quantityGreaterThanZero')}`);
                     }
 
-                    console.log(`Creating ticket type ${index + 1} with corrected payload:`, ticketPayload);
 
                     const ticketResponse = await fetch('http://localhost:5251/api/tickets/ticket-types', {
                         method: 'POST',
@@ -391,11 +560,9 @@ const CreateEventPage = () => {
                         body: JSON.stringify(ticketPayload)
                     });
 
-                    console.log(`Ticket ${index + 1} response status:`, ticketResponse.status);
 
                     if (!ticketResponse.ok) {
                         const ticketErrorText = await ticketResponse.text();
-                        console.error(`Failed to create ticket type ${index + 1}:`, ticketErrorText);
 
                         let ticketError;
                         try {
@@ -404,13 +571,9 @@ const CreateEventPage = () => {
                             ticketError = { message: ticketErrorText };
                         }
 
-                        console.error(`Ticket ${index + 1} error details:`, ticketError);
                         failedTickets++;
 
-                        // Log the specific validation errors if available
-                        if (ticketError.errors) {
-                            console.error(`Ticket ${index + 1} validation errors:`, ticketError.errors);
-                        }
+                       
                     } else {
                         const createdTicketType = await ticketResponse.json();
                         console.log(`Ticket type ${index + 1} created successfully:`, createdTicketType);
@@ -422,7 +585,6 @@ const CreateEventPage = () => {
                 }
             }
 
-            // Show appropriate success message
             if (failedTickets === 0) {
                 setSuccess(t('eventCreatedSuccessfully'));
             } else if (failedTickets < ticketTypes.length) {
@@ -431,13 +593,11 @@ const CreateEventPage = () => {
                 setSuccess(t('eventCreatedSuccessfully'));
             }
 
-            // Redirect after a delay
             setTimeout(() => {
                 router.push('/organizer/dashboard');
             }, 3000);
 
         } catch (error) {
-            console.error('Error in event creation process:', error);
             setError(error instanceof Error ? error.message : t('failedToCreateEvent'));
         } finally {
             setLoading(false);
@@ -769,7 +929,7 @@ const CreateEventPage = () => {
 
                                             <div>
                                                 <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                    {t('price')}
+                                                    {t('price')} ({CURRENCIES[userCurrency as keyof typeof CURRENCIES]?.symbol || '$'}) *
                                                 </label>
                                                 <input
                                                     type="number"

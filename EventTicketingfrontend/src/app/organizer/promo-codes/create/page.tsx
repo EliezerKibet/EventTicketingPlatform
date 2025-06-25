@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+﻿/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -20,6 +20,23 @@ import {
     MapPin
 } from 'lucide-react';
 
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
+
 const CreatePromoCodePage: React.FC = () => {
     const themeClasses = useThemeClasses();
     const { t } = useI18n();
@@ -32,15 +49,16 @@ const CreatePromoCodePage: React.FC = () => {
     const [success, setSuccess] = useState('');
     const [events, setEvents] = useState<Event[]>([]);
 
-    // Form data
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
     const [formData, setFormData] = useState({
         code: '',
         description: '',
-        type: 0, // 0 = Percentage, 1 = FixedAmount
+        type: 0,
         value: '',
         minimumOrderAmount: '',
         maximumDiscountAmount: '',
-        scope: 1, // 0 = EventSpecific, 1 = OrganizerWide
+        scope: 1,
         eventId: '',
         startDate: '',
         endDate: '',
@@ -48,12 +66,11 @@ const CreatePromoCodePage: React.FC = () => {
         maxUsagePerUser: '1'
     });
 
-    // Validation errors
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-    // Load events on component mount
     useEffect(() => {
         if (user && isOrganizer) {
+            fetchUserPreferences();
             loadEvents();
         } else if (user && !isOrganizer) {
             router.push('/');
@@ -66,18 +83,14 @@ const CreatePromoCodePage: React.FC = () => {
             const userEvents = await eventsApi.getMyEvents();
             setEvents(userEvents);
         } catch (error) {
-            console.error('Failed to load events:', error);
-            setError('Failed to load events');
         } finally {
             setEventsLoading(false);
         }
     };
 
-    // Form validation
     const validateForm = (): boolean => {
         const errors: Record<string, string> = {};
 
-        // Required fields
         if (!formData.code.trim()) {
             errors.code = 'Promo code is required';
         } else if (!/^[A-Z0-9]+$/.test(formData.code.trim())) {
@@ -152,7 +165,6 @@ const CreatePromoCodePage: React.FC = () => {
         return Object.keys(errors).length === 0;
     };
 
-    // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -183,27 +195,22 @@ const CreatePromoCodePage: React.FC = () => {
             const result = await promoCodesApi.createPromoCode(createData);
             setSuccess('Promo code created successfully!');
 
-            // Redirect to promo codes list after a short delay
             setTimeout(() => {
                 router.push('/organizer/promo-codes');
             }, 2000);
 
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to create promo code';
-            setError(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
-    // Handle input changes
     const handleInputChange = (field: string, value: string | number) => {
         setFormData(prev => ({
             ...prev,
             [field]: value
         }));
 
-        // Clear validation error for this field
         if (validationErrors[field]) {
             setValidationErrors(prev => ({
                 ...prev,
@@ -212,7 +219,6 @@ const CreatePromoCodePage: React.FC = () => {
         }
     };
 
-    // Auto-generate today's date for start date default
     useEffect(() => {
         const today = new Date();
         const tomorrow = new Date(today);
@@ -224,6 +230,86 @@ const CreatePromoCodePage: React.FC = () => {
             endDate: tomorrow.toISOString().split('T')[0]
         }));
     }, []);
+
+    type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY';
+
+    function isCurrency(value: unknown): value is Currency {
+        return typeof value === 'string' &&
+            ['USD', 'EUR', 'GBP', 'JPY'].includes(value);
+    }
+
+    const CURRENCIES = {
+        USD: { symbol: '$', name: 'US Dollar', code: 'USD' },
+        EUR: { symbol: '€', name: 'Euro', code: 'EUR' }, 
+        GBP: { symbol: '£', name: 'British Pound', code: 'GBP' },
+        JPY: { symbol: '¥', name: 'Japanese Yen', code: 'JPY' }
+    };
+
+    const EXCHANGE_RATES = {
+        USD: 1.00,
+        EUR: 0.92,
+        GBP: 0.79,
+        JPY: 149.0
+    };
+
+    const convertFromUSD = (usdAmount: number, toCurrency: string): number => {
+        const rate = EXCHANGE_RATES[toCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return usdAmount * rate;
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null) => {
+        const currency = preferences?.currency ?? 'USD';
+
+        try {
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const userPreferences = await response.json();
+                setPreferences(userPreferences);
+            }
+        } catch (error) {
+            setPreferences({
+                currency: 'USD',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC'
+            });
+        }
+    };
 
     if (!user || !isOrganizer) {
         return (
@@ -361,7 +447,7 @@ const CreatePromoCodePage: React.FC = () => {
                             {/* Discount Value */}
                             <div>
                                 <label className={`block text-sm font-medium ${themeClasses.themeFg} mb-2`}>
-                                    {t('discountSettings')} * {formData.type === 0 ? '(%)' : '($)'}
+                                    {t('discountSettings')} * {formData.type === 0 ? '(%)' : `(${preferences?.currency || 'USD'})`}
                                 </label>
                                 <input
                                     type="number"
@@ -381,7 +467,7 @@ const CreatePromoCodePage: React.FC = () => {
                             {/* Minimum Order Amount */}
                             <div>
                                 <label className={`block text-sm font-medium ${themeClasses.themeFg} mb-2`}>
-                                    {t('minimumOrderAmount')} ($)
+                                    {t('minimumOrderAmount')} ({preferences?.currency || 'USD'})
                                 </label>
                                 <input
                                     type="number"
@@ -395,12 +481,20 @@ const CreatePromoCodePage: React.FC = () => {
                                 {validationErrors.minimumOrderAmount && (
                                     <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.minimumOrderAmount}</p>
                                 )}
+                                <p className={`mt-1 text-xs ${themeClasses.themeMutedFg}`}>
+                                    {t('orderMustBeAtLeastThisAmount')}
+                                    {preferences?.currency && preferences.currency !== 'USD' && formData.minimumOrderAmount && (
+                                        <span className="block mt-1">
+                                            (≈ ${(parseFloat(formData.minimumOrderAmount) || 0).toFixed(2)} USD)
+                                        </span>
+                                    )}
+                                </p>
                             </div>
 
                             {/* Maximum Discount Amount */}
                             <div>
                                 <label className={`block text-sm font-medium ${themeClasses.themeFg} mb-2`}>
-                                    {t('maximumDiscountAmount')} ($)
+                                    {t('maximumDiscountAmount')} ({preferences?.currency || 'USD'})
                                 </label>
                                 <input
                                     type="number"
@@ -414,6 +508,14 @@ const CreatePromoCodePage: React.FC = () => {
                                 {validationErrors.maximumDiscountAmount && (
                                     <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.maximumDiscountAmount}</p>
                                 )}
+                                <p className={`mt-1 text-xs ${themeClasses.themeMutedFg}`}>
+                                    {t('capMaximumDiscountAmountForPercentage')}
+                                    {preferences?.currency && preferences.currency !== 'USD' && formData.maximumDiscountAmount && (
+                                        <span className="block mt-1">
+                                            (≈ ${(parseFloat(formData.maximumDiscountAmount) || 0).toFixed(2)} USD)
+                                        </span>
+                                    )}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -590,7 +692,7 @@ const CreatePromoCodePage: React.FC = () => {
                             ) : (
                                 <>
                                     <Save className="h-4 w-4 mr-2" />
-                                        {t('createPromoCode')}
+                                    {t('createPromoCode')}
                                 </>
                             )}
                         </button>

@@ -3,7 +3,6 @@ using EventTicketing.API.Models.Entities;
 
 namespace EventTicketing.API.Models.DTOs
 {
-    // Main profile response DTO
     public class UserProfileResponseDto
     {
         public int UserId { get; set; }
@@ -19,7 +18,6 @@ namespace EventTicketing.API.Models.DTOs
         public DateTime? LastLoginAt { get; set; }
         public UserStatus Status { get; set; }
 
-        // Profile details
         public string? Bio { get; set; }
         public string? Website { get; set; }
         public string? TimeZone { get; set; }
@@ -27,7 +25,6 @@ namespace EventTicketing.API.Models.DTOs
         public List<string> Roles { get; set; } = new List<string>();
     }
 
-    // Update profile DTO
     public class UpdateUserProfileDto
     {
         [Required]
@@ -50,7 +47,6 @@ namespace EventTicketing.API.Models.DTOs
         public string? ProfileImageUrl { get; set; }
     }
 
-    // Organization details DTO
     public class UserOrganizationDto
     {
         public string? CompanyName { get; set; }
@@ -62,7 +58,6 @@ namespace EventTicketing.API.Models.DTOs
         public string? Country { get; set; }
     }
 
-    // Update organization DTO
     public class UpdateUserOrganizationDto
     {
         public string? CompanyName { get; set; }
@@ -74,7 +69,6 @@ namespace EventTicketing.API.Models.DTOs
         public string? Country { get; set; }
     }
 
-    // User preferences DTO - SINGLE DEFINITION WITH ALL ENHANCED PROPERTIES
     public class UserPreferencesDto
     {
         // Notification preferences
@@ -113,7 +107,6 @@ namespace EventTicketing.API.Models.DTOs
         public bool CompactMode { get; set; } = false;
     }
 
-    // Update preferences DTO
     public class UpdateUserPreferencesDto
     {
         // Notification preferences
@@ -158,7 +151,6 @@ namespace EventTicketing.API.Models.DTOs
         public bool CompactMode { get; set; }
     }
 
-    // Change password DTO
     public class ChangePasswordDto
     {
         [Required]

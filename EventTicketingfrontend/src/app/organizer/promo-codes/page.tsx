@@ -1,3 +1,4 @@
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
@@ -31,11 +32,31 @@ import {
     Download
 } from 'lucide-react';
 
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
+
 const PromoCodesPage: React.FC = () => {
     const themeClasses = useThemeClasses();
     const { t } = useI18n();
     const { user, isOrganizer } = useAuth();
     const router = useRouter();
+
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
 
     const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
     const [stats, setStats] = useState<PromoCodeStats | null>(null);
@@ -47,22 +68,103 @@ const PromoCodesPage: React.FC = () => {
     const [filterScope, setFilterScope] = useState('all');
     const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-    // Check authentication and authorization
     useEffect(() => {
         if (user && !isOrganizer) {
             router.push('/');
         } else if (user && isOrganizer) {
+            fetchUserPreferences();
             fetchPromoData();
         }
     }, [user, isOrganizer, router]);
 
-    // Updated to use your API patterns
+
+
+    type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY';
+
+    function isCurrency(value: unknown): value is Currency {
+        return typeof value === 'string' &&
+            ['USD', 'EUR', 'GBP', 'JPY'].includes(value);
+    }
+
+    const CURRENCIES = {
+        USD: { symbol: '$', name: 'US Dollar', code: 'USD' },
+        EUR: { symbol: '', name: 'Euro', code: 'EUR' },
+        GBP: { symbol: '£', name: 'British Pound', code: 'GBP' },
+        JPY: { symbol: '¥', name: 'Japanese Yen', code: 'JPY' }
+    };
+
+    const EXCHANGE_RATES = {
+        USD: 1.00,
+        EUR: 0.92,
+        GBP: 0.79,
+        JPY: 149.0
+    };
+
+    const convertFromUSD = (usdAmount: number, toCurrency: string): number => {
+        const rate = EXCHANGE_RATES[toCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return usdAmount * rate;
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null) => {
+        const currency = preferences?.currency ?? 'USD';
+
+        try {
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const userPreferences = await response.json();
+                setPreferences(userPreferences);
+            }
+        } catch (error) {
+            setPreferences({
+                currency: 'USD',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC'
+            });
+        }
+    };
+
     const fetchPromoData = async () => {
         try {
             setLoading(true);
             setError('');
 
-            // Use your existing API functions
             const [promoCodesData, statsData] = await Promise.allSettled([
                 promoCodesApi.getPromoCodes(),
                 promoCodesApi.getStats()
@@ -81,7 +183,6 @@ const PromoCodesPage: React.FC = () => {
             }
 
         } catch (error: unknown) {
-            console.error('Error fetching promo data:', error);
             const errorMessage = error instanceof Error ? error.message : t('failedToLoadPromoCodes');
             setError(errorMessage);
         } finally {
@@ -89,7 +190,6 @@ const PromoCodesPage: React.FC = () => {
         }
     };
 
-    // Updated to use your API patterns
     const handleDeletePromoCode = async (promoCodeId: number, code: string) => {
         if (!confirm(t('deletePromoCodeConfirm', { code }))) {
             return;
@@ -106,17 +206,98 @@ const PromoCodesPage: React.FC = () => {
         }
     };
 
+    const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
+        const eventDate = new Date(dateTimeString);
+        const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+        const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+        const timeFormat = preferences?.timeFormat || '12h';
+
+        const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+        const year = zonedDate.getFullYear();
+        const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(zonedDate.getDate()).padStart(2, '0');
+
+        const monthNames = [
+            t('january'), t('february'), t('march'), t('april'),
+            t('may'), t('june'), t('july'), t('august'),
+            t('september'), t('october'), t('november'), t('december')
+        ];
+        const monthShort = monthNames[zonedDate.getMonth()];
+
+        const weekdays = [
+            t('sunday'), t('monday'), t('tuesday'), t('wednesday'),
+            t('thursday'), t('friday'), t('saturday')
+        ];
+        const weekday = weekdays[zonedDate.getDay()];
+
+        // Format date according to user preference - INDEPENDENT OF LOCALE
+        let formattedDate: string;
+        switch (dateFormat) {
+            case 'dd/MM/yyyy':
+                formattedDate = `${weekday}, ${day}/${month}/${year}`;
+                break;
+            case 'yyyy-MM-dd':
+                formattedDate = `${weekday}, ${year}-${month}-${day}`;
+                break;
+            case 'MMM dd, yyyy':
+                formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+                break;
+            case 'dd MMM yyyy':
+                formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+                break;
+            default: // MM/dd/yyyy
+                formattedDate = `${weekday}, ${month}/${day}/${year}`;
+        }
+
+        // Format time - also independent of locale
+        const hours24 = zonedDate.getHours();
+        const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+        let formattedTime: string;
+        if (timeFormat === '24h') {
+            formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+        } else {
+            const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+            const ampm = hours24 >= 12 ? 'PM' : 'AM';
+            formattedTime = `${hours12}:${minutes} ${ampm}`;
+        }
+
+        // Add timezone abbreviation
+        const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+        formattedTime += ` ${timeZoneAbbr}`;
+
+        const result = `${formattedDate} ${t('at')} ${formattedTime}`;
+
+        return result;
+    };
+
+    const getTimeZoneAbbreviation = (timeZone: string): string => {
+        const abbreviations: { [key: string]: string } = {
+            'UTC': 'UTC',
+            'America/New_York': 'EST/EDT',
+            'America/Chicago': 'CST/CDT',
+            'America/Denver': 'MST/MDT',
+            'America/Los_Angeles': 'PST/PDT',
+            'Asia/Kuala_Lumpur': 'MYT',
+            'Europe/London': 'GMT/BST',
+            'Europe/Paris': 'CET/CEST',
+            'Asia/Tokyo': 'JST',
+            'Australia/Sydney': 'AEST/AEDT'
+        };
+
+        return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+    };
+
     const copyToClipboard = async (code: string) => {
         try {
             await navigator.clipboard.writeText(code);
             setCopiedCode(code);
             setTimeout(() => setCopiedCode(null), 2000);
         } catch (error) {
-            console.error('Failed to copy code:', error);
         }
     };
 
-    // Filter promo codes - Fixed version
     const filteredPromoCodes = promoCodes.filter(promoCode => {
         const matchesSearch = promoCode.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (promoCode.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -134,7 +315,6 @@ const PromoCodesPage: React.FC = () => {
         return matchesSearch && matchesStatus && matchesScope;
     });
 
-    // Helper functions for status display
     const getStatusColor = (promoCode: PromoCode) => {
         if (!promoCode.isActive) return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
         if (!promoCode.isValid) {
@@ -164,7 +344,37 @@ const PromoCodesPage: React.FC = () => {
         });
     };
 
-    // Loading and auth checks
+    const formatDateWithUserPreference = (dateString: string, preferences: UserPreferences | null) => {
+        const date = new Date(dateString);
+        const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        // Get month names for formatting
+        const monthNames = [
+            t('jan'), t('feb'), t('mar'), t('apr'),
+            t('may'), t('jun'), t('jul'), t('aug'),
+            t('sep'), t('oct'), t('nov'), t('dec')
+        ];
+        const monthShort = monthNames[date.getMonth()];
+
+        // Format according to user preference
+        switch (dateFormat) {
+            case 'dd/MM/yyyy':
+                return `${day}/${month}/${year}`;
+            case 'yyyy-MM-dd':
+                return `${year}-${month}-${day}`;
+            case 'MMM dd, yyyy':
+                return `${monthShort} ${parseInt(day)}, ${year}`;
+            case 'dd MMM yyyy':
+                return `${parseInt(day)} ${monthShort} ${year}`;
+            default: // MM/dd/yyyy
+                return `${month}/${day}/${year}`;
+        }
+    };
+
     if (!user || !isOrganizer) {
         return (
             <div className={`min-h-screen ${themeClasses.themeBg} flex items-center justify-center theme-transition`}>
@@ -279,8 +489,16 @@ const PromoCodesPage: React.FC = () => {
                                 <div>
                                     <p className={`text-sm font-medium ${themeClasses.themeMutedFg}`}>{t('totalSavings')}</p>
                                     <p className={`text-2xl font-bold ${themeClasses.themeFg}`}>
-                                        ${stats.totalDiscountGiven.toFixed(2)}
+                                        {formatCurrencyWithUserPreference(
+                                            convertFromUSD(stats.totalDiscountGiven, preferences?.currency || 'USD'),
+                                            preferences
+                                        )}
                                     </p>
+                                    {preferences?.currency && preferences.currency !== 'USD' && (
+                                        <p className={`text-xs ${themeClasses.themeMutedFg} mt-1`}>
+                                            (≈ ${stats.totalDiscountGiven.toFixed(2)} USD)
+                                        </p>
+                                    )}
                                 </div>
                                 <DollarSign className="h-8 w-8 text-green-500" />
                             </div>
@@ -412,16 +630,51 @@ const PromoCodesPage: React.FC = () => {
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <div className={`text-sm ${themeClasses.themeFg} font-medium`}>
-                                                        {promoCode.formattedValue}
+                                                        {(() => {
+                                                            if (promoCode.formattedValue.includes('%')) {
+                                                                return promoCode.formattedValue;
+                                                            }
+
+                                                            if (promoCode.formattedValue.includes('$') || promoCode.formattedValue.includes('USD')) {
+                                                                // Extract the numeric value from formattedValue
+                                                                const numericValue = parseFloat(promoCode.formattedValue.replace(/[^0-9.]/g, ''));
+                                                                if (!isNaN(numericValue)) {
+                                                                    return formatCurrencyWithUserPreference(
+                                                                        convertFromUSD(numericValue, preferences?.currency || 'USD'),
+                                                                        preferences
+                                                                    ) + ' off';
+                                                                }
+                                                            }
+
+                                                            // Fallback to original formatted value
+                                                            return promoCode.formattedValue;
+                                                        })()}
                                                     </div>
                                                     <div className={`text-xs ${themeClasses.themeMutedFg} truncate max-w-xs`}>
                                                         {promoCode.description}
                                                     </div>
                                                     {promoCode.minimumOrderAmount && (
                                                         <div className={`text-xs ${themeClasses.themeMutedFg}`}>
-                                                            {t('minimumOrderAmount')}: ${promoCode.minimumOrderAmount}
+                                                            {t('minimumOrderAmount')}: {formatCurrencyWithUserPreference(
+                                                                convertFromUSD(promoCode.minimumOrderAmount, preferences?.currency || 'USD'),
+                                                                preferences
+                                                            )}
                                                         </div>
                                                     )}
+                                                    {/* Show original USD amount if currency was converted */}
+                                                    {(() => {
+                                                        const isFixedAmount = promoCode.formattedValue.includes('$') || promoCode.formattedValue.includes('USD');
+                                                        const userCurrency = preferences?.currency || 'USD';
+
+                                                        if (isFixedAmount && userCurrency !== 'USD' && !promoCode.formattedValue.includes('%')) {
+                                                            return (
+                                                                <div className={`text-xs ${themeClasses.themeMutedFg} opacity-75 mt-1`}>
+                                                                    (≈ {promoCode.formattedValue} USD)
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })()}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -442,8 +695,8 @@ const PromoCodesPage: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className={`text-xs ${themeClasses.themeMutedFg}`}>
-                                                    <div>{t('start')}: {formatDate(promoCode.startDate)}</div>
-                                                    <div>{t('end')}: {formatDate(promoCode.endDate)}</div>
+                                                    <div>{t('start')}: {formatDateWithUserPreference(promoCode.startDate, preferences)}</div>
+                                                    <div>{t('end')}: {formatDateWithUserPreference(promoCode.endDate, preferences)}</div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -505,8 +758,20 @@ const PromoCodesPage: React.FC = () => {
                                         )}
                                     </div>
                                     <div className={`text-sm ${themeClasses.themeMutedFg}`}>
-                                        <div>{code.usages} {t('uses')}</div>
-                                        <div>${code.totalDiscount.toFixed(2)} saved</div>
+                                        <div className="flex items-center justify-between">
+                                            <span>{code.usages} {t('uses')}</span>
+                                            <span className="font-medium text-green-600 dark:text-green-400">
+                                                {formatCurrencyWithUserPreference(
+                                                    convertFromUSD(code.totalDiscount, preferences?.currency || 'USD'),
+                                                    preferences
+                                                )}
+                                            </span>
+                                        </div>
+                                        {preferences?.currency && preferences.currency !== 'USD' && (
+                                            <div className="text-xs opacity-60 mt-1">
+                                                (≈ ${code.totalDiscount.toFixed(2)} USD)
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}

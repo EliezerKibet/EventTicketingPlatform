@@ -46,7 +46,6 @@ const LanguageSettings: React.FC<LanguageSettingsProps> = ({
     const selectedLanguage = userPreferences?.language || currentLanguage;
     const selectedLangData = SUPPORTED_LANGUAGES.find(lang => lang.code === selectedLanguage) || SUPPORTED_LANGUAGES[0];
 
-    // Filter languages based on search
     const filteredLanguages = SUPPORTED_LANGUAGES.filter(lang =>
         lang.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lang.nativeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,14 +56,12 @@ const LanguageSettings: React.FC<LanguageSettingsProps> = ({
         const langData = SUPPORTED_LANGUAGES.find(lang => lang.code === languageCode);
         if (!langData) return;
 
-        // Update language
         if (onLanguageChange) {
             onLanguageChange(languageCode);
         } else {
             changeLanguage(languageCode);
         }
 
-        // Auto-update related preferences based on language
         if (onPreferenceChange) {
             onPreferenceChange('language', languageCode);
             onPreferenceChange('timeFormat', langData.timeFormat);

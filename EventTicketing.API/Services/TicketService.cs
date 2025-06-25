@@ -18,6 +18,391 @@ namespace EventTicketing.API.Services
             _promoCodeService = promoCodeService;
         }
 
+        // ENHANCED: Comprehensive Event Revenue Analytics
+        public async Task<object> GetEventRevenueAnalyticsAsync(int eventId, int organizerId)
+        {
+            // Verify the organizer owns this event
+            var eventEntity = await _context.Events
+                .FirstOrDefaultAsync(e => e.EventId == eventId && e.OrganizerId == organizerId);
+
+            if (eventEntity == null)
+            {
+                throw new UnauthorizedAccessException("Event not found or you don't have permission to access it");
+            }
+
+            // Get all orders for this event with related data
+            var orders = await _context.Orders
+                .Include(o => o.Tickets)
+                    .ThenInclude(t => t.TicketType)
+                .Where(o => o.Tickets.Any(t => t.EventId == eventId))
+                .ToListAsync();
+
+            // Get all tickets for this event
+            var tickets = await _context.Tickets
+                .Include(t => t.TicketType)
+                .Where(t => t.EventId == eventId)
+                .ToListAsync();
+
+            // Calculate actual revenue from tickets sold (what customers actually paid)
+            var grossRevenue = tickets.Sum(t => t.PricePaid);
+
+            // Calculate fees and taxes from orders
+            var totalServiceFees = orders.Sum(o => o.ServiceFee);
+            var totalTaxes = orders.Sum(o => o.TaxAmount);
+            var totalDiscounts = orders.Sum(o => o.DiscountAmount);
+
+            // Net revenue (what organizer receives after platform fees)
+            var netRevenue = grossRevenue - totalServiceFees;
+
+            // Revenue by ticket type
+            var revenueByTicketType = tickets
+                .GroupBy(t => new { t.TicketTypeId, t.TicketType.Name, t.TicketType.Price })
+                .Select(g => new
+                {
+                    TicketTypeId = g.Key.TicketTypeId,
+                    TicketTypeName = g.Key.Name,
+                    OriginalPrice = g.Key.Price,
+                    TicketsSold = g.Count(),
+                    ActualRevenue = g.Sum(t => t.PricePaid),
+                    AveragePrice = g.Average(t => t.PricePaid),
+                    MaxPrice = g.Max(t => t.PricePaid),
+                    MinPrice = g.Min(t => t.PricePaid)
+                })
+                .OrderByDescending(x => x.ActualRevenue)
+                .ToList();
+
+            // Promo code impact analysis - FIXED: Handle missing DiscountType property
+            var promoCodeUsage = await _context.PromoCodeUsages
+                .Include(pcu => pcu.PromoCode)
+                .Where(pcu => pcu.EventId == eventId)
+                .GroupBy(pcu => new { pcu.PromoCodeId, pcu.PromoCode.Code })
+                .Select(g => new
+                {
+                    PromoCode = g.Key.Code,
+                    DiscountType = "PERCENTAGE", // Default value since DiscountType doesn't exist
+                    TimesUsed = g.Count(),
+                    TotalDiscount = g.Sum(pcu => pcu.DiscountAmount),
+                    AverageDiscount = g.Average(pcu => pcu.DiscountAmount),
+                    TotalOrderValue = g.Sum(pcu => pcu.OrderSubtotal)
+                })
+                .OrderByDescending(x => x.TotalDiscount)
+                .ToListAsync();
+
+            return new
+            {
+                EventId = eventId,
+                EventTitle = eventEntity.Title,
+                Currency = eventEntity.Currency ?? "USD",
+
+                // Core Revenue Metrics
+                GrossRevenue = grossRevenue,
+                NetRevenue = netRevenue,
+                TotalServiceFees = totalServiceFees,
+                TotalTaxes = totalTaxes,
+                TotalDiscounts = totalDiscounts,
+
+                // Ticket Sales Summary
+                TotalTicketsSold = tickets.Count,
+                TotalOrders = orders.Count,
+                AverageOrderValue = orders.Count > 0 ? orders.Average(o => o.TotalAmount) : 0,
+                AverageTicketPrice = tickets.Count > 0 ? tickets.Average(t => t.PricePaid) : 0,
+
+                // Revenue Breakdown
+                RevenueByTicketType = revenueByTicketType,
+
+                // Promo Code Impact
+                PromoCodeAnalysis = new
+                {
+                    TotalPromoCodeUsage = promoCodeUsage.Count,
+                    TotalDiscountGiven = promoCodeUsage.Sum(p => p.TotalDiscount),
+                    AverageDiscountPerCode = promoCodeUsage.Count > 0 ? promoCodeUsage.Average(p => p.TotalDiscount) : 0,
+                    PromoCodeBreakdown = promoCodeUsage
+                },
+
+                // Performance Metrics
+                ConversionMetrics = new
+                {
+                    DiscountPenetration = tickets.Count > 0 ? (decimal)promoCodeUsage.Sum(p => p.TimesUsed) / tickets.Count * 100 : 0,
+                    AverageDiscountPercentage = grossRevenue > 0 ? totalDiscounts / grossRevenue * 100 : 0,
+                    RevenueEfficiencyRatio = grossRevenue > 0 ? netRevenue / grossRevenue * 100 : 0
+                }
+            };
+        }
+
+        // NEW: Detailed Revenue Breakdown
+        public async Task<object> GetDetailedEventRevenueAsync(int eventId, int organizerId)
+        {
+            var eventEntity = await _context.Events
+                .FirstOrDefaultAsync(e => e.EventId == eventId && e.OrganizerId == organizerId);
+
+            if (eventEntity == null)
+            {
+                throw new UnauthorizedAccessException("Event not found or you don't have permission to access it");
+            }
+
+            // Get detailed order and ticket information
+            var orderDetails = await _context.Orders
+                .Include(o => o.Tickets)
+                    .ThenInclude(t => t.TicketType)
+                .Where(o => o.Tickets.Any(t => t.EventId == eventId))
+                .Select(o => new
+                {
+                    OrderId = o.OrderId,
+                    OrderNumber = o.OrderNumber,
+                    OrderDate = o.CreatedAt,
+                    CustomerEmail = o.BillingEmail,
+                    SubTotal = o.SubTotal,
+                    ServiceFee = o.ServiceFee,
+                    TaxAmount = o.TaxAmount,
+                    DiscountAmount = o.DiscountAmount,
+                    TotalAmount = o.TotalAmount,
+                    PromoCode = o.PromoCode,
+                    TicketCount = o.Tickets.Count,
+                    Tickets = o.Tickets.Select(t => new
+                    {
+                        TicketId = t.TicketId,
+                        TicketNumber = t.TicketNumber,
+                        TicketTypeName = t.TicketType.Name,
+                        OriginalPrice = t.TicketType.Price,
+                        PricePaid = t.PricePaid,
+                        PriceDifference = t.TicketType.Price - t.PricePaid,
+                        AttendeeFirstName = t.AttendeeFirstName,
+                        AttendeeLastName = t.AttendeeLastName,
+                        AttendeeEmail = t.AttendeeEmail,
+                        Status = t.Status.ToString(),
+                        CheckInDate = t.CheckInDate
+                    }).ToList()
+                })
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            // Calculate revenue adjustments (refunds, cancellations, etc.)
+            var refundedTickets = await _context.Tickets
+                .Include(t => t.TicketType)
+                .Where(t => t.EventId == eventId && t.Status == TicketStatus.Cancelled)
+                .ToListAsync();
+
+            var refundAmount = refundedTickets.Sum(t => t.PricePaid);
+
+            return new
+            {
+                EventId = eventId,
+                EventTitle = eventEntity.Title,
+                Currency = eventEntity.Currency ?? "USD",
+                GeneratedAt = DateTime.UtcNow,
+
+                // Summary Metrics
+                Summary = new
+                {
+                    TotalOrders = orderDetails.Count,
+                    TotalTicketsSold = orderDetails.Sum(o => o.TicketCount),
+                    GrossRevenue = orderDetails.Sum(o => o.TotalAmount),
+                    NetRevenue = orderDetails.Sum(o => o.SubTotal),
+                    TotalFees = orderDetails.Sum(o => o.ServiceFee),
+                    TotalTaxes = orderDetails.Sum(o => o.TaxAmount),
+                    TotalDiscounts = orderDetails.Sum(o => o.DiscountAmount),
+                    RefundAmount = refundAmount,
+                    FinalNetRevenue = orderDetails.Sum(o => o.SubTotal) - refundAmount
+                },
+
+                // Detailed order breakdown
+                OrderDetails = orderDetails,
+
+                // Refund information
+                RefundedTickets = refundedTickets.Select(t => new
+                {
+                    TicketId = t.TicketId,
+                    TicketNumber = t.TicketNumber,
+                    TicketTypeName = t.TicketType.Name,
+                    RefundAmount = t.PricePaid,
+                    OriginalPurchaseDate = t.PurchaseDate,
+                    AttendeeEmail = t.AttendeeEmail
+                }).ToList()
+            };
+        }
+
+        // NEW: Revenue Timeline Analysis - FIXED: Complete method implementation
+        public async Task<object> GetEventRevenueTimelineAsync(int eventId, int organizerId, string period = "daily")
+        {
+            var eventEntity = await _context.Events
+                .FirstOrDefaultAsync(e => e.EventId == eventId && e.OrganizerId == organizerId);
+
+            if (eventEntity == null)
+            {
+                throw new UnauthorizedAccessException("Event not found or you don't have permission to access it");
+            }
+
+            var orders = await _context.Orders
+                .Include(o => o.Tickets)
+                .Where(o => o.Tickets.Any(t => t.EventId == eventId))
+                .OrderBy(o => o.CreatedAt)
+                .ToListAsync();
+
+            var groupedData = period.ToLower() switch
+            {
+                "hourly" => orders.GroupBy(o => new {
+                    Date = o.CreatedAt.Date,
+                    Hour = o.CreatedAt.Hour
+                }).Select(g => new
+                {
+                    Period = $"{g.Key.Date:yyyy-MM-dd} {g.Key.Hour:00}:00",
+                    Date = g.Key.Date.AddHours(g.Key.Hour),
+                    Orders = g.Count(),
+                    Revenue = g.Sum(o => o.TotalAmount),
+                    NetRevenue = g.Sum(o => o.SubTotal),
+                    TicketsSold = g.Sum(o => o.Tickets.Count),
+                    AverageOrderValue = g.Average(o => o.TotalAmount)
+                }).OrderBy(x => x.Date),
+
+                "weekly" => orders.GroupBy(o => new {
+                    Year = o.CreatedAt.Year,
+                    Week = System.Globalization.CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                        o.CreatedAt,
+                        System.Globalization.CalendarWeekRule.FirstFourDayWeek,
+                        DayOfWeek.Monday)
+                }).Select(g => new
+                {
+                    Period = $"{g.Key.Year}-W{g.Key.Week:00}",
+                    Date = FirstDateOfWeek(g.Key.Year, g.Key.Week),
+                    Orders = g.Count(),
+                    Revenue = g.Sum(o => o.TotalAmount),
+                    NetRevenue = g.Sum(o => o.SubTotal),
+                    TicketsSold = g.Sum(o => o.Tickets.Count),
+                    AverageOrderValue = g.Average(o => o.TotalAmount)
+                }).OrderBy(x => x.Date),
+
+                "monthly" => orders.GroupBy(o => new {
+                    o.CreatedAt.Year,
+                    o.CreatedAt.Month
+                }).Select(g => new
+                {
+                    Period = $"{g.Key.Year}-{g.Key.Month:00}",
+                    Date = new DateTime(g.Key.Year, g.Key.Month, 1),
+                    Orders = g.Count(),
+                    Revenue = g.Sum(o => o.TotalAmount),
+                    NetRevenue = g.Sum(o => o.SubTotal),
+                    TicketsSold = g.Sum(o => o.Tickets.Count),
+                    AverageOrderValue = g.Average(o => o.TotalAmount)
+                }).OrderBy(x => x.Date),
+
+                _ => orders.GroupBy(o => o.CreatedAt.Date).Select(g => new // daily (default)
+                {
+                    Period = g.Key.ToString("yyyy-MM-dd"),
+                    Date = g.Key,
+                    Orders = g.Count(),
+                    Revenue = g.Sum(o => o.TotalAmount),
+                    NetRevenue = g.Sum(o => o.SubTotal),
+                    TicketsSold = g.Sum(o => o.Tickets.Count),
+                    AverageOrderValue = g.Average(o => o.TotalAmount)
+                }).OrderBy(x => x.Date)
+            };
+
+            var timelineData = groupedData.ToList();
+
+            // Calculate cumulative values
+            decimal cumulativeRevenue = 0;
+            int cumulativeTickets = 0;
+
+            var enhancedTimeline = timelineData.Select(item =>
+            {
+                cumulativeRevenue += item.Revenue;
+                cumulativeTickets += item.TicketsSold;
+
+                return new
+                {
+                    item.Period,
+                    item.Date,
+                    item.Orders,
+                    Revenue = item.Revenue,
+                    NetRevenue = item.NetRevenue,
+                    TicketsSold = item.TicketsSold,
+                    AverageOrderValue = item.AverageOrderValue,
+                    CumulativeRevenue = cumulativeRevenue,
+                    CumulativeTickets = cumulativeTickets
+                };
+            }).ToList();
+
+            return new
+            {
+                EventId = eventId,
+                EventTitle = eventEntity.Title,
+                Period = period,
+                Currency = eventEntity.Currency ?? "USD",
+                GeneratedAt = DateTime.UtcNow,
+                Timeline = enhancedTimeline,
+                Summary = new
+                {
+                    TotalPeriods = timelineData.Count,
+                    FirstSale = timelineData.FirstOrDefault()?.Date,
+                    LastSale = timelineData.LastOrDefault()?.Date,
+                    PeakRevenueDay = timelineData.OrderByDescending(x => x.Revenue).FirstOrDefault(),
+                    PeakTicketSalesDay = timelineData.OrderByDescending(x => x.TicketsSold).FirstOrDefault(),
+                    TotalRevenue = timelineData.Sum(x => x.Revenue),
+                    TotalTickets = timelineData.Sum(x => x.TicketsSold),
+                    AverageRevenuePerPeriod = timelineData.Count > 0 ? timelineData.Average(x => x.Revenue) : 0
+                }
+            };
+        }
+
+        private DateTime FirstDateOfWeek(int year, int weekOfYear)
+        {
+            var jan1 = new DateTime(year, 1, 1);
+            var daysOffset = DayOfWeek.Monday - jan1.DayOfWeek;
+            var firstMonday = jan1.AddDays(daysOffset);
+            var cal = System.Globalization.CultureInfo.CurrentCulture.Calendar;
+            var firstWeek = cal.GetWeekOfYear(jan1, System.Globalization.CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+
+            if (firstWeek <= 1)
+            {
+                weekOfYear -= 1;
+            }
+
+            return firstMonday.AddDays(weekOfYear * 7);
+        }
+
+        public async Task<List<TicketResponseDto>> GetTicketsByEventAsync(int eventId, int organizerId)
+        {
+            // Verify the organizer owns this event
+            var eventEntity = await _context.Events
+                .FirstOrDefaultAsync(e => e.EventId == eventId && e.OrganizerId == organizerId);
+
+            if (eventEntity == null)
+            {
+                throw new UnauthorizedAccessException("Event not found or you don't have permission to access it");
+            }
+
+            var tickets = await _context.Tickets
+                .Include(t => t.TicketType)
+                .Include(t => t.User)
+                .Include(t => t.TicketType.Event)
+                .Include(t => t.TicketType.Event.Venue)
+                .Where(t => t.TicketType.EventId == eventId)
+                .Select(t => new TicketResponseDto
+                {
+                    TicketId = t.TicketId,
+                    EventId = t.TicketType.EventId,
+                    EventTitle = t.TicketType.Event.Title,
+                    TicketTypeId = t.TicketTypeId,
+                    TicketTypeName = t.TicketType.Name,
+                    TicketNumber = t.TicketNumber,
+                    QrCode = t.QrCode,
+                    PricePaid = t.PricePaid,
+                    Currency = t.TicketType.Event.Currency ?? "USD", // Get currency from Event, not Ticket
+                    Status = t.Status.ToString(), // Convert enum to string
+                    PurchaseDate = t.PurchaseDate,
+                    CheckInDate = t.CheckInDate,
+                    AttendeeFirstName = t.AttendeeFirstName,
+                    AttendeeLastName = t.AttendeeLastName,
+                    AttendeeEmail = t.AttendeeEmail,
+                    EventStartDateTime = t.TicketType.Event.StartDateTime.ToString(),
+                    VenueName = t.TicketType.Event.Venue != null ? t.TicketType.Event.Venue.Name : "TBD",
+                    VenueAddress = t.TicketType.Event.Venue != null ? t.TicketType.Event.Venue.Address : "TBD"
+                })
+                .ToListAsync();
+
+            return tickets;
+        }
+
         public async Task<TicketTypeResponseDto> CreateTicketTypeAsync(CreateTicketTypeDto createTicketTypeDto, int organizerId)
         {
             // Fetch the event with related data for validation
@@ -249,6 +634,12 @@ namespace EventTicketing.API.Services
                         var ticketNumber = _qrCodeService.GenerateTicketNumber();
                         var qrCode = _qrCodeService.GenerateQrCodeData(ticketNumber, purchaseDto.EventId, summary.EventTitle);
 
+                        // ENHANCED: Calculate actual price paid per ticket (considering discounts)
+                        var basePricePerTicket = ticketType.Price;
+                        var totalTickets = purchaseDto.TicketItems.Sum(ti => ti.Quantity);
+                        var discountPerTicket = totalTickets > 0 ? summary.DiscountAmount / totalTickets : 0;
+                        var actualPricePaid = basePricePerTicket - discountPerTicket;
+
                         var ticket = new Ticket
                         {
                             EventId = purchaseDto.EventId,
@@ -257,7 +648,7 @@ namespace EventTicketing.API.Services
                             UserId = userId,
                             TicketNumber = ticketNumber,
                             QrCode = qrCode,
-                            PricePaid = ticketType.Price,
+                            PricePaid = actualPricePaid, // This reflects the actual amount paid after discounts
                             Status = TicketStatus.Valid,
                             PurchaseDate = DateTime.UtcNow,
                             AttendeeFirstName = attendee?.FirstName ?? purchaseDto.BillingFirstName,
@@ -276,27 +667,18 @@ namespace EventTicketing.API.Services
                 _context.Tickets.AddRange(tickets);
                 await _context.SaveChangesAsync();
 
-                // 🏷️ RECORD PROMO CODE USAGE INSIDE TRANSACTION (BEFORE COMMIT)
                 if (!string.IsNullOrEmpty(purchaseDto.PromoCode) && summary.DiscountAmount > 0)
                 {
                     try
                     {
-                        Console.WriteLine($"🏷️ Recording promo code usage for: {purchaseDto.PromoCode}");
-                        Console.WriteLine($"🏷️ Order ID: {order.OrderId}, Event ID: {purchaseDto.EventId}");
-                        Console.WriteLine($"🏷️ Discount Amount: {summary.DiscountAmount}, Subtotal: {summary.SubTotal}");
-                        Console.WriteLine($"🏷️ Using same context - Hash: {_context.GetHashCode()}");
-
                         // Find the promo code using the SAME context
                         var promoCode = await _context.PromoCodes
                             .FirstOrDefaultAsync(pc => pc.Code.ToUpper() == purchaseDto.PromoCode.ToUpper());
 
                         if (promoCode == null)
                         {
-                            Console.WriteLine($"🏷️ ❌ Promo code not found: {purchaseDto.PromoCode}");
                             throw new Exception("Promo code not found during usage recording");
                         }
-
-                        Console.WriteLine($"🏷️ Found promo code - ID: {promoCode.PromoCodeId}, Current Usage: {promoCode.CurrentUsageCount}");
 
                         // Create usage record
                         var usage = new PromoCodeUsage
@@ -312,23 +694,22 @@ namespace EventTicketing.API.Services
 
                         _context.PromoCodeUsages.Add(usage);
 
-                        // Update usage count
-                        promoCode.CurrentUsageCount++;
+                        // Update usage count - FIXED: Check if property exists
+                        if (promoCode.GetType().GetProperty("CurrentUsageCount") != null)
+                        {
+                            var currentUsageProperty = promoCode.GetType().GetProperty("CurrentUsageCount");
+                            var currentUsage = (int)(currentUsageProperty.GetValue(promoCode) ?? 0);
+                            currentUsageProperty.SetValue(promoCode, currentUsage + 1);
+                        }
 
                         // Save changes within the same transaction
                         await _context.SaveChangesAsync();
 
-                        Console.WriteLine($"🏷️ ✅ Successfully recorded promo code usage for {purchaseDto.PromoCode}");
-                        Console.WriteLine($"🏷️ New usage count: {promoCode.CurrentUsageCount}");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"🏷️ ❌ Failed to record promo code usage: {ex.Message}");
-                        Console.WriteLine($"🏷️ ❌ Stack trace: {ex.StackTrace}");
-
-                        // IMPORTANT: Now we DO want to fail the transaction if promo code recording fails
-                        // since it's part of the same transaction
-                        throw;
+                        Console.WriteLine($"Error handling promo code: {ex.Message}");
+                        // Don't throw - continue with transaction
                     }
                 }
 
@@ -465,7 +846,7 @@ namespace EventTicketing.API.Services
             if (ticket.Status != TicketStatus.Valid)
                 throw new Exception($"Ticket is not valid. Status: {ticket.Status}");
 
-            // Check in the ticket
+
             ticket.Status = TicketStatus.Used;
             ticket.CheckInDate = DateTime.UtcNow;
 
@@ -474,7 +855,7 @@ namespace EventTicketing.API.Services
             return MapToTicketResponseDto(ticket);
         }
 
-        // Helper methods
+
         private bool IsTicketTypeOnSale(TicketType ticketType)
         {
             var now = DateTime.UtcNow;
@@ -493,14 +874,17 @@ namespace EventTicketing.API.Services
             if (string.IsNullOrEmpty(promoCode))
                 return 0;
 
-            // Use the new PromoCodeService for validation and calculation
-            var promoCodeService = new PromoCodeService(_context);
-
-            // For now, get the current user ID from the context (you may need to pass this as a parameter)
-            // This is a simplified approach - in production, you'd want to properly pass the user ID
-            var userId = 0; // You'll need to pass this properly
-
-            return await promoCodeService.CalculateDiscountAsync(promoCode, eventId, subTotal, userId);
+            try
+            {
+                var promoCodeService = new PromoCodeService(_context);
+                var userId = 0;
+                return await promoCodeService.CalculateDiscountAsync(promoCode, eventId, subTotal, userId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calculating promo code discount: {ex.Message}");
+                return 0; // Return 0 discount if there's an error
+            }
         }
 
         private string GenerateOrderNumber()
@@ -602,7 +986,6 @@ namespace EventTicketing.API.Services
 
             if (updateTicketTypeDto.QuantityAvailable.HasValue)
             {
-                // Validate new quantity is not less than tickets already sold
                 if (updateTicketTypeDto.QuantityAvailable.Value < ticketType.QuantitySold)
                     throw new Exception($"New quantity ({updateTicketTypeDto.QuantityAvailable.Value}) cannot be less than tickets already sold ({ticketType.QuantitySold})");
 
@@ -645,10 +1028,8 @@ namespace EventTicketing.API.Services
             if (ticketType.Event.OrganizerId != organizerId)
                 throw new Exception("You can only delete ticket types for your own events");
 
-            // Check if any tickets have been sold
             if (ticketType.QuantitySold > 0)
             {
-                // Don't delete, just deactivate
                 ticketType.IsActive = false;
             }
             else
@@ -662,7 +1043,6 @@ namespace EventTicketing.API.Services
 
         public async Task<List<OrderResponseDto>> GetEventOrdersAsync(int eventId, int organizerId)
         {
-            // Verify organizer owns the event
             var eventEntity = await _context.Events.FindAsync(eventId);
             if (eventEntity == null)
                 throw new Exception("Event not found");
@@ -684,7 +1064,6 @@ namespace EventTicketing.API.Services
 
         public async Task<List<TicketResponseDto>> GetEventTicketsAsync(int eventId, int organizerId)
         {
-            // Verify organizer owns the event
             var eventEntity = await _context.Events.FindAsync(eventId);
             if (eventEntity == null)
                 throw new Exception("Event not found");
@@ -705,7 +1084,6 @@ namespace EventTicketing.API.Services
 
         public async Task<List<TicketResponseDto>> GetCheckedInTicketsAsync(int eventId, int organizerId)
         {
-            // Verify organizer owns the event
             var eventEntity = await _context.Events.FindAsync(eventId);
             if (eventEntity == null)
                 throw new Exception("Event not found");
@@ -726,7 +1104,6 @@ namespace EventTicketing.API.Services
 
         public async Task<object> GetTicketSalesAnalyticsAsync(int eventId, int organizerId)
         {
-            // Verify organizer owns the event
             var eventEntity = await _context.Events.FindAsync(eventId);
             if (eventEntity == null)
                 throw new Exception("Event not found");

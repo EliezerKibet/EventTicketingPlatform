@@ -3,26 +3,51 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth'; 
 import { Calendar, Users, Ticket, ArrowRight, Sparkles, Music, MapPin } from 'lucide-react';
 
 export default function Home() {
     const router = useRouter();
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, isOrganizer } = useAuth();
     const [showContent, setShowContent] = useState(false);
 
     useEffect(() => {
-        // Show content after a brief delay for smooth loading
         const timer = setTimeout(() => setShowContent(true), 300);
         return () => clearTimeout(timer);
     }, []);
 
-    const handleOrganizerClick = () => {
-        router.push('/login?type=organizer');
+    const handleOrganizerClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        console.log('Organizer button clicked');
+        console.log('User status:', { user, isLoading });
+        console.log('User roles:', user?.roles);
+        console.log('isOrganizer:', isOrganizer);
+
+        try {
+            if (user && !isLoading) {
+                await router.push('/organizer/dashboard');
+            } else {
+                await router.push('/login?type=organizer');
+            }
+        } catch (error) {
+        }
     };
 
-    const handleCustomerClick = () => {
-        router.push('/login?type=customer');
+    const handleCustomerClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        try {
+            if (user && !isLoading) {
+                await router.push('/events');
+            } else {
+                await router.push('/login?type=customer');
+            }
+        } catch (error) {
+            console.error('Navigation error:', error);
+        }
     };
 
     if (isLoading) {
@@ -50,30 +75,19 @@ export default function Home() {
                             <h1 className="text-2xl font-bold text-gray-900">EventTicketing</h1>
                         </div>
 
+                        {/* Debug info - remove this later */}
+                        {user && (
+                            <div className="text-sm text-gray-500">
+                                User: {user.firstName} | Roles: {user.roles?.join(', ') || 'None'} | isOrganizer: {String(isOrganizer)}
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
 
-            {/* Main Content */}
+            {/* Rest of your component stays the same... */}
             <main className="max-w-7xl mx-auto compact-card compact-space-y">
-                {/* Hero Section */}
-                <div className="text-center compact-space-y" style={{ marginBottom: 'calc(var(--spacing-unit) * 4)' }}>
-                    <div className="flex justify-center" style={{ marginBottom: 'calc(var(--spacing-unit) * 1.5)' }}>
-                        <div className="relative">
-                            <Calendar className="h-20 w-20 accent-text" />
-                            <Sparkles className="h-6 w-6 text-yellow-400 absolute -top-2 -right-2 animate-pulse" />
-                        </div>
-                    </div>
-                    <h2 className="text-responsive-3xl font-bold theme-fg compact-space-y">
-                        Welcome to <span className="accent-text">EventHub</span>
-                    </h2>
-                    <p className="text-responsive-xl theme-muted-fg max-w-3xl mx-auto compact-space-y">
-                        Your all-in-one platform for creating, managing, and discovering amazing events.
-                        Whether you&apos;re organizing the next big concert or looking for exciting events to attend.
-                    </p>
-                </div>
-
-                {/* User Type Selection */}
+                {/* Your existing content */}
                 <div className="grid md:grid-cols-2 compact-gap max-w-4xl mx-auto" style={{ marginBottom: 'calc(var(--spacing-unit) * 4)' }}>
                     {/* Organizer Card */}
                     <div className="theme-card theme-border border rounded-2xl compact-card hover:shadow-2xl theme-transition transform hover:scale-105">
@@ -86,29 +100,10 @@ export default function Home() {
                                 Create and manage events, sell tickets, track analytics, and build your audience.
                             </p>
 
-                            {/* Features List */}
-                            <div className="compact-space-y text-left" style={{ marginBottom: 'calc(var(--spacing-unit) * 2)' }}>
-                                <div className="flex items-center text-responsive-sm theme-muted-fg">
-                                    <div className="w-2 h-2 accent-bg rounded-full mr-3"></div>
-                                    Create unlimited events
-                                </div>
-                                <div className="flex items-center text-responsive-sm theme-muted-fg">
-                                    <div className="w-2 h-2 accent-bg rounded-full mr-3"></div>
-                                    Sell tickets & manage bookings
-                                </div>
-                                <div className="flex items-center text-responsive-sm theme-muted-fg">
-                                    <div className="w-2 h-2 accent-bg rounded-full mr-3"></div>
-                                    Real-time analytics & insights
-                                </div>
-                                <div className="flex items-center text-responsive-sm theme-muted-fg">
-                                    <div className="w-2 h-2 accent-bg rounded-full mr-3"></div>
-                                    QR code ticket validation
-                                </div>
-                            </div>
-
                             <button
+                                type="button"
                                 onClick={handleOrganizerClick}
-                                className="btn-accent w-full compact-button font-semibold rounded-lg flex items-center justify-center group focus-accent"
+                                className="btn-accent w-full compact-button font-semibold rounded-lg flex items-center justify-center group focus-accent mt-4"
                             >
                                 Get Started as Organizer
                                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 theme-transition" />
@@ -127,29 +122,10 @@ export default function Home() {
                                 Discover exciting events, purchase tickets, and enjoy seamless check-in experiences.
                             </p>
 
-                            {/* Features List */}
-                            <div className="compact-space-y text-left" style={{ marginBottom: 'calc(var(--spacing-unit) * 2)' }}>
-                                <div className="flex items-center text-responsive-sm theme-muted-fg">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                    Browse events by category
-                                </div>
-                                <div className="flex items-center text-responsive-sm theme-muted-fg">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                    Secure ticket purchasing
-                                </div>
-                                <div className="flex items-center text-responsive-sm theme-muted-fg">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                    Digital tickets on your phone
-                                </div>
-                                <div className="flex items-center text-responsive-sm theme-muted-fg">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                    Quick QR code entry
-                                </div>
-                            </div>
-
                             <button
+                                type="button"
                                 onClick={handleCustomerClick}
-                                className="w-full bg-green-600 text-white compact-button font-semibold rounded-lg hover:bg-green-700 theme-transition flex items-center justify-center group focus-accent"
+                                className="w-full bg-green-600 text-white compact-button font-semibold rounded-lg hover:bg-green-700 theme-transition flex items-center justify-center group focus-accent mt-4"
                             >
                                 Get Started as Customer
                                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 theme-transition" />
@@ -157,53 +133,7 @@ export default function Home() {
                         </div>
                     </div>
                 </div>
-
-                {/* Feature Highlights */}
-                <div className="theme-card theme-border border rounded-2xl compact-card" style={{ marginBottom: 'calc(var(--spacing-unit) * 4)' }}>
-                    <div className="text-center compact-space-y">
-                        <h3 className="text-responsive-3xl font-bold theme-fg compact-space-y">Why Choose EventHub?</h3>
-                        <p className="theme-muted-fg">Everything you need for successful events in one platform</p>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 compact-gap">
-                        <div className="text-center">
-                            <div className="bg-purple-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto compact-space-y">
-                                <Music className="h-6 w-6 text-purple-600" />
-                            </div>
-                            <h4 className="font-semibold theme-fg compact-space-y">All Event Types</h4>
-                            <p className="text-responsive-sm theme-muted-fg">Concerts, conferences, workshops, festivals - we support them all</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div className="bg-indigo-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto compact-space-y">
-                                <MapPin className="h-6 w-6 text-indigo-600" />
-                            </div>
-                            <h4 className="font-semibold theme-fg compact-space-y">Venue Management</h4>
-                            <p className="text-responsive-sm theme-muted-fg">Comprehensive venue database with detailed information</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div className="bg-pink-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto compact-space-y">
-                                <Sparkles className="h-6 w-6 text-pink-600" />
-                            </div>
-                            <h4 className="font-semibold theme-fg compact-space-y">Easy to Use</h4>
-                            <p className="text-responsive-sm theme-muted-fg">Intuitive interface designed for both organizers and attendees</p>
-                        </div>
-                    </div>
-                </div>
             </main>
-
-            {/* Footer */}
-            <footer className="theme-card theme-border border-t">
-                <div className="max-w-7xl mx-auto compact-card">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center compact-gap">
-                            <Calendar className="h-6 w-6 accent-text" />
-                            <span className="theme-muted-fg text-responsive-sm">© 2025 EventHub. All rights reserved.</span>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 }

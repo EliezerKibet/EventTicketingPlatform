@@ -135,6 +135,331 @@ interface UserPreferences {
     currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
 }
 
+// Enhanced theming system from profile page
+const getThemeClasses = (preferences: UserPreferences | null) => {
+    const isDarkMode = typeof window !== 'undefined' && (
+        preferences?.theme === 'dark' ||
+        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
+
+    const accentColor = preferences?.accentColor || 'blue';
+    const fontSize = preferences?.fontSize || 'medium';
+    const compactMode = preferences?.compactMode || false;
+
+    // Accent color configurations
+    const accentColors = {
+        blue: {
+            primary: 'bg-blue-600',
+            hover: 'hover:bg-blue-700',
+            light: isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50',
+            text: isDarkMode ? 'text-blue-400' : 'text-blue-600',
+            border: isDarkMode ? 'border-blue-700' : 'border-blue-200',
+            ring: 'focus:ring-blue-500 focus:border-blue-500',
+            gradient: 'from-blue-600 to-blue-700'
+        },
+        purple: {
+            primary: 'bg-purple-600',
+            hover: 'hover:bg-purple-700',
+            light: isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50',
+            text: isDarkMode ? 'text-purple-400' : 'text-purple-600',
+            border: isDarkMode ? 'border-purple-700' : 'border-purple-200',
+            ring: 'focus:ring-purple-500 focus:border-purple-500',
+            gradient: 'from-purple-600 to-purple-700'
+        },
+        green: {
+            primary: 'bg-green-600',
+            hover: 'hover:bg-green-700',
+            light: isDarkMode ? 'bg-green-900/20' : 'bg-green-50',
+            text: isDarkMode ? 'text-green-400' : 'text-green-600',
+            border: isDarkMode ? 'border-green-700' : 'border-green-200',
+            ring: 'focus:ring-green-500 focus:border-green-500',
+            gradient: 'from-green-600 to-green-700'
+        },
+        orange: {
+            primary: 'bg-orange-600',
+            hover: 'hover:bg-orange-700',
+            light: isDarkMode ? 'bg-orange-900/20' : 'bg-orange-50',
+            text: isDarkMode ? 'text-orange-400' : 'text-orange-600',
+            border: isDarkMode ? 'border-orange-700' : 'border-orange-200',
+            ring: 'focus:ring-orange-500 focus:border-orange-500',
+            gradient: 'from-orange-600 to-orange-700'
+        },
+        pink: {
+            primary: 'bg-pink-600',
+            hover: 'hover:bg-pink-700',
+            light: isDarkMode ? 'bg-pink-900/20' : 'bg-pink-50',
+            text: isDarkMode ? 'text-pink-400' : 'text-pink-600',
+            border: isDarkMode ? 'border-pink-700' : 'border-pink-200',
+            ring: 'focus:ring-pink-500 focus:border-pink-500',
+            gradient: 'from-pink-600 to-pink-700'
+        }
+    };
+
+    const currentAccent = accentColors[accentColor as keyof typeof accentColors] || accentColors.blue;
+
+    // Font size configurations
+    const fontSizes = {
+        small: {
+            text: 'text-sm',
+            heading: 'text-lg',
+            title: 'text-xl',
+            subtitle: 'text-xs',
+            button: 'text-sm',
+            label: 'text-xs',
+            hero: 'text-4xl md:text-5xl',
+            section: 'text-2xl md:text-3xl'
+        },
+        medium: {
+            text: 'text-base',
+            heading: 'text-xl',
+            title: 'text-2xl',
+            subtitle: 'text-sm',
+            button: 'text-base',
+            label: 'text-sm',
+            hero: 'text-5xl md:text-6xl',
+            section: 'text-3xl md:text-4xl'
+        },
+        large: {
+            text: 'text-lg',
+            heading: 'text-2xl',
+            title: 'text-3xl',
+            subtitle: 'text-base',
+            button: 'text-lg',
+            label: 'text-base',
+            hero: 'text-6xl md:text-7xl',
+            section: 'text-4xl md:text-5xl'
+        }
+    };
+
+    const currentFont = fontSizes[fontSize as keyof typeof fontSizes] || fontSizes.medium;
+
+    return {
+        // Basic colors
+        background: isDarkMode ? 'bg-gray-900' : 'bg-white',
+        backgroundCard: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
+        backgroundSidebar: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
+        backgroundInput: isDarkMode ? 'bg-gray-700/90' : 'bg-white/90',
+        backgroundHeader: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
+        backgroundFooter: isDarkMode ? 'bg-gray-900' : 'bg-white',
+
+        // Text colors
+        text: isDarkMode ? 'text-gray-100' : 'text-gray-900',
+        textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600',
+        textMuted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
+        textHero: isDarkMode ? 'text-white' : 'text-white',
+
+        // Borders
+        border: isDarkMode ? 'border-gray-600' : 'border-gray-300',
+        borderCard: isDarkMode ? 'border-gray-600/30' : 'border-white/30',
+
+        // Effects
+        shadow: isDarkMode ? 'shadow-2xl shadow-black/50' : 'shadow-2xl',
+        hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-white/50',
+
+        // Typography & Layout
+        fontSize: currentFont,
+
+        // Padding/spacing based on compact mode
+        padding: compactMode ? 'p-3' : 'p-6',
+        paddingSmall: compactMode ? 'p-2' : 'p-4',
+        paddingLarge: compactMode ? 'p-4' : 'p-8',
+        paddingSection: compactMode ? 'py-8' : 'py-16',
+
+        // Margins
+        margin: compactMode ? 'mb-3' : 'mb-6',
+        marginSmall: compactMode ? 'mb-2' : 'mb-4',
+        marginLarge: compactMode ? 'mb-4' : 'mb-8',
+        marginSection: compactMode ? 'mb-12' : 'mb-20',
+
+        // Spacing
+        spacing: compactMode ? 'space-y-2' : 'space-y-4',
+        spacingLarge: compactMode ? 'space-y-3' : 'space-y-6',
+
+        // Grid gaps
+        gap: compactMode ? 'gap-3' : 'gap-6',
+
+        // Button sizes
+        buttonPadding: compactMode ? 'px-4 py-2' : 'px-6 py-3',
+        buttonPaddingSmall: compactMode ? 'px-2 py-1' : 'px-3 py-2',
+
+        // Input heights
+        inputHeight: compactMode ? 'h-9' : 'h-11',
+        searchHeight: compactMode ? 'py-3' : 'py-4',
+
+        // Icon sizes
+        iconSize: compactMode ? 'h-4 w-4' : 'h-5 w-5',
+        iconSizeSmall: compactMode ? 'h-3 w-3' : 'h-4 w-4',
+        iconSizeLarge: compactMode ? 'h-6 w-6' : 'h-8 w-8',
+
+        // Accent colors
+        accent: currentAccent.primary,
+        accentHover: currentAccent.hover,
+        accentText: currentAccent.text,
+        accentLight: currentAccent.light,
+        accentBorder: currentAccent.border,
+        accentRing: currentAccent.ring,
+        accentGradient: currentAccent.gradient,
+
+        // State info
+        isDarkMode,
+        accentColor,
+        fontSizeValue: fontSize,
+        compactMode
+    };
+};
+
+// Helper function to get timezone abbreviations
+const getTimeZoneAbbreviation = (timeZone: string): string => {
+    const abbreviations: { [key: string]: string } = {
+        'UTC': 'UTC',
+        'America/New_York': 'EST/EDT',
+        'America/Chicago': 'CST/CDT',
+        'America/Denver': 'MST/MDT',
+        'America/Los_Angeles': 'PST/PDT',
+        'Asia/Kuala_Lumpur': 'MYT',
+        'Europe/London': 'GMT/BST',
+        'Europe/Paris': 'CET/CEST',
+        'Asia/Tokyo': 'JST',
+        'Australia/Sydney': 'AEST/AEDT'
+    };
+
+    return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+};
+
+// ADD this function right after the getTimeZoneAbbreviation function (around line 497):
+
+const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+    const timeFormat = preferences?.timeFormat || '12h';
+
+    console.log('📅 Formatting date with preferences:', {
+        dateFormat,
+        timeFormat,
+        userTimeZone,
+        originalDate: dateTimeString
+    });
+
+    // Create date in user's timezone
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    // Extract date components
+    const year = zonedDate.getFullYear();
+    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(zonedDate.getDate()).padStart(2, '0');
+
+    // Month names for text formats
+    const monthNames = [
+        t('jan'), t('feb'), t('mar'), t('apr'),
+        t('may'), t('jun'), t('jul'), t('aug'),
+        t('sep'), t('oct'), t('nov'), t('dec')
+    ];
+    const monthShort = monthNames[zonedDate.getMonth()];
+
+    // Weekday names
+    const weekdays = [
+        t('sunday'), t('monday'), t('tuesday'), t('wednesday'),
+        t('thursday'), t('friday'), t('saturday')
+    ];
+    const weekday = weekdays[zonedDate.getDay()];
+
+    // Format date according to user preference - INDEPENDENT OF LOCALE
+    let formattedDate: string;
+    switch (dateFormat) {
+        case 'dd/MM/yyyy':
+            formattedDate = `${weekday}, ${day}/${month}/${year}`;
+            break;
+        case 'yyyy-MM-dd':
+            formattedDate = `${weekday}, ${year}-${month}-${day}`;
+            break;
+        case 'MMM dd, yyyy':
+            formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+            break;
+        case 'dd MMM yyyy':
+            formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+            break;
+        default: // MM/dd/yyyy
+            formattedDate = `${weekday}, ${month}/${day}/${year}`;
+    }
+
+    // Format time - also independent of locale
+    const hours24 = zonedDate.getHours();
+    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+    let formattedTime: string;
+    if (timeFormat === '24h') {
+        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    } else {
+        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+        const ampm = hours24 >= 12 ? 'PM' : 'AM';
+        formattedTime = `${hours12}:${minutes} ${ampm}`;
+    }
+
+    // Add timezone abbreviation
+    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+    formattedTime += ` ${timeZoneAbbr}`;
+
+    const result = `${formattedDate} ${t('at')} ${formattedTime}`;
+
+    return result;
+};
+
+const formatEventDateOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    const year = zonedDate.getFullYear();
+    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(zonedDate.getDate()).padStart(2, '0');
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthShort = monthNames[zonedDate.getMonth()];
+
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekday = weekdays[zonedDate.getDay()];
+
+    switch (dateFormat) {
+        case 'dd/MM/yyyy':
+            return `${weekday}, ${day}/${month}/${year}`;
+        case 'yyyy-MM-dd':
+            return `${weekday}, ${year}-${month}-${day}`;
+        case 'MMM dd, yyyy':
+            return `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+        case 'dd MMM yyyy':
+            return `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+        default: // MM/dd/yyyy
+            return `${weekday}, ${month}/${day}/${year}`;
+    }
+};
+
+const formatEventTimeOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
+    const eventDate = new Date(dateTimeString);
+    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+    const timeFormat = preferences?.timeFormat || '12h';
+
+    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+    const hours24 = zonedDate.getHours();
+    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+    let formattedTime: string;
+    if (timeFormat === '24h') {
+        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+    } else {
+        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+        const ampm = hours24 >= 12 ? 'PM' : 'AM';
+        formattedTime = `${hours12}:${minutes} ${ampm}`;
+    }
+
+    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+    return `${formattedTime} ${timeZoneAbbr}`;
+};
+
 // Helper component for category icons
 const CategoryIcon = ({ categoryName }: { categoryName: string }) => {
     const name = categoryName.toLowerCase();
@@ -435,325 +760,7 @@ const EventGallerySlideshow = ({ images, autoPlay = true, themeClasses }: {
 };
 
 
-// Enhanced theming system from profile page
-const getThemeClasses = (preferences: UserPreferences | null) => {
-    const isDarkMode = typeof window !== 'undefined' && (
-        preferences?.theme === 'dark' ||
-        (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    );
 
-    const accentColor = preferences?.accentColor || 'blue';
-    const fontSize = preferences?.fontSize || 'medium';
-    const compactMode = preferences?.compactMode || false;
-
-    // Accent color configurations
-    const accentColors = {
-        blue: {
-            primary: 'bg-blue-600',
-            hover: 'hover:bg-blue-700',
-            light: isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50',
-            text: isDarkMode ? 'text-blue-400' : 'text-blue-600',
-            border: isDarkMode ? 'border-blue-700' : 'border-blue-200',
-            ring: 'focus:ring-blue-500 focus:border-blue-500',
-            gradient: 'from-blue-600 to-blue-700'
-        },
-        purple: {
-            primary: 'bg-purple-600',
-            hover: 'hover:bg-purple-700',
-            light: isDarkMode ? 'bg-purple-900/20' : 'bg-purple-50',
-            text: isDarkMode ? 'text-purple-400' : 'text-purple-600',
-            border: isDarkMode ? 'border-purple-700' : 'border-purple-200',
-            ring: 'focus:ring-purple-500 focus:border-purple-500',
-            gradient: 'from-purple-600 to-purple-700'
-        },
-        green: {
-            primary: 'bg-green-600',
-            hover: 'hover:bg-green-700',
-            light: isDarkMode ? 'bg-green-900/20' : 'bg-green-50',
-            text: isDarkMode ? 'text-green-400' : 'text-green-600',
-            border: isDarkMode ? 'border-green-700' : 'border-green-200',
-            ring: 'focus:ring-green-500 focus:border-green-500',
-            gradient: 'from-green-600 to-green-700'
-        },
-        orange: {
-            primary: 'bg-orange-600',
-            hover: 'hover:bg-orange-700',
-            light: isDarkMode ? 'bg-orange-900/20' : 'bg-orange-50',
-            text: isDarkMode ? 'text-orange-400' : 'text-orange-600',
-            border: isDarkMode ? 'border-orange-700' : 'border-orange-200',
-            ring: 'focus:ring-orange-500 focus:border-orange-500',
-            gradient: 'from-orange-600 to-orange-700'
-        },
-        pink: {
-            primary: 'bg-pink-600',
-            hover: 'hover:bg-pink-700',
-            light: isDarkMode ? 'bg-pink-900/20' : 'bg-pink-50',
-            text: isDarkMode ? 'text-pink-400' : 'text-pink-600',
-            border: isDarkMode ? 'border-pink-700' : 'border-pink-200',
-            ring: 'focus:ring-pink-500 focus:border-pink-500',
-            gradient: 'from-pink-600 to-pink-700'
-        }
-    };
-
-    const currentAccent = accentColors[accentColor as keyof typeof accentColors] || accentColors.blue;
-
-    // Font size configurations
-    const fontSizes = {
-        small: {
-            text: 'text-sm',
-            heading: 'text-lg',
-            title: 'text-xl',
-            subtitle: 'text-xs',
-            button: 'text-sm',
-            label: 'text-xs',
-            hero: 'text-4xl md:text-5xl',
-            section: 'text-2xl md:text-3xl'
-        },
-        medium: {
-            text: 'text-base',
-            heading: 'text-xl',
-            title: 'text-2xl',
-            subtitle: 'text-sm',
-            button: 'text-base',
-            label: 'text-sm',
-            hero: 'text-5xl md:text-6xl',
-            section: 'text-3xl md:text-4xl'
-        },
-        large: {
-            text: 'text-lg',
-            heading: 'text-2xl',
-            title: 'text-3xl',
-            subtitle: 'text-base',
-            button: 'text-lg',
-            label: 'text-base',
-            hero: 'text-6xl md:text-7xl',
-            section: 'text-4xl md:text-5xl'
-        }
-    };
-
-    const currentFont = fontSizes[fontSize as keyof typeof fontSizes] || fontSizes.medium;
-
-    return {
-        // Basic colors
-        background: isDarkMode ? 'bg-gray-900' : 'bg-white',
-        backgroundCard: isDarkMode ? 'bg-gray-800/90' : 'bg-white/90',
-        backgroundSidebar: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
-        backgroundInput: isDarkMode ? 'bg-gray-700/90' : 'bg-white/90',
-        backgroundHeader: isDarkMode ? 'bg-gray-800/80' : 'bg-white/80',
-        backgroundFooter: isDarkMode ? 'bg-gray-900' : 'bg-white',
-
-        // Text colors
-        text: isDarkMode ? 'text-gray-100' : 'text-gray-900',
-        textSecondary: isDarkMode ? 'text-gray-300' : 'text-gray-600',
-        textMuted: isDarkMode ? 'text-gray-400' : 'text-gray-500',
-        textHero: isDarkMode ? 'text-white' : 'text-white',
-
-        // Borders
-        border: isDarkMode ? 'border-gray-600' : 'border-gray-300',
-        borderCard: isDarkMode ? 'border-gray-600/30' : 'border-white/30',
-
-        // Effects
-        shadow: isDarkMode ? 'shadow-2xl shadow-black/50' : 'shadow-2xl',
-        hover: isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-white/50',
-
-        // Typography & Layout
-        fontSize: currentFont,
-
-        // Padding/spacing based on compact mode
-        padding: compactMode ? 'p-3' : 'p-6',
-        paddingSmall: compactMode ? 'p-2' : 'p-4',
-        paddingLarge: compactMode ? 'p-4' : 'p-8',
-        paddingSection: compactMode ? 'py-8' : 'py-16',
-
-        // Margins
-        margin: compactMode ? 'mb-3' : 'mb-6',
-        marginSmall: compactMode ? 'mb-2' : 'mb-4',
-        marginLarge: compactMode ? 'mb-4' : 'mb-8',
-        marginSection: compactMode ? 'mb-12' : 'mb-20',
-
-        // Spacing
-        spacing: compactMode ? 'space-y-2' : 'space-y-4',
-        spacingLarge: compactMode ? 'space-y-3' : 'space-y-6',
-
-        // Grid gaps
-        gap: compactMode ? 'gap-3' : 'gap-6',
-
-        // Button sizes
-        buttonPadding: compactMode ? 'px-4 py-2' : 'px-6 py-3',
-        buttonPaddingSmall: compactMode ? 'px-2 py-1' : 'px-3 py-2',
-
-        // Input heights
-        inputHeight: compactMode ? 'h-9' : 'h-11',
-        searchHeight: compactMode ? 'py-3' : 'py-4',
-
-        // Icon sizes
-        iconSize: compactMode ? 'h-4 w-4' : 'h-5 w-5',
-        iconSizeSmall: compactMode ? 'h-3 w-3' : 'h-4 w-4',
-        iconSizeLarge: compactMode ? 'h-6 w-6' : 'h-8 w-8',
-
-        // Accent colors
-        accent: currentAccent.primary,
-        accentHover: currentAccent.hover,
-        accentText: currentAccent.text,
-        accentLight: currentAccent.light,
-        accentBorder: currentAccent.border,
-        accentRing: currentAccent.ring,
-        accentGradient: currentAccent.gradient,
-
-        // State info
-        isDarkMode,
-        accentColor,
-        fontSizeValue: fontSize,
-        compactMode
-    };
-};
-
-// Helper function to get timezone abbreviations
-const getTimeZoneAbbreviation = (timeZone: string): string => {
-    const abbreviations: { [key: string]: string } = {
-        'UTC': 'UTC',
-        'America/New_York': 'EST/EDT',
-        'America/Chicago': 'CST/CDT',
-        'America/Denver': 'MST/MDT',
-        'America/Los_Angeles': 'PST/PDT',
-        'Asia/Kuala_Lumpur': 'MYT',
-        'Europe/London': 'GMT/BST',
-        'Europe/Paris': 'CET/CEST',
-        'Asia/Tokyo': 'JST',
-        'Australia/Sydney': 'AEST/AEDT'
-    };
-
-    return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
-};
-
-// ADD this function right after the getTimeZoneAbbreviation function (around line 497):
-
-const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
-    const eventDate = new Date(dateTimeString);
-    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
-    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
-    const timeFormat = preferences?.timeFormat || '12h';
-
-    console.log('📅 Formatting date with preferences:', {
-        dateFormat,
-        timeFormat,
-        userTimeZone,
-        originalDate: dateTimeString
-    });
-
-    // Create date in user's timezone
-    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
-
-    // Extract date components
-    const year = zonedDate.getFullYear();
-    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(zonedDate.getDate()).padStart(2, '0');
-
-    // Month names for text formats
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthShort = monthNames[zonedDate.getMonth()];
-
-    // Weekday names
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const weekday = weekdays[zonedDate.getDay()];
-
-    // Format date according to user preference - INDEPENDENT OF LOCALE
-    let formattedDate: string;
-    switch (dateFormat) {
-        case 'dd/MM/yyyy':
-            formattedDate = `${weekday}, ${day}/${month}/${year}`;
-            break;
-        case 'yyyy-MM-dd':
-            formattedDate = `${weekday}, ${year}-${month}-${day}`;
-            break;
-        case 'MMM dd, yyyy':
-            formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
-            break;
-        case 'dd MMM yyyy':
-            formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
-            break;
-        default: // MM/dd/yyyy
-            formattedDate = `${weekday}, ${month}/${day}/${year}`;
-    }
-
-    // Format time - also independent of locale
-    const hours24 = zonedDate.getHours();
-    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
-
-    let formattedTime: string;
-    if (timeFormat === '24h') {
-        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
-    } else {
-        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
-        const ampm = hours24 >= 12 ? 'PM' : 'AM';
-        formattedTime = `${hours12}:${minutes} ${ampm}`;
-    }
-
-    // Add timezone abbreviation
-    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
-    formattedTime += ` ${timeZoneAbbr}`;
-
-    const result = `${formattedDate} ${t('at')} ${formattedTime}`;
-
-    console.log('📅 Final formatted result:', result);
-    return result;
-};
-
-const formatEventDateOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
-    const eventDate = new Date(dateTimeString);
-    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
-    const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
-
-    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
-
-    const year = zonedDate.getFullYear();
-    const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(zonedDate.getDate()).padStart(2, '0');
-
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthShort = monthNames[zonedDate.getMonth()];
-
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const weekday = weekdays[zonedDate.getDay()];
-
-    switch (dateFormat) {
-        case 'dd/MM/yyyy':
-            return `${weekday}, ${day}/${month}/${year}`;
-        case 'yyyy-MM-dd':
-            return `${weekday}, ${year}-${month}-${day}`;
-        case 'MMM dd, yyyy':
-            return `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
-        case 'dd MMM yyyy':
-            return `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
-        default: // MM/dd/yyyy
-            return `${weekday}, ${month}/${day}/${year}`;
-    }
-};
-
-const formatEventTimeOnly = (dateTimeString: string, preferences: UserPreferences | null) => {
-    const eventDate = new Date(dateTimeString);
-    const userTimeZone = preferences?.defaultTimeZone || 'UTC';
-    const timeFormat = preferences?.timeFormat || '12h';
-
-    const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
-
-    const hours24 = zonedDate.getHours();
-    const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
-
-    let formattedTime: string;
-    if (timeFormat === '24h') {
-        formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
-    } else {
-        const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
-        const ampm = hours24 >= 12 ? 'PM' : 'AM';
-        formattedTime = `${hours12}:${minutes} ${ampm}`;
-    }
-
-    const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
-    return `${formattedTime} ${timeZoneAbbr}`;
-};
 
 export default function EventsHomepage() {
     const { t } = useI18nContext();
@@ -1042,7 +1049,7 @@ export default function EventsHomepage() {
                     id: `upcoming-${event.eventId}`,
                     url: imageUrl,
                     title: event.title,
-                    subtitle: `${daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`} at ${formatEventTimeOnly(event.startDateTime, preferences)}`,
+                    subtitle: `${daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`} at ${formatEventTimeOnly(event.startDateTime, preferences)}`,                                        
                     description: `${event.isOnline ? t('onlineEvent') : event.venueName} • ${event.ticketsSold} ${t('ticketsSold')}`,
                     type: 'upcoming',
                     eventId: event.eventId

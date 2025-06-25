@@ -19,7 +19,8 @@ namespace EventTicketing.API.Models.DTOs
 		public string LastName { get; set; }
 
 		public string? PhoneNumber { get; set; }
-	}
+		public string? UserType { get; set; }
+    }
 
 	public class LoginDto
 	{

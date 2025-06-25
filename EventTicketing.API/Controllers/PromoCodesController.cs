@@ -168,25 +168,16 @@ namespace EventTicketing.API.Controllers
         {
             try
             {
-                Console.WriteLine($"🔍 === CONTROLLER VALIDATION START ===");
-                Console.WriteLine($"🔍 Code: {request.Code}, EventId: {request.EventId}, Subtotal: {request.OrderSubtotal}");
 
                 var userId = User.Identity?.IsAuthenticated == true ? GetUserId() : 0;
-                Console.WriteLine($"🔍 UserId: {userId}");
 
                 var result = await _promoCodeService.ValidatePromoCodeAsync(request.Code, request.EventId, request.OrderSubtotal, userId);
 
-                Console.WriteLine($"🔍 === SERVICE RETURNED ===");
-                Console.WriteLine($"🔍 IsValid: {result.IsValid}");
-                Console.WriteLine($"🔍 DiscountAmount: {result.DiscountAmount}");
-                Console.WriteLine($"🔍 Message: {result.Message}");
-                Console.WriteLine($"🔍 === CONTROLLER VALIDATION END ===");
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"🔍 Controller validation error: {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
         }

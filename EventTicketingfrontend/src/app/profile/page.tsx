@@ -244,7 +244,6 @@ export default function AttendeeProfilePage() {
     const router = useRouter();
     const { t, currentLanguage, changeLanguage, availableLanguages } = useI18n();
 
-    // State management
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('profile');
@@ -261,7 +260,6 @@ export default function AttendeeProfilePage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Image upload states
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
     const [profileImagePreview, setProfileImagePreview] = useState<string>('');
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -285,7 +283,6 @@ export default function AttendeeProfilePage() {
         return backendUrl + imageUrl;
     };
 
-    // Helper function to format date for input field
     const formatDateForInput = (dateString: string | undefined | null) => {
         if (!dateString) return '';
 
@@ -299,12 +296,10 @@ export default function AttendeeProfilePage() {
 
             return `${year}-${month}-${day}`;
         } catch (error) {
-            console.error('Error formatting date:', error);
             return '';
         }
     };
 
-    // Apply theme to document body
     useEffect(() => {
         if (preferences) {
             if (themeClasses.isDarkMode) {
@@ -321,10 +316,8 @@ export default function AttendeeProfilePage() {
         try {
             setLoading(true);
 
-            // Load profile data
             const profileData = await userApi.getProfile();
 
-            // Check if user is an organizer - redirect them to organizer profile
             if (profileData.isOrganizer) {
                 router.push('/profile/organizer');
                 return;
@@ -332,7 +325,6 @@ export default function AttendeeProfilePage() {
 
             setProfile(profileData);
 
-            // Load attendee-specific preferences WITH ENHANCED APPEARANCE OPTIONS
             try {
                 const prefsData = await userApi.getPreferences();
                 setPreferences({
@@ -363,7 +355,6 @@ export default function AttendeeProfilePage() {
                 });
             }
         } catch (error: any) {
-            setError(t('failedToUpdateProfile') + ': ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -374,7 +365,6 @@ export default function AttendeeProfilePage() {
         if (file) {
             const validation = imageApi.validateImageFile(file);
             if (!validation.isValid) {
-                setError(validation.error || t('invalidImageFile'));
                 return;
             }
 
@@ -410,7 +400,6 @@ export default function AttendeeProfilePage() {
             setSuccess(t('imageUploadSuccess'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError(t('imageUploadFailed') + ': ' + error.message);
         } finally {
             setUploadingImage(false);
         }
@@ -459,7 +448,6 @@ export default function AttendeeProfilePage() {
             setSuccess(t('profileUpdatedSuccessfully'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError(t('failedToUpdateProfile') + ': ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -488,7 +476,6 @@ export default function AttendeeProfilePage() {
             setSuccess(t('passwordChanged'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError(t('failedToChangePassword') + ': ' + error.message);
         } finally {
             setSaving(false);
         }
@@ -502,16 +489,11 @@ export default function AttendeeProfilePage() {
             setError('');
             setSuccess('');
 
-            console.log('🔧 Saving preferences:', preferences);
 
-            // Get current preferences first to ensure we send all required fields
             const currentPrefs = await userApi.getPreferences();
 
-            // Merge current preferences with new ones to ensure all fields are present
             const fullPreferences = {
-                // Start with current preferences
                 ...currentPrefs,
-                // Override with new values
                 emailNotifications: preferences.emailNotifications ?? currentPrefs.emailNotifications ?? true,
                 smsNotifications: currentPrefs.smsNotifications ?? false,
                 newBookingNotifications: currentPrefs.newBookingNotifications ?? true,
@@ -539,8 +521,6 @@ export default function AttendeeProfilePage() {
                 compactMode: preferences.compactMode ?? currentPrefs.compactMode ?? false
             };
 
-            console.log('🔧 Full preferences being sent:', fullPreferences);
-            console.log('🔧 Payload size:', Object.keys(fullPreferences).length, 'fields');
 
             await userApi.updatePreferences(fullPreferences);
 
@@ -552,21 +532,15 @@ export default function AttendeeProfilePage() {
             setSuccess(t('preferencesUpdatedSuccessfully'));
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            console.error('❌ Failed to save preferences:', error);
 
             if (error.response) {
-                console.error('❌ Response status:', error.response.status);
-                console.error('❌ Response data:', error.response.data);
-                console.error('❌ Response headers:', error.response.headers);
 
                 const errorMessage = error.response.data?.message ||
                     error.response.data?.error ||
                     JSON.stringify(error.response.data) ||
                     error.message;
 
-                setError(`${t('failedToUpdatePreferences')}: ${errorMessage}`);
             } else {
-                setError(t('failedToUpdatePreferences') + ': ' + error.message);
             }
         } finally {
             setSaving(false);
@@ -616,7 +590,6 @@ export default function AttendeeProfilePage() {
             setSuccess('Data downloaded successfully!');
             setTimeout(() => setSuccess(''), 3000);
         } catch (error: any) {
-            setError('Failed to download data: ' + error.message);
         }
     };
 

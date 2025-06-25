@@ -75,7 +75,6 @@ const fallbackAvailableLanguages = [
     { code: 'en', flag: '🇺🇸', nativeName: 'English', name: 'English' }
 ];
 
-// Component that provides i18n props to children
 interface I18nWrapperProps {
     children: (i18nProps: {
         t: (key: string, params?: Record<string, any>) => string;
@@ -92,15 +91,12 @@ interface I18nWrapperProps {
 }
 
 export const I18nWrapper: React.FC<I18nWrapperProps> = ({ children }) => {
-    // Try to get real i18n context
     let i18nProps;
 
     try {
-        // This will be replaced by the real implementation when available
         const { useI18nContext } = require('@/components/providers/I18nProvider');
         i18nProps = useI18nContext();
     } catch (error) {
-        // Use fallback
         i18nProps = {
             t: fallbackT,
             formatCurrency: fallbackFormatCurrency,

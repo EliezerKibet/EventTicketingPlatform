@@ -2,7 +2,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import axios, { AxiosResponse, AxiosError } from 'axios';
 
-// Enhanced types with smart ticketing support
+const getApiBaseUrl = (): string => {
+    if (typeof window !== 'undefined') {
+        return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+    }
+    return process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:5251';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+
 interface User {
     email: string;
     firstName: string;
@@ -33,6 +42,7 @@ interface RegisterRequest {
 }
 
 export interface Event {
+    actualRevenue: any;
     eventDate: string | number | Date;
     revenue: number;
     eventId: number;
@@ -58,7 +68,6 @@ export interface Event {
     isPublished: boolean;
 }
 
-// Enhanced TicketType interface with smart editing support
 interface TicketType {
     ticketTypeId: number;
     eventId: number;
@@ -71,7 +80,6 @@ interface TicketType {
     quantityRemaining: number;
     isActive: boolean;
     isOnSale: boolean;
-    // Smart editing support fields
     isEventPublished?: boolean;
     eventStatus?: string;
     saleStartDate?: string;
@@ -112,7 +120,6 @@ interface Order {
     tickets: Ticket[];
 }
 
-// Enhanced DTOs with proper field mapping
 interface CreateEventDto {
     title: string;
     description: string;
@@ -149,7 +156,6 @@ interface UpdateEventDto {
     onlineUrl?: string;
 }
 
-// Enhanced CreateTicketTypeDto with all required fields
 interface CreateTicketTypeDto {
     eventId: number;
     name: string;
@@ -229,12 +235,12 @@ export interface PromoCode {
     promoCodeId: number;
     code: string;
     description: string;
-    type: string; // 'Percentage' | 'FixedAmount'
+    type: string; 
     value: number;
-    formattedValue: string; // "20% off" or "$10.00 off"
+    formattedValue: string; 
     minimumOrderAmount?: number;
     maximumDiscountAmount?: number;
-    scope: string; // 'EventSpecific' | 'OrganizerWide'
+    scope: string; 
     eventId?: number;
     eventTitle?: string;
     startDate: string;
@@ -243,7 +249,7 @@ export interface PromoCode {
     currentUsageCount: number;
     remainingUsage: number;
     maxUsagePerUser?: number;
-    status: string; // 'Active' | 'Inactive' | 'Expired' | 'Suspended'
+    status: string; 
     isActive: boolean;
     isValid: boolean;
     invalidReason?: string;
@@ -292,14 +298,14 @@ interface PromoCodeAnalytics {
 export interface CreatePromoCodeDto {
     code: string;
     description?: string;
-    type: number; // 0 = Percentage, 1 = FixedAmount
+    type: number; 
     value: number;
     minimumOrderAmount?: number;
     maximumDiscountAmount?: number;
-    scope: number; // 0 = EventSpecific, 1 = OrganizerWide
+    scope: number; 
     eventId?: number;
-    startDate: string; // ISO string
-    endDate: string; // ISO string
+    startDate: string; 
+    endDate: string; 
     maxUsageCount: number;
     maxUsagePerUser?: number;
 }
@@ -313,7 +319,7 @@ interface UpdatePromoCodeDto {
     endDate?: string;
     maxUsageCount?: number;
     maxUsagePerUser?: number;
-    status?: number; // 0 = Inactive, 1 = Active, 2 = Expired, 3 = Suspended
+    status?: number; 
     isActive?: boolean;
 }
 
@@ -394,7 +400,7 @@ interface UpdateUserProfileDto {
     bio?: string;
     website?: string;
     timeZone?: string;
-    profileImageUrl?: string; 
+    profileImageUrl?: string;
 }
 
 interface UserOrganization {
@@ -446,7 +452,6 @@ interface UserPreferences {
 }
 
 interface UpdateUserPreferencesDto {
-    // ALL fields should be optional to allow partial updates
     emailNotifications?: boolean;
     smsNotifications?: boolean;
     newBookingNotifications?: boolean;
@@ -464,23 +469,21 @@ interface UpdateUserPreferencesDto {
     defaultRefundPolicy?: string;
     requireApproval?: boolean;
     autoPublish?: boolean;
-    theme?: string;        // Made optional
-    language?: string;     // Made optional  
-    dateFormat?: string;   // Made optional
-    timeFormat?: string;   // Made optional
-    currency?: string;     // Made optional
-    accentColor?: string;  // Made optional
-    fontSize?: string;     // Made optional
-    compactMode?: boolean; // Made optional
+    theme?: string;        
+    language?: string;    
+    dateFormat?: string;   
+    timeFormat?: string;   
+    currency?: string;     
+    accentColor?: string;  
+    fontSize?: string;     
+    compactMode?: boolean; 
 }
-
 
 interface ChangePasswordDto {
     currentPassword: string;
     newPassword: string;
 }
 
-// API Response wrapper
 interface ApiResponse<T> {
     success?: boolean;
     data?: T;
@@ -499,199 +502,70 @@ interface ImageValidationResult {
     error?: string;
 }
 
-// Enhanced API configuration with environment support
-const getApiBaseUrl = (): string => {
+const api = axios.create({
+    baseURL: `${API_BASE_URL}/api`, 
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    timeout: 30000,
+});
+
+api.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {
-        return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251/api';
-    }
-    return process.env.API_URL || 'http://localhost:5251/api';
-};
-
-
-export const promoCodesApi = {
-    // Get all promo codes for the organizer
-    getPromoCodes: async (): Promise<PromoCode[]> => {
-        try {
-            console.log('🏷️ Fetching promo codes');
-            const response = await api.get('/PromoCodes');
-            console.log(`🏷️ Successfully loaded ${Array.isArray(response.data) ? response.data.length : 0} promo codes`);
-            return Array.isArray(response.data) ? response.data : [];
-        } catch (error: any) {
-            console.error('🏷️ Error fetching promo codes:', error.message);
-            throw new Error(`Failed to load promo codes: ${error.message}`);
-        }
-    },
-
-    // Get promo code statistics
-    getStats: async (): Promise<PromoCodeStats> => {
-        try {
-            console.log('🏷️ Fetching promo code statistics');
-            const response = await api.get('/PromoCodes/stats');
-            console.log('🏷️ Successfully loaded promo code statistics');
-            return response.data;
-        } catch (error: any) {
-            console.error('🏷️ Error fetching stats:', error.message);
-            // Return default stats if endpoint fails
-            return {
-                totalPromoCodes: 0,
-                activePromoCodes: 0,
-                totalUsages: 0,
-                totalDiscountGiven: 0,
-                averageDiscountAmount: 0,
-                topPerformingCodes: []
-            };
-        }
-    },
-
-    // Get single promo code
-    getPromoCode: async (id: number): Promise<PromoCode> => {
-        try {
-            console.log(`🏷️ Fetching promo code ${id}`);
-            const response = await api.get(`/PromoCodes/${id}`);
-            console.log('🏷️ Successfully loaded promo code');
-            return response.data;
-        } catch (error: any) {
-            console.error('🏷️ Error fetching promo code:', error.message);
-            throw new Error(`Failed to load promo code: ${error.message}`);
-        }
-    },
-
-    // Create a new promo code
-    createPromoCode: async (data: CreatePromoCodeDto): Promise<PromoCode> => {
-        try {
-            console.log('🏷️ Creating promo code:', data);
-
-            // Ensure proper data types
-            const payload = {
-                code: data.code.trim().toUpperCase(),
-                description: data.description?.trim() || null,
-                type: Number(data.type),
-                value: Number(data.value),
-                minimumOrderAmount: data.minimumOrderAmount ? Number(data.minimumOrderAmount) : null,
-                maximumDiscountAmount: data.maximumDiscountAmount ? Number(data.maximumDiscountAmount) : null,
-                scope: Number(data.scope),
-                eventId: data.scope === 0 ? Number(data.eventId) : null,
-                startDate: data.startDate,
-                endDate: data.endDate,
-                maxUsageCount: Number(data.maxUsageCount),
-                maxUsagePerUser: data.maxUsagePerUser ? Number(data.maxUsagePerUser) : null
-            };
-
-            const response = await api.post('/PromoCodes', payload);
-            console.log('🏷️ Successfully created promo code');
-            return response.data;
-        } catch (error: any) {
-            console.error('🏷️ Error creating promo code:', error.message);
-            throw new Error(`Failed to create promo code: ${error.message}`);
-        }
-    },
-
-    // Update promo code
-    updatePromoCode: async (id: number, data: UpdatePromoCodeDto): Promise<PromoCode> => {
-        try {
-            console.log(`🏷️ Updating promo code ${id}:`, data);
-
-            // Remove undefined values and ensure proper types
-            const payload = Object.fromEntries(
-                Object.entries(data)
-                    .filter(([_, value]) => value !== undefined)
-                    .map(([key, value]) => [
-                        key,
-                        typeof value === 'string' && !isNaN(Number(value)) ? Number(value) : value
-                    ])
-            );
-
-            const response = await api.put(`/PromoCodes/${id}`, payload);
-            console.log('🏷️ Successfully updated promo code');
-            return response.data;
-        } catch (error: any) {
-            console.error('🏷️ Error updating promo code:', error.message);
-            throw new Error(`Failed to update promo code: ${error.message}`);
-        }
-    },
-
-    // Delete promo code
-    deletePromoCode: async (id: number): Promise<boolean> => {
-        try {
-            console.log(`🏷️ Deleting promo code ${id}`);
-            const response = await api.delete(`/PromoCodes/${id}`);
-            console.log('🏷️ Successfully deleted promo code');
-            return response.status === 204 || response.status === 200;
-        } catch (error: any) {
-            console.error('🏷️ Error deleting promo code:', error.message);
-            throw new Error(`Failed to delete promo code: ${error.message}`);
-        }
-    },
-
-    // Get analytics for a promo code
-    getAnalytics: async (id: number): Promise<PromoCodeAnalytics> => {
-        try {
-            console.log(`🏷️ Fetching analytics for promo code ${id}`);
-            const response = await api.get(`/PromoCodes/${id}/analytics`);
-            console.log('🏷️ Successfully loaded promo code analytics');
-            return response.data;
-        } catch (error: any) {
-            console.error('🏷️ Error fetching analytics:', error.message);
-            throw new Error(`Failed to load analytics: ${error.message}`);
-        }
-    },
-
-    // Get usage history for a promo code
-    getUsageHistory: async (id: number): Promise<PromoCodeUsage[]> => {
-        try {
-            console.log(`🏷️ Fetching usage history for promo code ${id}`);
-            const response = await api.get(`/PromoCodes/${id}/usage-history`);
-            console.log(`🏷️ Successfully loaded ${Array.isArray(response.data) ? response.data.length : 0} usage records`);
-            return Array.isArray(response.data) ? response.data : [];
-        } catch (error: any) {
-            console.error('🏷️ Error fetching usage history:', error.message);
-            throw new Error(`Failed to load usage history: ${error.message}`);
-        }
-    },
-
-    // Validate promo code (public endpoint)
-    validatePromoCode: async (data: ValidatePromoCodeRequest): Promise<PromoCodeValidation> => {
-        try {
-            console.log('🏷️ Validating promo code:', data.code);
-
-            // This endpoint might not require authentication for public validation
-            const response = await api.post('/PromoCodes/validate', data);
-            console.log('🏷️ Promo code validation completed');
-            return response.data;
-        } catch (error: any) {
-            console.error('🏷️ Error validating promo code:', error.message);
-            throw new Error(`Failed to validate promo code: ${error.message}`);
-        }
-    },
-
-    // Get promo codes for a specific event
-    getEventPromoCodes: async (eventId: number): Promise<PromoCode[]> => {
-        try {
-            console.log(`🏷️ Fetching promo codes for event ${eventId}`);
-            const response = await api.get(`/PromoCodes/event/${eventId}`);
-            console.log(`🏷️ Successfully loaded ${Array.isArray(response.data) ? response.data.length : 0} event promo codes`);
-            return Array.isArray(response.data) ? response.data : [];
-        } catch (error: any) {
-            console.error('🏷️ Error fetching event promo codes:', error.message);
-            throw new Error(`Failed to load event promo codes: ${error.message}`);
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
     }
-};
 
-// Image helper utilities
+
+    return config;
+});
+
+api.interceptors.response.use(
+    (response: AxiosResponse) => {
+        if (response.data?.success === false) {
+            throw new Error(response.data.message || 'API request failed');
+        }
+
+        if (response.data?.success === true && response.data?.data !== undefined) {
+            response.data = response.data.data;
+        }
+
+        if (process.env.NODE_ENV === 'development') {
+        }
+
+        return response;
+    },
+    (error: AxiosError) => {
+        const message = (error.response?.data as any)?.message || error.message || 'Network error';
+
+
+        if (error.response?.status === 401 && typeof window !== 'undefined') {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+        }
+
+        // Create a more detailed error
+        const enhancedError = new Error(message);
+        (enhancedError as any).status = error.response?.status;
+        (enhancedError as any).originalError = error;
+
+        return Promise.reject(enhancedError);
+    }
+);
+
 export const imageUtils = {
-    // Get image with fallback
     getImageWithFallback: (
         imageUrl?: string,
         type: 'event-banner' | 'event-image' | 'venue' | 'user' | 'category' = 'event-image'
     ): string => {
         if (imageUrl && imageUrl.trim() !== '') {
-            // If it's already a full URL, return as-is
             if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
                 return imageUrl;
             }
-            // If it's a relative path, ensure it starts with /
-            return imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+            const fullUrl = imageUrl.startsWith('/') ? `${API_BASE_URL}${imageUrl}` : `${API_BASE_URL}/${imageUrl}`;
+            return fullUrl;
         }
 
         const defaults = {
@@ -705,7 +579,6 @@ export const imageUtils = {
         return defaults[type];
     },
 
-    // Resize image for preview (client-side)
     resizeImageForPreview: (file: File, maxWidth = 400, maxHeight = 300, quality = 0.8): Promise<string> => {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
@@ -736,507 +609,6 @@ export const imageUtils = {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 };
-
-
-export const imageApi = {
-    // Validation helper
-    validateImageFile: (file: File): ImageValidationResult => {
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-
-        if (!allowedTypes.includes(file.type)) {
-            return {
-                isValid: false,
-                error: 'Please select a valid image file (JPEG, PNG, WebP, or GIF)'
-            };
-        }
-
-        if (file.size > maxSize) {
-            return {
-                isValid: false,
-                error: 'File size must be less than 5MB'
-            };
-        }
-
-        return { isValid: true };
-    },
-
-    // Event Images
-    uploadEventBanner: async (eventId: number, file: File): Promise<ImageUploadResponse> => {
-        try {
-            const validation = imageApi.validateImageFile(file);
-            if (!validation.isValid) {
-                throw new Error(validation.error);
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            console.log(`📸 Uploading event banner for event ${eventId}`);
-
-            const response = await api.post(`/events/${eventId}/upload-banner`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            console.log('📸 Event banner uploaded successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Event banner upload failed:', error.message);
-            throw new Error(`Failed to upload event banner: ${error.message}`);
-        }
-    },
-
-    uploadEventImage: async (eventId: number, file: File): Promise<ImageUploadResponse> => {
-        try {
-            const validation = imageApi.validateImageFile(file);
-            if (!validation.isValid) {
-                throw new Error(validation.error);
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            console.log(`📸 Uploading event image for event ${eventId}`);
-
-            const response = await api.post(`/events/${eventId}/upload-image`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            console.log('📸 Event image uploaded successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Event image upload failed:', error.message);
-            throw new Error(`Failed to upload event image: ${error.message}`);
-        }
-    },
-
-    deleteEventBanner: async (eventId: number): Promise<ImageUploadResponse> => {
-        try {
-            console.log(`📸 Deleting event banner for event ${eventId}`);
-            const response = await api.delete(`/events/${eventId}/banner`);
-            console.log('📸 Event banner deleted successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Event banner deletion failed:', error.message);
-            throw new Error(`Failed to delete event banner: ${error.message}`);
-        }
-    },
-
-    deleteEventImage: async (eventId: number): Promise<ImageUploadResponse> => {
-        try {
-            console.log(`📸 Deleting event image for event ${eventId}`);
-            const response = await api.delete(`/events/${eventId}/image`);
-            console.log('📸 Event image deleted successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Event image deletion failed:', error.message);
-            throw new Error(`Failed to delete event image: ${error.message}`);
-        }
-    },
-
-    // User Profile Images
-    uploadUserProfileImage: async (file: File): Promise<ImageUploadResponse> => {
-        try {
-            const validation = imageApi.validateImageFile(file);
-            if (!validation.isValid) {
-                throw new Error(validation.error);
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            console.log('📸 Uploading user profile image');
-
-            const response = await api.post('/user/upload-profile-image', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            console.log('📸 Profile image uploaded successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Profile image upload failed:', error.message);
-            throw new Error(`Failed to upload profile image: ${error.message}`);
-        }
-    },
-
-    deleteUserProfileImage: async (): Promise<ImageUploadResponse> => {
-        try {
-            console.log('📸 Deleting user profile image');
-            const response = await api.delete('/user/profile-image');
-            console.log('📸 Profile image deleted successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Profile image deletion failed:', error.message);
-            throw new Error(`Failed to delete profile image: ${error.message}`);
-        }
-    },
-
-    // Venue Images
-    uploadVenueImage: async (venueId: number, file: File): Promise<ImageUploadResponse> => {
-        try {
-            const validation = imageApi.validateImageFile(file);
-            if (!validation.isValid) {
-                throw new Error(validation.error);
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            console.log(`📸 Uploading venue image for venue ${venueId}`);
-
-            const response = await api.post(`/venues/${venueId}/upload-image`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            console.log('📸 Venue image uploaded successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Venue image upload failed:', error.message);
-            throw new Error(`Failed to upload venue image: ${error.message}`);
-        }
-    },
-
-    deleteVenueImage: async (venueId: number): Promise<ImageUploadResponse> => {
-        try {
-            console.log(`📸 Deleting venue image for venue ${venueId}`);
-            const response = await api.delete(`/venues/${venueId}/image`);
-            console.log('📸 Venue image deleted successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Venue image deletion failed:', error.message);
-            throw new Error(`Failed to delete venue image: ${error.message}`);
-        }
-    },
-
-    // Category Icons (Admin only)
-    uploadCategoryIcon: async (categoryId: number, file: File): Promise<ImageUploadResponse> => {
-        try {
-            const validation = imageApi.validateImageFile(file);
-            if (!validation.isValid) {
-                throw new Error(validation.error);
-            }
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            console.log(`📸 Uploading category icon for category ${categoryId}`);
-
-            const response = await api.post(`/categories/${categoryId}/upload-icon`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-
-            console.log('📸 Category icon uploaded successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Category icon upload failed:', error.message);
-            throw new Error(`Failed to upload category icon: ${error.message}`);
-        }
-    },
-
-    deleteCategoryIcon: async (categoryId: number): Promise<ImageUploadResponse> => {
-        try {
-            console.log(`📸 Deleting category icon for category ${categoryId}`);
-            const response = await api.delete(`/categories/${categoryId}/icon`);
-            console.log('📸 Category icon deleted successfully');
-            return response.data;
-        } catch (error: any) {
-            console.error('📸 Category icon deletion failed:', error.message);
-            throw new Error(`Failed to delete category icon: ${error.message}`);
-        }
-    }
-};
-
-export const userApi = {
-
-    updateProfileWithImage: async (
-        profileData: UpdateUserProfileDto,
-        profileImageFile?: File,
-        deleteImage = false
-    ): Promise<UserProfile> => {
-        try {
-            console.log('👤 Updating profile with image');
-
-            // Step 1: Update profile data
-            let updatedProfile = await userApi.updateProfile(profileData);
-
-            // Step 2: Handle image operations
-            if (deleteImage) {
-                await imageApi.deleteUserProfileImage();
-            } else if (profileImageFile) {
-                await imageApi.uploadUserProfileImage(profileImageFile);
-                // Fetch updated profile to get new image URL
-                updatedProfile = await userApi.getProfile();
-            }
-
-            console.log('👤 Profile updated successfully');
-            return updatedProfile;
-        } catch (error: any) {
-            console.error('👤 Profile update with image failed:', error.message);
-            throw error;
-        }
-    },
-
-    // Profile management
-    getProfile: async (): Promise<UserProfile> => {
-        try {
-            console.log('👤 Fetching user profile');
-            const response = await api.get('/user/profile');
-            console.log('👤 Successfully loaded user profile');
-            return response.data;
-        } catch (error: any) {
-            console.error('👤 Error fetching profile:', error.message);
-            throw new Error(`Failed to load profile: ${error.message}`);
-        }
-    },
-
-    updateProfile: async (profileData: UpdateUserProfileDto): Promise<UserProfile> => {
-        try {
-            console.log('👤 Updating user profile');
-            const response = await api.put('/user/profile', profileData);
-            console.log('👤 Successfully updated user profile');
-            return response.data;
-        } catch (error: any) {
-            console.error('👤 Error updating profile:', error.message);
-            throw new Error(`Failed to update profile: ${error.message}`);
-        }
-    },
-
-    changePassword: async (passwordData: ChangePasswordDto): Promise<void> => {
-        try {
-            console.log('👤 Changing password');
-            await api.post('/user/change-password', passwordData);
-            console.log('👤 Successfully changed password');
-        } catch (error: any) {
-            console.error('👤 Error changing password:', error.message);
-            throw new Error(`Failed to change password: ${error.message}`);
-        }
-    },
-
-    // Organization management
-    getOrganization: async (): Promise<UserOrganization> => {
-        try {
-            console.log('🏢 Fetching organization details');
-            const response = await api.get('/user/organization');
-            console.log('🏢 Successfully loaded organization details');
-            return response.data;
-        } catch (error: any) {
-            console.error('🏢 Error fetching organization:', error.message);
-            // Return empty object for new organizations
-            return {};
-        }
-    },
-
-    updateOrganization: async (orgData: UpdateUserOrganizationDto): Promise<UserOrganization> => {
-        try {
-            console.log('🏢 Updating organization details');
-            const response = await api.put('/user/organization', orgData);
-            console.log('🏢 Successfully updated organization details');
-            return response.data;
-        } catch (error: any) {
-            console.error('🏢 Error updating organization:', error.message);
-            throw new Error(`Failed to update organization: ${error.message}`);
-        }
-    },
-
-    // Preferences management
-    getPreferences: async (): Promise<UserPreferences> => {
-        try {
-            console.log('⚙️ Fetching user preferences');
-            const response = await api.get('/user/preferences');
-            console.log('⚙️ Successfully loaded user preferences');
-            return response.data;
-        } catch (error: any) {
-            console.error('⚙️ Error fetching preferences:', error.message);
-            // Return default preferences if none exist
-            return {
-                emailNotifications: true,
-                smsNotifications: false,
-                newBookingNotifications: true,
-                cancellationNotifications: true,
-                lowInventoryNotifications: true,
-                dailyReports: false,
-                weeklyReports: true,
-                monthlyReports: true,
-                twoFactorEnabled: false,
-                sessionTimeout: 30,
-                loginNotifications: true,
-                defaultTimeZone: 'America/New_York',
-                defaultEventDuration: 120,
-                defaultTicketSaleStart: 30,
-                defaultRefundPolicy: 'flexible',
-                requireApproval: false,
-                autoPublish: false,
-                theme: 'light',
-                language: 'en',
-                dateFormat: 'MM/dd/yyyy',
-                timeFormat: '12h',
-                currency: 'USD',
-                accentColor: 'blue',
-                fontSize: 'medium',
-                compactMode: false
-
-            };
-        }
-    },
-
-    updatePreferences: async (preferences: Partial<UpdateUserPreferencesDto>): Promise<UserPreferences> => {
-        try {
-            console.log('⚙️ Updating user preferences:', preferences);
-
-            // Add detailed request logging
-            console.log('🔧 Preferences payload type check:');
-            Object.entries(preferences).forEach(([key, value]) => {
-                console.log(`🔧   ${key}: ${value} (${typeof value})`);
-            });
-
-            const response = await api.put('/user/preferences', preferences);
-            console.log('✅ API Response: PUT /user/preferences');
-            console.log('⚙️ Successfully updated user preferences');
-            return response.data;
-        } catch (error: any) {
-            console.error('❌ API Error: PUT /user/preferences', error.message);
-
-            // Enhanced error logging
-            if (error.response) {
-                console.error('❌ Error Status:', error.response.status);
-                console.error('❌ Error Data:', error.response.data);
-                console.error('❌ Error Headers:', error.response.headers);
-                console.error('❌ Request Data Sent:', preferences);
-
-                // Try to extract specific validation errors
-                if (error.response.data?.errors) {
-                    console.error('❌ Validation Errors:', error.response.data.errors);
-                }
-                if (error.response.data?.details) {
-                    console.error('❌ Error Details:', error.response.data.details);
-                }
-            } else if (error.request) {
-                console.error('❌ No response received:', error.request);
-            } else {
-                console.error('❌ Request setup error:', error.message);
-            }
-
-            console.log('⚙️ Error updating preferences:', {
-                message: error.message,
-                status: error.response?.status,
-                data: error.response?.data,
-                payload: preferences
-            });
-            throw new Error(`Failed to update preferences: ${error.message}`);
-        }
-    },
-
-    updateLanguageOnly: async (language: string): Promise<void> => {
-        try {
-            console.log('🌐 Updating language preference only:', language);
-
-            // Try PATCH method first (if backend supports it)
-            try {
-                await api.patch('/user/preferences/language', { language });
-                console.log('🌐 Language updated via PATCH endpoint');
-                return;
-            } catch (patchError) {
-                console.log('🌐 PATCH endpoint not available, using PUT with minimal data');
-            }
-
-            // Fallback: Use PUT with minimal required data
-            const minimalUpdate = {
-                language,
-                // Add any other fields that might be required by your backend
-                emailNotifications: true,
-                smsNotifications: false,
-                theme: 'light',
-                fontSize: 'medium',
-                compactMode: false
-            };
-
-            await api.put('/user/preferences', minimalUpdate);
-            console.log('🌐 Language updated via PUT with minimal data');
-        } catch (error: any) {
-            console.error('🌐 Language-only update failed:', error.message);
-            throw error;
-        }
-    }
-};
-
-const API_BASE_URL = getApiBaseUrl();
-
-const api = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    timeout: 30000, // 30 second timeout
-});
-
-// Enhanced request interceptor with better error handling
-api.interceptors.request.use((config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-    }
-
-    // Log requests in development
-    if (process.env.NODE_ENV === 'development') {
-        console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.url}`);
-    }
-
-    return config;
-});
-
-// Enhanced response interceptor with better error handling
-api.interceptors.response.use(
-    (response: AxiosResponse) => {
-        // Handle wrapped responses
-        if (response.data?.success === false) {
-            throw new Error(response.data.message || 'API request failed');
-        }
-
-        // Extract data from wrapped responses
-        if (response.data?.success === true && response.data?.data !== undefined) {
-            response.data = response.data.data;
-        }
-
-        if (process.env.NODE_ENV === 'development') {
-            console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`);
-        }
-
-        return response;
-    },
-    (error: AxiosError) => {
-        const message = (error.response?.data as any)?.message || error.message || 'Network error';
-
-        if (process.env.NODE_ENV === 'development') {
-            console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, message);
-        }
-
-        if (error.response?.status === 401 && typeof window !== 'undefined') {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('user');
-            // Don't redirect automatically, let components handle this
-            console.warn('Authentication expired. Please log in again.');
-        }
-
-        // Create a more detailed error
-        const enhancedError = new Error(message);
-        (enhancedError as any).status = error.response?.status;
-        (enhancedError as any).originalError = error;
-
-        return Promise.reject(enhancedError);
-    }
-);
 
 // Helper functions for data normalization
 const normalizeTicketType = (tt: any): TicketType => ({
@@ -1318,9 +690,14 @@ export const authApi = {
         const response = await api.post('/auth/register', userData);
         return response.data;
     },
+
+    verify: async (): Promise<UserProfile> => {
+        const response = await api.get('/auth/verify');
+        return response.data;
+    },
 };
 
-// Events API - Enhanced for organizers
+// Events API - Enhanced for organizers with environment-aware URLs
 export const eventsApi = {
     // Public endpoints
     getEvents: async (params?: {
@@ -1377,23 +754,17 @@ export const eventsApi = {
         imageFile?: File
     ): Promise<Event> => {
         try {
-            console.log('🎯 Creating event with images');
 
-            // Step 1: Create the event first
             const event = await eventsApi.createEvent(eventData);
-            console.log('🎯 Event created, ID:', event.eventId);
 
-            // Step 2: Upload banner if provided
             if (bannerFile) {
                 try {
                     const bannerResult = await imageApi.uploadEventBanner(event.eventId, bannerFile);
-                    console.log('🎯 Banner uploaded:', bannerResult.imageUrl);
 
                     // Update event with banner URL
                     const updateData: UpdateEventDto = { bannerImageUrl: bannerResult.imageUrl };
                     await eventsApi.updateEvent(event.eventId, updateData);
                 } catch (bannerError) {
-                    console.warn('🎯 Banner upload failed, continuing without banner:', bannerError);
                 }
             }
 
@@ -1401,20 +772,18 @@ export const eventsApi = {
             if (imageFile) {
                 try {
                     const imageResult = await imageApi.uploadEventImage(event.eventId, imageFile);
-                    console.log('🎯 Image uploaded:', imageResult.imageUrl);
+                    
 
                     // Update event with image URL
                     const updateData: UpdateEventDto = { imageUrl: imageResult.imageUrl };
                     await eventsApi.updateEvent(event.eventId, updateData);
                 } catch (imageError) {
-                    console.warn('🎯 Image upload failed, continuing without image:', imageError);
                 }
             }
 
             // Step 4: Return the updated event
             return await eventsApi.getEvent(event.eventId);
         } catch (error: any) {
-            console.error('🎯 Event creation with images failed:', error.message);
             throw error;
         }
     },
@@ -1429,7 +798,7 @@ export const eventsApi = {
         deleteImage = false
     ): Promise<Event> => {
         try {
-            console.log('🎯 Updating event with images');
+            
 
             // Step 1: Update event data
             let updatedEvent = await eventsApi.updateEvent(eventId, eventData);
@@ -1452,10 +821,10 @@ export const eventsApi = {
                 updatedEvent = await eventsApi.updateEvent(eventId, updateData);
             }
 
-            console.log('🎯 Event updated successfully');
+            
             return await eventsApi.getEvent(eventId);
         } catch (error: any) {
-            console.error('🎯 Event update with images failed:', error.message);
+           
             throw error;
         }
     }
@@ -1502,53 +871,508 @@ export const venuesApi = {
         imageFile?: File
     ): Promise<Venue> => {
         try {
-            console.log('🏢 Creating venue with image');
 
-            // Step 1: Create venue
             const venue = await venuesApi.createVenue(venueData);
-            console.log('🏢 Venue created, ID:', venue.venueId);
 
-            // Step 2: Upload image if provided
             if (imageFile) {
                 try {
                     const imageResult = await imageApi.uploadVenueImage(venue.venueId, imageFile);
-                    console.log('🏢 Venue image uploaded:', imageResult.imageUrl);
                 } catch (imageError) {
-                    console.warn('🏢 Venue image upload failed, continuing without image:', imageError);
                 }
             }
 
             // Step 3: Return updated venue
             return await venuesApi.getVenue(venue.venueId);
         } catch (error: any) {
-            console.error('🏢 Venue creation with image failed:', error.message);
             throw error;
         }
     }
 };
 
-// Enhanced Tickets API with smart ticketing support
+// Image API
+export const imageApi = {
+    // Validation helper
+    validateImageFile: (file: File): ImageValidationResult => {
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+        if (!allowedTypes.includes(file.type)) {
+            return {
+                isValid: false,
+                error: 'Please select a valid image file (JPEG, PNG, WebP, or GIF)'
+            };
+        }
+
+        if (file.size > maxSize) {
+            return {
+                isValid: false,
+                error: 'File size must be less than 5MB'
+            };
+        }
+
+        return { isValid: true };
+    },
+
+    // Event Images
+    uploadEventBanner: async (eventId: number, file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+
+            const response = await api.post(`/events/${eventId}/upload-banner`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to upload event banner: ${error.message}`);
+        }
+    },
+
+    uploadEventImage: async (eventId: number, file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+
+            const response = await api.post(`/events/${eventId}/upload-image`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to upload event image: ${error.message}`);
+        }
+    },
+
+    deleteEventBanner: async (eventId: number): Promise<ImageUploadResponse> => {
+        try {
+            const response = await api.delete(`/events/${eventId}/banner`);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to delete event banner: ${error.message}`);
+        }
+    },
+
+    deleteEventImage: async (eventId: number): Promise<ImageUploadResponse> => {
+        try {
+            const response = await api.delete(`/events/${eventId}/image`);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to delete event image: ${error.message}`);
+        }
+    },
+
+    // User Profile Images
+    uploadUserProfileImage: async (file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+
+            const response = await api.post('/user/upload-profile-image', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error: any) {
+            console.error('📸 Profile image upload failed:', error.message);
+            throw new Error(`Failed to upload profile image: ${error.message}`);
+        }
+    },
+
+    deleteUserProfileImage: async (): Promise<ImageUploadResponse> => {
+        try {
+            const response = await api.delete('/user/profile-image');
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to delete profile image: ${error.message}`);
+        }
+    },
+
+    // Venue Images
+    uploadVenueImage: async (venueId: number, file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+
+            const response = await api.post(`/venues/${venueId}/upload-image`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to upload venue image: ${error.message}`);
+        }
+    },
+
+    deleteVenueImage: async (venueId: number): Promise<ImageUploadResponse> => {
+        try {
+            const response = await api.delete(`/venues/${venueId}/image`);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to delete venue image: ${error.message}`);
+        }
+    },
+
+    // Category Icons (Admin only)
+    uploadCategoryIcon: async (categoryId: number, file: File): Promise<ImageUploadResponse> => {
+        try {
+            const validation = imageApi.validateImageFile(file);
+            if (!validation.isValid) {
+                throw new Error(validation.error);
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+
+            const response = await api.post(`/categories/${categoryId}/upload-icon`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to upload category icon: ${error.message}`);
+        }
+    },
+
+    deleteCategoryIcon: async (categoryId: number): Promise<ImageUploadResponse> => {
+        try {
+            const response = await api.delete(`/categories/${categoryId}/icon`);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to delete category icon: ${error.message}`);
+        }
+    }
+};
+
+// User API
+export const userApi = {
+    updateProfileWithImage: async (
+        profileData: UpdateUserProfileDto,
+        profileImageFile?: File,
+        deleteImage = false
+    ): Promise<UserProfile> => {
+        try {
+
+            let updatedProfile = await userApi.updateProfile(profileData);
+
+            if (deleteImage) {
+                await imageApi.deleteUserProfileImage();
+            } else if (profileImageFile) {
+                await imageApi.uploadUserProfileImage(profileImageFile);
+                updatedProfile = await userApi.getProfile();
+            }
+
+            return updatedProfile;
+        } catch (error: any) {
+            throw error;
+        }
+    },
+
+    // Profile management
+    getProfile: async (): Promise<UserProfile> => {
+        try {
+            const response = await api.get('/user/profile');
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to load profile: ${error.message}`);
+        }
+    },
+
+    updateProfile: async (profileData: UpdateUserProfileDto): Promise<UserProfile> => {
+        try {
+            const response = await api.put('/user/profile', profileData);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to update profile: ${error.message}`);
+        }
+    },
+
+    changePassword: async (passwordData: ChangePasswordDto): Promise<void> => {
+        try {
+            await api.post('/user/change-password', passwordData);
+        } catch (error: any) {
+            throw new Error(`Failed to change password: ${error.message}`);
+        }
+    },
+
+    // Organization management
+    getOrganization: async (): Promise<UserOrganization> => {
+        try {
+            const response = await api.get('/user/organization');
+            return response.data;
+        } catch (error: any) {
+            return {};
+        }
+    },
+
+    updateOrganization: async (orgData: UpdateUserOrganizationDto): Promise<UserOrganization> => {
+        try {
+            const response = await api.put('/user/organization', orgData);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to update organization: ${error.message}`);
+        }
+    },
+
+    // Preferences management
+    getPreferences: async (): Promise<UserPreferences> => {
+        try {
+            const response = await api.get('/user/preferences');
+            return response.data;
+        } catch (error: any) {
+            return {
+                emailNotifications: true,
+                smsNotifications: false,
+                newBookingNotifications: true,
+                cancellationNotifications: true,
+                lowInventoryNotifications: true,
+                dailyReports: false,
+                weeklyReports: true,
+                monthlyReports: true,
+                twoFactorEnabled: false,
+                sessionTimeout: 30,
+                loginNotifications: true,
+                defaultTimeZone: 'America/New_York',
+                defaultEventDuration: 120,
+                defaultTicketSaleStart: 30,
+                defaultRefundPolicy: 'flexible',
+                requireApproval: false,
+                autoPublish: false,
+                theme: 'light',
+                language: 'en',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                currency: 'USD',
+                accentColor: 'blue',
+                fontSize: 'medium',
+                compactMode: false
+            };
+        }
+    },
+
+    updatePreferences: async (preferences: Partial<UpdateUserPreferencesDto>): Promise<UserPreferences> => {
+        try {
+
+
+            const response = await api.put('/user/preferences', preferences);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to update preferences: ${error.message}`);
+        }
+    },
+
+    updateLanguageOnly: async (language: string): Promise<void> => {
+        try {
+
+            // Try PATCH method first (if backend supports it)
+            try {
+                await api.patch('/user/preferences/language', { language });
+                return;
+            } catch (patchError) {
+            }
+
+            const minimalUpdate = {
+                language,
+                emailNotifications: true,
+                smsNotifications: false,
+                theme: 'light',
+                fontSize: 'medium',
+                compactMode: false
+            };
+
+            await api.put('/user/preferences', minimalUpdate);
+        } catch (error: any) {
+            throw error;
+        }
+    }
+};
+
+// Promo Codes API
+export const promoCodesApi = {
+    // Get all promo codes for the organizer
+    getPromoCodes: async (): Promise<PromoCode[]> => {
+        try {
+            const response = await api.get('/PromoCodes');
+           return Array.isArray(response.data) ? response.data : [];
+        } catch (error: any) {
+            throw new Error(`Failed to load promo codes: ${error.message}`);
+        }
+    },
+
+    // Get promo code statistics
+    getStats: async (): Promise<PromoCodeStats> => {
+        try {
+            const response = await api.get('/PromoCodes/stats');
+            return response.data;
+        } catch (error: any) {
+            return {
+                totalPromoCodes: 0,
+                activePromoCodes: 0,
+                totalUsages: 0,
+                totalDiscountGiven: 0,
+                averageDiscountAmount: 0,
+                topPerformingCodes: []
+            };
+        }
+    },
+
+    // Get single promo code
+    getPromoCode: async (id: number): Promise<PromoCode> => {
+        try {
+            const response = await api.get(`/PromoCodes/${id}`);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to load promo code: ${error.message}`);
+        }
+    },
+
+    // Create a new promo code
+    createPromoCode: async (data: CreatePromoCodeDto): Promise<PromoCode> => {
+        try {
+
+            // Ensure proper data types
+            const payload = {
+                code: data.code.trim().toUpperCase(),
+                description: data.description?.trim() || null,
+                type: Number(data.type),
+                value: Number(data.value),
+                minimumOrderAmount: data.minimumOrderAmount ? Number(data.minimumOrderAmount) : null,
+                maximumDiscountAmount: data.maximumDiscountAmount ? Number(data.maximumDiscountAmount) : null,
+                scope: Number(data.scope),
+                eventId: data.scope === 0 ? Number(data.eventId) : null,
+                startDate: data.startDate,
+                endDate: data.endDate,
+                maxUsageCount: Number(data.maxUsageCount),
+                maxUsagePerUser: data.maxUsagePerUser ? Number(data.maxUsagePerUser) : null
+            };
+
+            const response = await api.post('/PromoCodes', payload);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to create promo code: ${error.message}`);
+        }
+    },
+
+    // Update promo code
+    updatePromoCode: async (id: number, data: UpdatePromoCodeDto): Promise<PromoCode> => {
+        try {
+
+            const payload = Object.fromEntries(
+                Object.entries(data)
+                    .filter(([_, value]) => value !== undefined)
+                    .map(([key, value]) => [
+                        key,
+                        typeof value === 'string' && !isNaN(Number(value)) ? Number(value) : value
+                    ])
+            );
+
+            const response = await api.put(`/PromoCodes/${id}`, payload);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to update promo code: ${error.message}`);
+        }
+    },
+
+    deletePromoCode: async (id: number): Promise<boolean> => {
+        try {
+            const response = await api.delete(`/PromoCodes/${id}`);
+            return response.status === 204 || response.status === 200;
+        } catch (error: any) {
+            throw new Error(`Failed to delete promo code: ${error.message}`);
+        }
+    },
+
+    // Get analytics for a promo code
+    getAnalytics: async (id: number): Promise<PromoCodeAnalytics> => {
+        try {
+            const response = await api.get(`/PromoCodes/${id}/analytics`);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to load analytics: ${error.message}`);
+        }
+    },
+
+    // Get usage history for a promo code
+    getUsageHistory: async (id: number): Promise<PromoCodeUsage[]> => {
+        try {
+            const response = await api.get(`/PromoCodes/${id}/usage-history`);
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error: any) {
+            throw new Error(`Failed to load usage history: ${error.message}`);
+        }
+    },
+
+    validatePromoCode: async (data: ValidatePromoCodeRequest): Promise<PromoCodeValidation> => {
+        try {
+
+            const response = await api.post('/PromoCodes/validate', data);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(`Failed to validate promo code: ${error.message}`);
+        }
+    },
+
+    getEventPromoCodes: async (eventId: number): Promise<PromoCode[]> => {
+        try {
+            const response = await api.get(`/PromoCodes/event/${eventId}`);
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error: any) {
+            throw new Error(`Failed to load event promo codes: ${error.message}`);
+        }
+    }
+};
+
 export const ticketsApi = {
-    // Ticket Types - Enhanced with proper error handling and data normalization
     getEventTicketTypes: async (eventId: number): Promise<TicketType[]> => {
         try {
-            console.log(`🎫 Fetching ticket types for event ${eventId}`);
             const response = await api.get(`/tickets/event/${eventId}/ticket-types`);
 
             const ticketTypes = Array.isArray(response.data) ? response.data : [];
             const normalizedTicketTypes = ticketTypes.map(normalizeTicketType);
 
-            console.log(`🎫 Successfully loaded ${normalizedTicketTypes.length} ticket types`);
             return normalizedTicketTypes;
         } catch (error: any) {
-            console.error('🎫 Error fetching ticket types:', error.message);
             throw new Error(`Failed to load ticket types: ${error.message}`);
         }
     },
 
     createTicketType: async (ticketTypeData: CreateTicketTypeDto): Promise<TicketType> => {
         try {
-            console.log('🎫 Creating ticket type:', ticketTypeData);
 
             const payload = {
                 eventId: Number(ticketTypeData.eventId),
@@ -1566,19 +1390,15 @@ export const ticketsApi = {
             const response = await api.post('/tickets/ticket-types', payload);
             const normalizedTicketType = normalizeTicketType(response.data);
 
-            console.log('🎫 Successfully created ticket type:', normalizedTicketType);
             return normalizedTicketType;
         } catch (error: any) {
-            console.error('🎫 Error creating ticket type:', error.message);
             throw new Error(`Failed to create ticket type: ${error.message}`);
         }
     },
 
     updateTicketType: async (id: number, ticketTypeData: UpdateTicketTypeDto): Promise<TicketType> => {
         try {
-            console.log(`🎫 Updating ticket type ${id}:`, ticketTypeData);
 
-            // Remove undefined values
             const payload = Object.fromEntries(
                 Object.entries(ticketTypeData).filter(([_, value]) => value !== undefined)
             );
@@ -1586,22 +1406,17 @@ export const ticketsApi = {
             const response = await api.put(`/tickets/ticket-types/${id}`, payload);
             const normalizedTicketType = normalizeTicketType(response.data);
 
-            console.log('🎫 Successfully updated ticket type:', normalizedTicketType);
             return normalizedTicketType;
         } catch (error: any) {
-            console.error('🎫 Error updating ticket type:', error.message);
             throw new Error(`Failed to update ticket type: ${error.message}`);
         }
     },
 
     deleteTicketType: async (id: number): Promise<boolean> => {
         try {
-            console.log(`🎫 Deleting ticket type ${id}`);
             const response = await api.delete(`/tickets/ticket-types/${id}`);
-            console.log('🎫 Successfully deleted ticket type');
             return response.status === 204 || response.status === 200;
         } catch (error: any) {
-            console.error('🎫 Error deleting ticket type:', error.message);
             throw new Error(`Failed to delete ticket type: ${error.message}`);
         }
     },
@@ -1626,6 +1441,11 @@ export const ticketsApi = {
     getMyTickets: async (): Promise<Ticket[]> => {
         const response = await api.get('/tickets/my-tickets');
         return Array.isArray(response.data) ? response.data : [];
+    },
+
+    getMyTicketCount: async (): Promise<{ count: number }> => {
+        const response = await api.get('/tickets/my-tickets/count');
+        return response.data;
     },
 
     getTicket: async (id: number): Promise<Ticket> => {
@@ -1660,6 +1480,30 @@ export const ordersApi = {
     }
 };
 
+// Analytics API (for dashboard stats)
+export const analyticsApi = {
+    // Get revenue analytics
+    getRevenueByEvent: async (period: string = 'all'): Promise<any> => {
+        const response = await api.get(`/analytics/revenue-by-event?period=${period}`);
+        return response.data;
+    },
+
+    // Get ticket sales analytics
+    getTicketSales: async (period: string = 'all'): Promise<any> => {
+        const response = await api.get(`/analytics/ticket-sales?period=${period}`);
+        return response.data;
+    },
+
+    // Get event performance
+    getEventPerformance: async (eventId?: number): Promise<any> => {
+        const url = eventId
+            ? `/analytics/event-performance/${eventId}`
+            : '/analytics/event-performance';
+        const response = await api.get(url);
+        return response.data;
+    }
+};
+
 // Health check and connectivity testing
 export const healthApi = {
     checkConnection: async (): Promise<boolean> => {
@@ -1681,4 +1525,21 @@ export const healthApi = {
     }
 };
 
+// Export the configured API instance and environment info
+export const apiConfig = {
+    baseURL: API_BASE_URL,
+    environment: process.env.NODE_ENV,
+    isDevelopment: process.env.NODE_ENV === 'development'
+};
+
+// Export everything
 export default api;
+
+// Export environment-aware helper functions
+export const getApiUrl = (endpoint: string): string => {
+    return `${API_BASE_URL}/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+};
+
+export const getImageUrl = (imagePath?: string): string => {
+    return imageUtils.getImageWithFallback(imagePath);
+};

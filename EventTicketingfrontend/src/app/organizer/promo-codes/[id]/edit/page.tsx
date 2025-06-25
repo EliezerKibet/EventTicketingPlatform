@@ -28,7 +28,6 @@ import {
     TrendingUp
 } from 'lucide-react';
 
-// Define the UpdatePromoCodeDto interface locally since it's not exported
 interface UpdatePromoCodeDto {
     description?: string;
     value?: number;
@@ -58,6 +57,22 @@ interface FormData {
     isActive: boolean;
 }
 
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
 const EditPromoCodePage: React.FC = () => {
     const themeClasses = useThemeClasses();
     const { t } = useI18n();
@@ -66,7 +81,6 @@ const EditPromoCodePage: React.FC = () => {
     const params = useParams();
     const promoCodeId = Number(params.id);
 
-    // State management
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [eventsLoading, setEventsLoading] = useState(true);
@@ -76,7 +90,8 @@ const EditPromoCodePage: React.FC = () => {
     const [originalPromoCode, setOriginalPromoCode] = useState<PromoCode | null>(null);
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    // Form data - initialized with empty values, will be populated when promo code loads
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
     const [formData, setFormData] = useState<FormData>({
         description: '',
         value: '',
@@ -89,12 +104,11 @@ const EditPromoCodePage: React.FC = () => {
         isActive: true
     });
 
-    // Validation errors
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-    // Load promo code and events on component mount
     useEffect(() => {
         if (user && isOrganizer) {
+            fetchUserPreferences();
             loadPromoCode();
             loadEvents();
         } else if (user && !isOrganizer) {
@@ -110,7 +124,6 @@ const EditPromoCodePage: React.FC = () => {
             const promoCode = await promoCodesApi.getPromoCode(promoCodeId);
             setOriginalPromoCode(promoCode);
 
-            // Populate form with existing data
             setFormData({
                 description: promoCode.description || '',
                 value: promoCode.value.toString(),
@@ -123,14 +136,12 @@ const EditPromoCodePage: React.FC = () => {
                 isActive: promoCode.isActive
             });
 
-            // Show advanced options if any advanced fields are set
             if (promoCode.minimumOrderAmount || promoCode.maximumDiscountAmount || promoCode.maxUsagePerUser) {
                 setShowAdvanced(true);
             }
 
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : t('failedToLoadPromoCodes');
-            setError(errorMessage);
         } finally {
             setInitialLoading(false);
         }
@@ -142,19 +153,16 @@ const EditPromoCodePage: React.FC = () => {
             const userEvents = await eventsApi.getMyEvents();
             setEvents(userEvents);
         } catch (error) {
-            console.error('Failed to load events:', error);
         } finally {
             setEventsLoading(false);
         }
     };
 
-    // Form validation with enhanced checks
     const validateForm = (): boolean => {
         if (!originalPromoCode) return false;
 
         const errors: ValidationErrors = {};
 
-        // Value validation
         if (!formData.value.trim()) {
             errors.value = t('discountValueRequired');
         } else {
@@ -168,7 +176,6 @@ const EditPromoCodePage: React.FC = () => {
             }
         }
 
-        // Date validation
         if (!formData.startDate) {
             errors.startDate = t('startDateRequired');
         }
@@ -187,14 +194,12 @@ const EditPromoCodePage: React.FC = () => {
                 errors.endDate = t('endDateAfterStartDate');
             }
 
-            // Only check past dates if promo code hasn't been used
             if (originalPromoCode.currentUsageCount === 0) {
                 if (startDate < today) {
                     errors.startDate = t('startDateCannotBeInPast');
                 }
             }
 
-            // Check for reasonable date range (not more than 2 years)
             const maxEndDate = new Date(startDate);
             maxEndDate.setFullYear(maxEndDate.getFullYear() + 2);
             if (endDate > maxEndDate) {
@@ -202,7 +207,6 @@ const EditPromoCodePage: React.FC = () => {
             }
         }
 
-        // Usage count validation
         if (!formData.maxUsageCount.trim()) {
             errors.maxUsageCount = t('maxUsageRequired');
         } else {
@@ -212,13 +216,11 @@ const EditPromoCodePage: React.FC = () => {
             } else if (count > 10000) {
                 errors.maxUsageCount = t('maximumUsageCountCannotExceed10000');
             }
-            // Don't allow reducing below current usage
             if (originalPromoCode && count < originalPromoCode.currentUsageCount) {
                 errors.maxUsageCount = t('currentUsageCannotReduceBelow', { count: originalPromoCode.currentUsageCount });
             }
         }
 
-        // Optional field validations
         if (formData.minimumOrderAmount.trim()) {
             const minAmount = parseFloat(formData.minimumOrderAmount);
             if (isNaN(minAmount) || minAmount <= 0) {
@@ -236,7 +238,6 @@ const EditPromoCodePage: React.FC = () => {
                 errors.maximumDiscountAmount = t('maximumDiscountAmountCannotExceed10000');
             }
 
-            // Logical validation: max discount should be reasonable compared to value
             if (originalPromoCode.type === 'FixedAmount') {
                 const value = parseFloat(formData.value);
                 if (!isNaN(value) && maxAmount > value) {
@@ -258,7 +259,6 @@ const EditPromoCodePage: React.FC = () => {
         return Object.keys(errors).length === 0;
     };
 
-    // Handle form submission with enhanced error handling
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -267,7 +267,6 @@ const EditPromoCodePage: React.FC = () => {
             return;
         }
 
-        // Check if promo code has been used and block editing
         if (originalPromoCode.currentUsageCount > 0) {
             setError(t('cannotEditUsedPromoCode'));
             return;
@@ -277,7 +276,6 @@ const EditPromoCodePage: React.FC = () => {
             setLoading(true);
             setError('');
 
-            // Only send changed fields
             const updateData: UpdatePromoCodeDto = {};
             let hasChanges = false;
 
@@ -333,7 +331,6 @@ const EditPromoCodePage: React.FC = () => {
                 hasChanges = true;
             }
 
-            // Only update if there are changes
             if (!hasChanges) {
                 setSuccess('No changes to save');
                 setTimeout(() => {
@@ -345,7 +342,6 @@ const EditPromoCodePage: React.FC = () => {
             await promoCodesApi.updatePromoCode(promoCodeId, updateData);
             setSuccess(t('promoCodeUpdatedSuccessfully'));
 
-            // Redirect to promo codes list after a short delay
             setTimeout(() => {
                 router.push('/organizer/promo-codes');
             }, 2000);
@@ -358,14 +354,12 @@ const EditPromoCodePage: React.FC = () => {
         }
     };
 
-    // Handle input changes with improved validation
     const handleInputChange = (field: string, value: string | boolean) => {
         setFormData(prev => ({
             ...prev,
             [field]: value
         }));
 
-        // Clear validation error for this field
         if (validationErrors[field]) {
             setValidationErrors(prev => ({
                 ...prev,
@@ -373,7 +367,6 @@ const EditPromoCodePage: React.FC = () => {
             }));
         }
 
-        // Real-time validation for certain fields
         if (field === 'endDate' && formData.startDate && typeof value === 'string') {
             const startDate = new Date(formData.startDate);
             const endDate = new Date(value);
@@ -386,7 +379,6 @@ const EditPromoCodePage: React.FC = () => {
         }
     };
 
-    // Calculate discount preview
     const getDiscountPreview = () => {
         if (!originalPromoCode || !formData.value) return '';
 
@@ -396,11 +388,11 @@ const EditPromoCodePage: React.FC = () => {
         if (originalPromoCode.type === 'Percentage') {
             return `${value}${t('percentageOff')}`;
         } else {
-            return `$${value.toFixed(2)} ${t('fixedAmountOff')}`;
+            const convertedValue = convertFromUSD(value, preferences?.currency || 'USD');
+            return `${formatCurrencyWithUserPreference(convertedValue, preferences)} ${t('fixedAmountOff')}`;
         }
     };
 
-    // Get usage statistics display
     const getUsageStats = () => {
         if (!originalPromoCode) return null;
 
@@ -416,7 +408,86 @@ const EditPromoCodePage: React.FC = () => {
         };
     };
 
-    // Loading states
+    type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY';
+
+    function isCurrency(value: unknown): value is Currency {
+        return typeof value === 'string' &&
+            ['USD', 'EUR', 'GBP', 'JPY'].includes(value);
+    }
+
+    const CURRENCIES = {
+        USD: { symbol: '$', name: 'US Dollar', code: 'USD' },
+        EUR: { symbol: '€', name: 'Euro', code: 'EUR' },
+        GBP: { symbol: '£', name: 'British Pound', code: 'GBP' },
+        JPY: { symbol: '¥', name: 'Japanese Yen', code: 'JPY' }
+    };
+
+    const EXCHANGE_RATES = {
+        USD: 1.00,
+        EUR: 0.92,
+        GBP: 0.79,
+        JPY: 149.0
+    };
+
+    const convertFromUSD = (usdAmount: number, toCurrency: string): number => {
+        const rate = EXCHANGE_RATES[toCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return usdAmount * rate;
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null) => {
+        const currency = preferences?.currency ?? 'USD';
+
+        try {
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const userPreferences = await response.json();
+                setPreferences(userPreferences);
+            }
+        } catch (error) {
+            setPreferences({
+                currency: 'USD',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC'
+            });
+        }
+    };
+
     if (!user || !isOrganizer) {
         return (
             <div className={`min-h-screen ${themeClasses.themeBg} flex items-center justify-center theme-transition`}>
@@ -654,7 +725,7 @@ const EditPromoCodePage: React.FC = () => {
                             {/* Discount Value */}
                             <div>
                                 <label className={`block text-sm font-medium ${themeClasses.themeFg} mb-2`}>
-                                    {t('formattedValue')} * {originalPromoCode.type === 'Percentage' ? '(%)' : '($)'}
+                                    {t('formattedValue')} * {originalPromoCode.type === 'Percentage' ? '(%)' : `(${preferences?.currency || 'USD'})`}
                                     {discountPreview && (
                                         <span className="ml-2 text-sm text-green-600 dark:text-green-400 font-normal">
                                             Preview: {discountPreview}
@@ -695,7 +766,7 @@ const EditPromoCodePage: React.FC = () => {
                                     {/* Minimum Order Amount */}
                                     <div>
                                         <label className={`block text-sm font-medium ${themeClasses.themeFg} mb-2`}>
-                                            {t('minimumOrderAmount')} ($)
+                                            {t('minimumOrderAmount')} ({preferences?.currency || 'USD'})
                                         </label>
                                         <input
                                             type="number"
@@ -714,13 +785,18 @@ const EditPromoCodePage: React.FC = () => {
                                         )}
                                         <p className={`mt-1 text-xs ${themeClasses.themeMutedFg}`}>
                                             {t('orderMustBeAtLeastThisAmount')}
+                                            {preferences?.currency && preferences.currency !== 'USD' && formData.minimumOrderAmount && (
+                                                <span className="block mt-1">
+                                                    (≈ ${(parseFloat(formData.minimumOrderAmount) || 0).toFixed(2)} USD)
+                                                </span>
+                                            )}
                                         </p>
                                     </div>
 
                                     {/* Maximum Discount Amount */}
                                     <div>
                                         <label className={`block text-sm font-medium ${themeClasses.themeFg} mb-2`}>
-                                            {t('maximumDiscountAmount')} ($)
+                                            {t('maximumDiscountAmount')} ({preferences?.currency || 'USD'})
                                         </label>
                                         <input
                                             type="number"
@@ -739,6 +815,11 @@ const EditPromoCodePage: React.FC = () => {
                                         )}
                                         <p className={`mt-1 text-xs ${themeClasses.themeMutedFg}`}>
                                             {t('capMaximumDiscountAmountForPercentage')}
+                                            {preferences?.currency && preferences.currency !== 'USD' && formData.maximumDiscountAmount && (
+                                                <span className="block mt-1">
+                                                    (≈ ${(parseFloat(formData.maximumDiscountAmount) || 0).toFixed(2)} USD)
+                                                </span>
+                                            )}
                                         </p>
                                     </div>
                                 </div>

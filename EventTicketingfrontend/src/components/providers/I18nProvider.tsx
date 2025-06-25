@@ -1061,6 +1061,28 @@ export interface TranslationKeys {
     minutes: string;
     hours: string
     hour: string;
+
+    monday: string;
+    tuesday: string;
+    wednesday: string;
+    thursday: string;
+    friday: string;
+    saturday: string;
+    sunday: string;
+
+    jan: string;
+    feb: string;
+    mar: string;
+    apr: string;
+    may: string;
+    jun: string;
+    jul: string;
+    aug: string;
+    sep: string;
+    oct: string;
+    nov: string;
+    dec: string;
+
 }
 
 interface SettingsTranslationKeys {
@@ -2930,7 +2952,7 @@ const translations: Record<string, TranslationKeys> = {
         ticketTypeNameRequired: 'Ticket name is required',
         ticketDescription: 'Description',
         optionalTicketDescription: 'Optional description for this ticket type',
-        price: 'Price (RM)',
+        price: 'Price',
         priceRequired: 'Valid price is required',
         quantity: 'Quantity',
         quantityRequired: 'Ticket quantity must be greater than 0',
@@ -3782,7 +3804,32 @@ const translations: Record<string, TranslationKeys> = {
         completePurchase: 'Complete Purchase',
         minutes: 'minutes',
         hours: 'hours',
-        hour: 'hour',   
+        hour: 'hour', 
+
+        monday: 'Monday',
+
+        tuesday: 'Tuesday',
+        wednesday: 'Wednesday',
+        thursday: 'Thursday',
+        friday: 'Friday',
+
+        saturday: 'Saturday',
+        sunday: 'Sunday',
+
+        // Months
+        jan: 'January',
+        feb: 'February',
+        mar: 'March',
+        apr: 'April',
+        may: 'May',
+        jun: 'June',
+        jul: 'July',
+        aug: 'August',
+        sep: 'September',
+        oct: 'October',
+        nov: 'November',
+        dec: 'December',
+            
     },
     // Spanish translations
     es: {
@@ -3908,7 +3955,7 @@ const translations: Record<string, TranslationKeys> = {
         ticketTypeNameRequired: 'El nombre del boleto es obligatorio',
         ticketDescription: 'Descripción',
         optionalTicketDescription: 'Descripción opcional para este tipo de boleto',
-        price: 'Precio (RM)',
+        price: 'Precio',
         priceRequired: 'Se requiere un precio válido',
         quantity: 'Cantidad',
         quantityRequired: 'La cantidad de boletos debe ser mayor a 0',
@@ -4766,6 +4813,27 @@ const translations: Record<string, TranslationKeys> = {
         minutes: 'minutos',
         hours: 'horas',
         hour: 'horas',
+
+        monday: 'Lunes',
+        tuesday: 'Martes',
+        wednesday: 'Miércoles',
+        thursday: 'Jueves',
+        friday: 'Viernes',
+        saturday: 'Sábado',
+        sunday: 'Domingo',
+
+        jan: 'Enero',
+        feb: 'Febrero',
+        mar: 'Marzo',
+        apr: 'Abril',
+        may: 'Mayo',
+        jun: 'Junio',
+        jul: 'Julio',
+        aug: 'Agosto',
+        sep: 'Septiembre',
+        oct: 'Octubre',
+        nov: 'Noviembre',
+        dec: 'Diciembre',
     },
     // French translations
     fr: {
@@ -4891,7 +4959,7 @@ const translations: Record<string, TranslationKeys> = {
         ticketTypeNameRequired: 'Le nom du billet est requis',
         ticketDescription: 'Description',
         optionalTicketDescription: 'Description optionnelle pour ce type de billet',
-        price: 'Prix (RM)',
+        price: 'Prix ',
         priceRequired: 'Un prix valide est requis',
         quantity: 'Quantité',
         quantityRequired: 'La quantité de billets doit être supérieure à 0',
@@ -5748,6 +5816,29 @@ const translations: Record<string, TranslationKeys> = {
         minutes: 'minutes',
         hours: 'heures',
         hour: 'heures',
+
+        monday: 'Lundi',
+        tuesday: 'Mardi',
+        wednesday: 'Mercredi',
+        thursday: 'Jeudi',
+        friday: 'Vendredi',
+        saturday: 'Samedi',
+        sunday: 'Dimanche',
+
+        jan: 'Janvier',
+        feb: 'Février',
+        mar: 'Mars',
+        apr: 'Avril',
+        may: 'Mai',
+        jun: 'Juin',
+        jul: 'Juillet',
+        aug: 'Août',
+        sep: 'Septembre',
+        oct: 'Octobre',
+        nov: 'Novembre',
+        dec: 'Décembre',
+
+        
     },
     // German translations
     de: {
@@ -5873,7 +5964,7 @@ const translations: Record<string, TranslationKeys> = {
         ticketTypeNameRequired: 'Ticketname ist erforderlich',
         ticketDescription: 'Beschreibung',
         optionalTicketDescription: 'Optionale Beschreibung für diesen Tickettyp',
-        price: 'Preis (RM)',
+        price: 'Preis ',
         priceRequired: 'Gültiger Preis ist erforderlich',
         quantity: 'Menge',
         quantityRequired: 'Ticketmenge muss größer als 0 sein',
@@ -6732,6 +6823,28 @@ const translations: Record<string, TranslationKeys> = {
         minutes: 'Minuten',
         hours: 'Stunden',
         hour: 'Stunde',
+
+        monday: 'Montag',
+        tuesday: 'Dienstag',
+        wednesday: 'Mittwoch',
+        thursday: 'Donnerstag',
+        friday: 'Freitag',
+        saturday: 'Samstag',
+        sunday: 'Sonntag',
+
+        jan: 'Januar',
+        feb: 'Februar',
+        mar: 'März',
+        apr: 'April',
+        may: 'Mai',
+        jun: 'Juni',
+        jul: 'Juli',
+        aug: 'August',
+        sep: 'September',
+        oct: 'Oktober',
+        nov: 'November',
+        dec: 'Dezember',
+
     },
     // Italian translations
     it: {
@@ -6857,7 +6970,7 @@ const translations: Record<string, TranslationKeys> = {
         ticketTypeNameRequired: 'Il nome del biglietto è obbligatorio',
         ticketDescription: 'Descrizione',
         optionalTicketDescription: 'Descrizione opzionale per questo tipo di biglietto',
-        price: 'Prezzo (RM)',
+        price: 'Prezzo ',
         priceRequired: 'È richiesto un prezzo valido',
         quantity: 'Quantità',
         quantityRequired: 'La quantità di biglietti deve essere maggiore di 0',
@@ -7710,6 +7823,27 @@ const translations: Record<string, TranslationKeys> = {
         minutes: 'minuti',
         hours: 'ore',
         hour: 'ora',
+
+        monday: 'Lunedì',
+        tuesday: 'Martedì',
+        wednesday: 'Mercoledì',
+        thursday: 'Giovedì',
+        friday: 'Venerdì',
+        saturday: 'Sabato',
+        sunday: 'Domenica',
+
+        jan: 'Gennaio',
+        feb: 'Febbraio',
+        mar: 'Marzo',
+        apr: 'Aprile',
+        may: 'Maggio',
+        jun: 'Giugno',
+        jul: 'Luglio',
+        aug: 'Agosto',
+        sep: 'Settembre',
+        oct: 'Ottobre',
+        nov: 'Novembre',
+        dec: 'Dicembre',
     }
 };
 
@@ -7951,7 +8085,6 @@ export {
     extendedTranslations
 };
 
-// Hook to use I18n context
 export const useI18nContext = () => {
     const context = useContext(I18nContext);
     if (!context) {
@@ -7960,7 +8093,6 @@ export const useI18nContext = () => {
     return context;
 };
 
-// Also export as useI18n for compatibility with existing code
 export const useI18n = useI18nContext;
 
 export default translations;

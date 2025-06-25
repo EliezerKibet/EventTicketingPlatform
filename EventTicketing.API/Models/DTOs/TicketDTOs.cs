@@ -34,7 +34,6 @@ namespace EventTicketing.API.Models.DTOs
         public int SortOrder { get; set; } = 0;
     }
 
-    // NEW: Add UpdateTicketTypeDto for editing functionality
     public class UpdateTicketTypeDto
     {
         [StringLength(100)]
@@ -113,7 +112,6 @@ namespace EventTicketing.API.Models.DTOs
         public string? BillingZipCode { get; set; }
         public string? PromoCode { get; set; }
 
-        // Attendee information for each ticket
         public List<AttendeeInfo> Attendees { get; set; } = new List<AttendeeInfo>();
     }
 
@@ -173,7 +171,7 @@ namespace EventTicketing.API.Models.DTOs
         public string TicketNumber { get; set; }
         public string? QrCode { get; set; }
         public decimal PricePaid { get; set; }
-        public string Currency { get; set; } = "USD"; // Default currency
+        public string Currency { get; set; } = "USD"; 
         public string Status { get; set; }
         public DateTime PurchaseDate { get; set; }
         public DateTime? CheckInDate { get; set; }
@@ -190,7 +188,7 @@ namespace EventTicketing.API.Models.DTOs
         [Required]
         public string TicketNumber { get; set; }
 
-        // Or use QR code
+        
         public string? QrCode { get; set; }
     }
 

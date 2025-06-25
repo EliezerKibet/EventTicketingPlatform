@@ -12,7 +12,9 @@ import {
 } from 'lucide-react';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 import { imageApi, imageUtils, eventsApi } from '@/lib/api';
-// Local interfaces to avoid import issues
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
 interface Category {
     categoryId: number;
     name: string;
@@ -60,6 +62,47 @@ interface EventFormData {
     isPublished: boolean;
 }
 
+interface Event {
+    eventDate: string | number | Date;
+    revenue: number;
+    actualRevenue?: number;
+    eventId: number;
+    title: string;
+    description: string;
+    shortDescription?: string;
+    organizerId: number;
+    organizerName: string;
+    venueId: number;
+    venueName: string;
+    venueCity: string;
+    categoryId: number;
+    categoryName: string;
+    startDateTime: string;
+    endDateTime: string;
+    imageUrl?: string;
+    basePrice: number;
+    currency: string;
+    isOnline: boolean;
+    ticketsSold: number;
+    availableTickets: number;
+    status: string;
+    isPublished: boolean;
+}
+
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
 interface CreateTicketTypeData {
     name: string;
     description: string;
@@ -81,7 +124,7 @@ const EditEventPage = () => {
     const params = useParams();
     const eventId = params?.id as string;
     const { user, isOrganizer } = useAuth();
-    const { t } = useI18n(); // Add this hook
+    const { t } = useI18n(); 
     const themeClasses = useThemeClasses();
 
     const [loading, setLoading] = useState(false);
@@ -92,14 +135,12 @@ const EditEventPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Ticket editing state
     const [showCreateTicketForm, setShowCreateTicketForm] = useState(false);
     const [showEditTicketForm, setShowEditTicketForm] = useState(false);
     const [editingTicketType, setEditingTicketType] = useState<TicketType | null>(null);
     const [ticketFormLoading, setTicketFormLoading] = useState(false);
 
 
-    // Image handling state - add after your existing state declarations
     const [bannerFile, setBannerFile] = useState<File | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string>('');
@@ -108,9 +149,11 @@ const EditEventPage = () => {
     const [deleteImage, setDeleteImage] = useState(false);
     const [imageUploadLoading, setImageUploadLoading] = useState(false);
 
+    const [userPreferences, setUserPreferences] = useState<any>(null);
+    const [userCurrency, setUserCurrency] = useState<Currency>('USD');
+
     const [isDragging, setIsDragging] = useState(false);
 
-    // Form state
     const [formData, setFormData] = useState<EventFormData>({
         title: '',
         description: '',
@@ -154,6 +197,152 @@ const EditEventPage = () => {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [ticketFormErrors, setTicketFormErrors] = useState<Record<string, string>>({});
 
+    const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+        const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+            ? preferences.currency
+            : 'USD';
+
+
+        if (fromCurrency === userCurrency) {
+            return formatCurrencyWithUserPreference(amount, preferences, currentLangData);
+        }
+
+        const conversionRates: { [key: string]: { [key: string]: number } } = {
+            'USD': {
+                'USD': 1,
+                'EUR': 0.92,  // 1 USD = 0.92 EUR
+                'GBP': 0.79,  // 1 USD = 0.79 GBP
+                'JPY': 149    // 1 USD = 149 JPY
+            },
+            'EUR': {
+                'USD': 1.09,  // 1 EUR = 1.09 USD
+                'EUR': 1,
+                'GBP': 0.86,  // 1 EUR = 0.86 GBP
+                'JPY': 162    // 1 EUR = 162 JPY
+            },
+            'GBP': {
+                'USD': 1.27,  // 1 GBP = 1.27 USD
+                'EUR': 1.16,  // 1 GBP = 1.16 EUR
+                'GBP': 1,
+                'JPY': 189    // 1 GBP = 189 JPY
+            },
+            'JPY': {
+                'USD': 0.0067, // 1 JPY = 0.0067 USD
+                'EUR': 0.0062, // 1 JPY = 0.0062 EUR
+                'GBP': 0.0053, // 1 JPY = 0.0053 GBP
+                'JPY': 1
+            }
+        };
+
+        const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+        const convertedAmount = amount * rate;
+
+        return formatCurrencyWithUserPreference(convertedAmount, preferences, currentLangData);
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+        const currency = preferences?.currency ?? 'USD';
+        const locale = currentLangData?.region ?? 'en-US';
+
+        try {
+            const formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '\u20AC', // Euro symbol
+                'GBP': '\u00A3', // Pound symbol
+                'JPY': '\u00A5'  // Yen symbol
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '\u20AC', // Euro symbol
+            'GBP': '\u00A3', // Pound symbol
+            'JPY': '\u00A5'  // Yen symbol
+        };
+
+        return symbols[currency] || '$';
+    };
+
+    const CURRENCIES = {
+        USD: { symbol: '$', name: 'US Dollar', code: 'USD' },
+        EUR: { symbol: '€', name: 'Euro', code: 'EUR' },
+        GBP: { symbol: '£', name: 'British Pound', code: 'GBP' },
+        JPY: { symbol: '¥', name: 'Japanese Yen', code: 'JPY' }
+    };
+
+    const EXCHANGE_RATES = {
+        USD: 1.00,
+        EUR: 0.92,
+        GBP: 0.79,
+        JPY: 149.0
+    };
+
+    const convertFromUSD = (usdAmount: number, toCurrency: string): number => {
+        const rate = EXCHANGE_RATES[toCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return usdAmount * rate;
+    };
+
+    const convertToUSD = (amount: number, fromCurrency: string): number => {
+        const rate = EXCHANGE_RATES[fromCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return amount / rate;
+    };
+
+    
+
+    type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY';
+
+    function isCurrency(value: unknown): value is Currency {
+        return typeof value === 'string' &&
+            ['USD', 'EUR', 'GBP', 'JPY'].includes(value);
+    }
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`http://localhost:5251/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const preferences = await response.json();
+                setUserPreferences(preferences);
+
+                // Use type guard for safe currency assignment
+                const currency: Currency = isCurrency(preferences.currency)
+                    ? preferences.currency
+                    : 'USD';
+                setUserCurrency(currency);
+            } else {
+                setUserCurrency('USD');
+            }
+        } catch (error) {
+            console.error('Failed to fetch user preferences:', error);
+            setUserCurrency('USD');
+        }
+    };
 
     const [showImageModal, setShowImageModal] = useState(false);
     const [modalImageSrc, setModalImageSrc] = useState('');
@@ -186,6 +375,7 @@ const EditEventPage = () => {
     // Load event data and initial data
     useEffect(() => {
         if (user && isOrganizer && eventId) {
+            fetchUserPreferences(); 
             loadEventData();
             fetchInitialData();
         } else if (user && !isOrganizer) {
@@ -214,9 +404,7 @@ const EditEventPage = () => {
             }
 
             const eventData = await response.json();
-            console.log('Loaded event data:', eventData);
 
-            // Helper function to format date for datetime-local input
             const formatDateForInput = (dateValue: any) => {
                 if (!dateValue) return '';
 
@@ -224,7 +412,6 @@ const EditEventPage = () => {
                     const date = new Date(dateValue);
                     if (isNaN(date.getTime())) return '';
 
-                    // Format to YYYY-MM-DDTHH:MM for datetime-local input
                     const year = date.getFullYear();
                     const month = String(date.getMonth() + 1).padStart(2, '0');
                     const day = String(date.getDate()).padStart(2, '0');
@@ -238,7 +425,6 @@ const EditEventPage = () => {
                 }
             };
 
-            // In your loadEventData function, after setting formData:
             setFormData({
                 title: eventData.title || '',
                 description: eventData.description || '',
@@ -256,7 +442,6 @@ const EditEventPage = () => {
 
 
 
-            // Fetch ticket types for this event
             await fetchTicketTypes();
 
         } catch (error) {
@@ -299,7 +484,7 @@ const EditEventPage = () => {
     const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setError(''); // Clear previous errors
+            setError(''); 
 
             const validation = imageApi.validateImageFile(file);
             if (!validation.isValid) {
@@ -308,13 +493,12 @@ const EditEventPage = () => {
             }
 
             try {
-                setImageUploadLoading(true); // Show loading state during preview generation
+                setImageUploadLoading(true);
                 setBannerFile(file);
                 const preview = await imageUtils.resizeImageForPreview(file, 800, 400);
                 setBannerPreview(preview);
                 setDeleteBanner(false);
 
-                // Show success message for file selection
                 setSuccess(t('imageUploadSuccess'));
                 setTimeout(() => setSuccess(''), 2000);
             } catch (error) {
@@ -328,7 +512,6 @@ const EditEventPage = () => {
     const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setError(''); // Clear previous errors
 
             const validation = imageApi.validateImageFile(file);
             if (!validation.isValid) {
@@ -337,13 +520,12 @@ const EditEventPage = () => {
             }
 
             try {
-                setImageUploadLoading(true); // Show loading state during preview generation
+                setImageUploadLoading(true); 
                 setImageFile(file);
                 const preview = await imageUtils.resizeImageForPreview(file, 400, 300);
                 setImagePreview(preview);
                 setDeleteImage(false);
 
-                // Show success message for file selection
                 setSuccess(t('imageUploadSuccess'));
                 setTimeout(() => setSuccess(''), 2000);
             } catch (error) {
@@ -381,9 +563,6 @@ const EditEventPage = () => {
 
             if (response.ok) {
                 const ticketTypesData = await response.json();
-                console.log('Loaded ticket types:', ticketTypesData);
-
-                // Map API response to local format with smart editing fields
                 const mappedTicketTypes = ticketTypesData.map((tt: any) => ({
                     ticketTypeId: tt.ticketTypeId,
                     name: tt.name,
@@ -404,14 +583,12 @@ const EditEventPage = () => {
                 setTicketTypes(mappedTicketTypes);
             }
         } catch (error) {
-            console.error('Error fetching ticket types:', error);
             setTicketTypes([]);
         }
     };
 
     const fetchInitialData = async () => {
         try {
-            // Fetch categories
             const categoriesResponse = await fetch('http://localhost:5251/api/categories', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -423,7 +600,6 @@ const EditEventPage = () => {
                 setCategories(categoriesData);
             }
 
-            // Fetch venues
             const venuesResponse = await fetch('http://localhost:5251/api/venues', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -436,13 +612,10 @@ const EditEventPage = () => {
             }
 
         } catch (error) {
-            console.error('Error fetching initial data:', error);
         }
     };
 
-    // Smart editing logic for ticket types
     const canEditTicketType = (ticketType: TicketType): { canEdit: boolean; reason: string } => {
-        // Check if event is published
         if (ticketType.isEventPublished) {
             return {
                 canEdit: false,
@@ -450,7 +623,6 @@ const EditEventPage = () => {
             };
         }
 
-        // Check if tickets have been sold
         const ticketsSold = ticketType.quantitySold || 0;
         if (ticketsSold > 0) {
             return {
@@ -459,7 +631,6 @@ const EditEventPage = () => {
             };
         }
 
-        // Check if event is in draft status
         if (ticketType.eventStatus && ticketType.eventStatus.toLowerCase() !== 'draft') {
             return {
                 canEdit: false,
@@ -532,7 +703,6 @@ const EditEventPage = () => {
     };
 
     const canCreateTicketTypes = (): { canCreate: boolean; reason: string } => {
-        // Check if event is published
         if (formData.isPublished) {
             return {
                 canCreate: false,
@@ -540,7 +710,6 @@ const EditEventPage = () => {
             };
         }
 
-        // Check if any tickets have been sold
         const totalTicketsSold = ticketTypes.reduce((sum, tt) => sum + (tt.quantitySold || 0), 0);
         if (totalTicketsSold > 0) {
             return {
@@ -564,7 +733,6 @@ const EditEventPage = () => {
             [name]: type === 'checkbox' ? checked : value
         }));
 
-        // Clear error when field is updated
         if (formErrors[name]) {
             setFormErrors(prev => ({
                 ...prev,
@@ -635,7 +803,7 @@ const EditEventPage = () => {
             ticketTypeId: ticketType.ticketTypeId!,
             name: ticketType.name,
             description: ticketType.description,
-            price: ticketType.price.toString(),
+            price: convertFromUSD(ticketType.price, userCurrency).toFixed(userCurrency === 'JPY' ? 0 : 2),
             quantityAvailable: ticketType.quantityAvailable.toString(),
             saleStartDate: ticketType.saleStartDate || '',
             saleEndDate: ticketType.saleEndDate || '',
@@ -659,7 +827,7 @@ const EditEventPage = () => {
                 eventId: parseInt(eventId),
                 name: createTicketData.name.trim(),
                 description: createTicketData.description.trim() || null,
-                price: parseFloat(createTicketData.price),
+                price: convertToUSD(parseFloat(createTicketData.price), userCurrency),
                 quantityAvailable: parseInt(createTicketData.quantityAvailable),
                 saleStartDate: createTicketData.saleStartDate || null,
                 saleEndDate: createTicketData.saleEndDate || null,
@@ -687,7 +855,6 @@ const EditEventPage = () => {
                 setError(errorData.message || t('failedToCreateTicketType'));
             }
         } catch (error) {
-            setError(t('loadError'));
         } finally {
             setTicketFormLoading(false);
         }
@@ -705,7 +872,7 @@ const EditEventPage = () => {
             const payload = {
                 name: editTicketData.name.trim(),
                 description: editTicketData.description.trim() || null,
-                price: parseFloat(editTicketData.price),
+                price: convertToUSD(parseFloat(editTicketData.price), userCurrency),
                 quantityAvailable: parseInt(editTicketData.quantityAvailable),
                 saleStartDate: editTicketData.saleStartDate || null,
                 saleEndDate: editTicketData.saleEndDate || null,
@@ -740,7 +907,6 @@ const EditEventPage = () => {
         }
     };
 
-    // Helper function to check if event spans multiple days
     const isMultiDayEvent = () => {
         if (!formData.eventDate || !formData.endDate) return false;
 
@@ -750,7 +916,6 @@ const EditEventPage = () => {
         return start.toDateString() !== end.toDateString();
     };
 
-    // Helper function to calculate event duration
     const getEventDuration = () => {
         if (!formData.eventDate || !formData.endDate) return null;
 
@@ -777,7 +942,6 @@ const EditEventPage = () => {
             errors.eventDate = t('startDateTimeRequired');
         }
 
-        // Validate end date if provided
         if (formData.endDate && formData.eventDate) {
             const start = new Date(formData.eventDate);
             const end = new Date(formData.endDate);
@@ -799,7 +963,6 @@ const EditEventPage = () => {
             errors.maxCapacity = t('maxCapacityRequired');
         }
 
-        // Validate registration deadline
         if (formData.registrationDeadline && formData.eventDate) {
             const regDeadline = new Date(formData.registrationDeadline);
             const eventStart = new Date(formData.eventDate);
@@ -830,24 +993,23 @@ const EditEventPage = () => {
             const eventPayload = {
                 title: formData.title,
                 description: formData.description,
-                shortDescription: undefined, // Changed from null to undefined
+                shortDescription: undefined, 
                 startDateTime: formData.eventDate,
-                endDateTime: formData.endDate || undefined, // Changed from null to undefined
+                endDateTime: formData.endDate || undefined, 
                 categoryId: parseInt(formData.categoryId),
-                venueId: formData.isOnline ? undefined : parseInt(formData.venueId?.toString() || '0'), // Changed from null to undefined
-                imageUrl: formData.imageUrl || undefined, // Changed from null to undefined
-                bannerImageUrl: undefined, // Changed from null to undefined
-                tags: undefined, // Changed from null to undefined
+                venueId: formData.isOnline ? undefined : parseInt(formData.venueId?.toString() || '0'),
+                imageUrl: formData.imageUrl || undefined, 
+                bannerImageUrl: undefined, 
+                tags: undefined, 
                 maxAttendees: parseInt(formData.maxCapacity),
                 basePrice: 0,
                 currency: "USD",
                 isOnline: formData.isOnline,
-                onlineUrl: undefined // Changed from null to undefined
+                onlineUrl: undefined 
             };
 
             console.log('Updating event with images:', eventPayload);
 
-            // Enhanced error handling for image uploads
             try {
                 const updatedEvent = await eventsApi.updateEventWithImages(
                     parseInt(eventId),
@@ -858,26 +1020,16 @@ const EditEventPage = () => {
                     deleteImage
                 );
 
-                console.log('Event updated successfully:', updatedEvent);
                 setSuccess(t('eventUpdatedSuccessfully'));
 
                 setTimeout(() => {
                     router.push(`/organizer/events`);
                 }, 2000);
             } catch (imageError: any) {
-                // Handle specific image upload errors
-                if (imageError.message.includes('banner')) {
-                    setError(t('bannerImage') + ' ' + t('imageUploadFailed') + ': ' + imageError.message);
-                } else if (imageError.message.includes('image')) {
-                    setError(t('eventImage') + ' ' + t('imageUploadFailed') + ': ' + imageError.message);
-                } else {
-                    setError(t('imageUploadFailed') + ': ' + imageError.message);
-                }
+               
             }
 
         } catch (error) {
-            console.error('Error updating event:', error);
-            setError(error instanceof Error ? error.message : t('failedToUpdateEvent'));
         } finally {
             setLoading(false);
             setImageUploadLoading(false);
@@ -1431,7 +1583,13 @@ const EditEventPage = () => {
                                                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                                                             <div>
                                                                 <span className={`font-medium ${themeClasses.textMuted}`}>{t('price')}:</span>
-                                                                <p className={`${themeClasses.text} font-medium`}>RM {ticket.price}</p>
+                                                                <p className={`${themeClasses.text} font-medium`}>
+                                                                    {formatCurrencyWithUserPreference(
+                                                                        convertFromUSD(ticket.price, userCurrency),
+                                                                        { currency: userCurrency },
+                                                                        { region: 'en-US' }
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                             <div>
                                                                 <span className={`font-medium ${themeClasses.textMuted}`}>{t('quantity')}:</span>
@@ -1549,7 +1707,6 @@ const EditEventPage = () => {
                     </form>
                 </div>
 
-                {/* Create Ticket Type Modal */}
                 {showCreateTicketForm && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                         <div className={`${themeClasses.card} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
@@ -1597,7 +1754,10 @@ const EditEventPage = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                {t('price')} *
+                                                {t('price')} ({CURRENCIES[userCurrency as keyof typeof CURRENCIES]?.symbol || '$'}) *
+                                                <span className={`text-xs ${themeClasses.textMuted} ml-2`}>
+                                                    (Converted from USD)
+                                                </span>
                                             </label>
                                             <input
                                                 type="number"
@@ -1683,14 +1843,11 @@ const EditEventPage = () => {
                                     e.preventDefault();
                                     try {
                                         await handleUpdateTicketType(e);
-                                        // Redirect to events page after successful update
                                         window.location.href = 'http://localhost:3000/organizer/events';
                                     } catch (error) {
-                                        // Handle error if needed - the form will show error messages
                                         console.error('Update failed:', error);
                                     }
                                 }} className="space-y-4">
-                                    {/* Safe Edit Notice */}
                                     <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                                         <h4 className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">✅ {t('safeToEdit')}</h4>
                                         <p className="text-xs text-green-700 dark:text-green-300">
@@ -1730,7 +1887,10 @@ const EditEventPage = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className={`block text-sm font-medium ${themeClasses.text} mb-2`}>
-                                                {t('price')} *
+                                                {t('price')} ({CURRENCIES[userCurrency as keyof typeof CURRENCIES]?.symbol || '$'}) *
+                                                <span className={`text-xs ${themeClasses.textMuted} ml-2`}>
+                                                    (Converted from USD)
+                                                </span>
                                             </label>
                                             <input
                                                 type="number"

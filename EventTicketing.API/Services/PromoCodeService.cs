@@ -16,7 +16,6 @@ namespace EventTicketing.API.Services
 
         public async Task<PromoCodeResponseDto> CreatePromoCodeAsync(CreatePromoCodeDto createDto, int organizerId)
         {
-            // Verify organizer exists and has correct role
             var organizer = await _context.Users
                 .Include(u => u.UserRoles)
                 .FirstOrDefaultAsync(u => u.UserId == organizerId);
@@ -24,14 +23,12 @@ namespace EventTicketing.API.Services
             if (organizer == null || !organizer.UserRoles.Any(ur => ur.Role == RoleType.Organizer && ur.IsActive))
                 throw new UnauthorizedAccessException("Only organizers can create promo codes");
 
-            // Validate code uniqueness (case-insensitive)
             var existingCode = await _context.PromoCodes
                 .FirstOrDefaultAsync(pc => pc.Code.ToLower() == createDto.Code.ToLower());
 
             if (existingCode != null)
                 throw new Exception($"Promo code '{createDto.Code}' already exists. Please choose a different code.");
 
-            // Validate event ownership if event-specific
             if (createDto.Scope == PromoCodeScope.EventSpecific)
             {
                 if (!createDto.EventId.HasValue)
@@ -45,14 +42,12 @@ namespace EventTicketing.API.Services
                     throw new Exception("You can only create promo codes for your own events");
             }
 
-            // Validate date range
             if (createDto.StartDate >= createDto.EndDate)
                 throw new Exception("End date must be after start date");
 
             if (createDto.StartDate < DateTime.UtcNow.Date)
                 throw new Exception("Start date cannot be in the past");
 
-            // Validate percentage values
             if (createDto.Type == PromoCodeType.Percentage && (createDto.Value <= 0 || createDto.Value > 100))
                 throw new Exception("Percentage value must be between 0.01 and 100");
 
@@ -97,7 +92,6 @@ namespace EventTicketing.API.Services
                 };
             }
 
-            // Check if promo code is active
             if (!promoCode.IsActive || promoCode.Status != PromoCodeStatus.Active)
             {
                 return new PromoCodeValidationDto
@@ -107,7 +101,6 @@ namespace EventTicketing.API.Services
                 };
             }
 
-            // Check date validity
             var now = DateTime.UtcNow;
             if (now < promoCode.StartDate)
             {
@@ -127,7 +120,6 @@ namespace EventTicketing.API.Services
                 };
             }
 
-            // Check usage limits
             if (promoCode.CurrentUsageCount >= promoCode.MaxUsageCount)
             {
                 return new PromoCodeValidationDto
@@ -137,7 +129,6 @@ namespace EventTicketing.API.Services
                 };
             }
 
-            // Check per-user usage limit
             if (promoCode.MaxUsagePerUser.HasValue && userId > 0)
             {
                 var userUsageCount = promoCode.PromoCodeUsages.Count(u => u.UserId == userId);
@@ -151,7 +142,6 @@ namespace EventTicketing.API.Services
                 }
             }
 
-            // Check minimum order amount
             if (promoCode.MinimumOrderAmount.HasValue && orderSubtotal < promoCode.MinimumOrderAmount.Value)
             {
                 return new PromoCodeValidationDto
@@ -161,7 +151,6 @@ namespace EventTicketing.API.Services
                 };
             }
 
-            // Check scope restrictions
             var eventEntity = await _context.Events.FindAsync(eventId);
             if (eventEntity == null)
             {
@@ -197,7 +186,6 @@ namespace EventTicketing.API.Services
                     break;
             }
 
-            // Calculate discount
             var discountAmount = CalculateDiscount(promoCode, orderSubtotal);
 
             return new PromoCodeValidationDto
@@ -218,36 +206,27 @@ namespace EventTicketing.API.Services
 
         private decimal CalculateDiscount(PromoCode promoCode, decimal orderSubtotal)
         {
-            Console.WriteLine($"🔍 Calculating discount for code: {promoCode.Code}");
-            Console.WriteLine($"🔍 Type: {promoCode.Type}, Value: {promoCode.Value}, Subtotal: {orderSubtotal}");
 
             decimal discount = 0;
 
             switch (promoCode.Type)
             {
                 case PromoCodeType.Percentage:
-                    // FIX: Add 'm' suffix to force decimal division instead of integer division
                     discount = orderSubtotal * (promoCode.Value / 100m);
-                    Console.WriteLine($"🔍 Percentage calculation: {orderSubtotal} * ({promoCode.Value} / 100) = {discount}");
                     break;
 
                 case PromoCodeType.FixedAmount:
                     discount = Math.Min(promoCode.Value, orderSubtotal);
-                    Console.WriteLine($"🔍 Fixed amount calculation: Min({promoCode.Value}, {orderSubtotal}) = {discount}");
                     break;
             }
-
-            Console.WriteLine($"🔍 Discount before max limit: {discount}");
 
             // Apply maximum discount limit if specified
             if (promoCode.MaximumDiscountAmount.HasValue)
             {
                 decimal originalDiscount = discount;
                 discount = Math.Min(discount, promoCode.MaximumDiscountAmount.Value);
-                Console.WriteLine($"🔍 Max discount limit applied: {originalDiscount} -> {discount} (limit: {promoCode.MaximumDiscountAmount.Value})");
             }
 
-            Console.WriteLine($"🔍 Final discount: {discount}");
             return discount;
         }
 
@@ -330,11 +309,9 @@ namespace EventTicketing.API.Services
             if (promoCode == null)
                 throw new Exception("Promo code not found");
 
-            // Don't allow editing if it's been used
             if (promoCode.CurrentUsageCount > 0)
                 throw new Exception("Cannot modify promo code that has already been used");
 
-            // Apply updates
             if (updateDto.Description != null)
                 promoCode.Description = updateDto.Description;
 

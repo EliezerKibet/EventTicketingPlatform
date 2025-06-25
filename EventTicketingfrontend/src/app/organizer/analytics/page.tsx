@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme, useThemeClasses } from '@/hooks/useTheme';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { eventsApi } from '@/lib/api';
 import {
     BarChart,
     Bar,
@@ -36,7 +37,8 @@ import {
 } from 'lucide-react';
 import { useI18n } from '../../../components/providers/I18nProvider';
 
-// TypeScript interfaces for analytics data
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
 interface EventRevenueData {
     eventId: number;
     eventName: string;
@@ -161,6 +163,7 @@ interface AnalyticsData {
     venues: VenueAnalytics;
     seasonal: SeasonalAnalytics;
     lowAttendance: LowAttendanceAnalytics;
+
 }
 
 interface StatCardProps {
@@ -170,6 +173,29 @@ interface StatCardProps {
     trend?: string;
     color?: string;
 }
+
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
+interface Stats {
+    totalEvents: number;
+    publishedEvents: number;
+    totalTicketsSold: number;
+    totalRevenue: number;
+    upcomingEvents: number;
+}
+
 
 const OrganizerAnalytics: React.FC = () => {
     const themeClasses = useThemeClasses();
@@ -182,15 +208,12 @@ const OrganizerAnalytics: React.FC = () => {
     const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
     const [apiErrors, setApiErrors] = useState<string[]>([]);
 
-    // Configure your backend API URL - update this to match your C# API port
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
 
-    // Chart colors that work well in both themes
     const COLORS = isDark
         ? ['#60A5FA', '#F87171', '#34D399', '#FBBF24', '#A78BFA', '#22D3EE']
         : ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#06B6D4'];
 
-    // Check authentication status
     const checkAuth = (): boolean => {
         const token = localStorage.getItem('authToken');
         const user = localStorage.getItem('user');
@@ -201,7 +224,6 @@ const OrganizerAnalytics: React.FC = () => {
         }
 
         try {
-            // Basic token validation - check if it's expired
             const payload = JSON.parse(atob(token.split('.')[1]));
             const currentTime = Math.floor(Date.now() / 1000);
 
@@ -215,7 +237,6 @@ const OrganizerAnalytics: React.FC = () => {
             setAuthStatus('authenticated');
             return true;
         } catch (error) {
-            console.error('Invalid token format:', error);
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
             setAuthStatus('unauthenticated');
@@ -223,7 +244,6 @@ const OrganizerAnalytics: React.FC = () => {
         }
     };
 
-    // Enhanced API call with better error handling
     const makeAuthenticatedRequest = async (endpoint: string, isOptional: boolean = false): Promise<any> => {
         const token = localStorage.getItem('authToken');
 
@@ -243,12 +263,9 @@ const OrganizerAnalytics: React.FC = () => {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
                 setAuthStatus('unauthenticated');
-                throw new Error('Authentication expired. Please log in again.');
             }
 
-            // Handle known issues gracefully
             if (response.status === 400 && endpoint.includes('check-in-patterns')) {
-                console.warn('Check-in patterns API has known LINQ translation issue - using empty data');
                 return { hourlyPattern: [], totalCheckIns: 0, totalTicketsSold: 0, attendanceRate: 0 };
             }
 
@@ -260,14 +277,12 @@ const OrganizerAnalytics: React.FC = () => {
             return response.json();
         } catch (error: any) {
             if (isOptional) {
-                console.warn(`Optional endpoint ${endpoint} failed:`, error.message);
                 return null;
             }
             throw error;
         }
     };
 
-    // API endpoints pointing to your C# backend
     const fetchAnalyticsData = async (): Promise<void> => {
         if (!checkAuth()) {
             return;
@@ -277,15 +292,58 @@ const OrganizerAnalytics: React.FC = () => {
         setApiErrors([]);
 
         try {
-            console.log('Fetching analytics data from:', API_BASE_URL);
+            setLoading(true);
 
-            // Fetch data with individual error handling
+            const eventsResponse = await eventsApi.getMyEvents();
+
+            let totalActualRevenue = 0;
+
+            for (const event of eventsResponse) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/tickets/event/${event.eventId}/revenue`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const revenueData = await response.json();
+                        event.actualRevenue = revenueData.grossRevenue || 0;
+                        totalActualRevenue += event.actualRevenue;
+                    } else {
+                        event.actualRevenue = 0;
+                    }
+                } catch (error) {
+                    console.error(`Failed to fetch revenue for event ${event.eventId}`);
+                    event.actualRevenue = 0;
+                }
+            }
+
+
+
+            const now = new Date();
+            const totalEvents = eventsResponse.length;
+            const publishedEvents = eventsResponse.filter(event => event.isPublished).length;
+            const upcomingEvents = eventsResponse.filter(event =>
+                new Date(event.startDateTime || event.eventDate) > now && event.isPublished
+            ).length;
+            const totalTicketsSold = eventsResponse.reduce((sum, event) => sum + (event.ticketsSold || 0), 0);
+
+            setStats({
+                totalEvents,
+                publishedEvents,
+                totalTicketsSold,
+                totalRevenue: totalActualRevenue,
+                upcomingEvents
+            });
+
             const results = await Promise.allSettled([
                 makeAuthenticatedRequest(`/api/analytics/revenue-by-event?period=${selectedPeriod}`),
                 makeAuthenticatedRequest(`/api/analytics/payment-methods?period=${selectedPeriod}`),
                 makeAuthenticatedRequest(`/api/analytics/event-capacity?period=${selectedPeriod}`),
                 makeAuthenticatedRequest(`/api/analytics/attendee-demographics?period=${selectedPeriod}`),
-                makeAuthenticatedRequest(`/api/analytics/check-in-patterns?period=${selectedPeriod}`, true), // Mark as optional
+                makeAuthenticatedRequest(`/api/analytics/check-in-patterns?period=${selectedPeriod}`, true), 
                 makeAuthenticatedRequest(`/api/analytics/venue-performance?period=${selectedPeriod}`),
                 makeAuthenticatedRequest(`/api/analytics/seasonal-trends`),
                 makeAuthenticatedRequest(`/api/analytics/low-attendance-events`)
@@ -293,7 +351,6 @@ const OrganizerAnalytics: React.FC = () => {
 
             const errors: string[] = [];
 
-            // Process results with fallbacks
             const [
                 revenueResult,
                 paymentResult,
@@ -336,8 +393,6 @@ const OrganizerAnalytics: React.FC = () => {
             const checkInData = checkInResult.status === 'fulfilled'
                 ? checkInResult.value
                 : (() => {
-                    // Don't add to errors - this is a known backend issue that's handled gracefully
-                    console.log('Check-in patterns data using fallback due to known API issue');
                     return { hourlyPattern: [], totalCheckIns: 0, totalTicketsSold: 0, attendanceRate: 0 };
                 })();
 
@@ -376,10 +431,7 @@ const OrganizerAnalytics: React.FC = () => {
             });
 
         } catch (error: any) {
-            console.error('Error fetching analytics:', error);
-            setApiErrors(['Failed to connect to analytics API. Please check your connection and try again.']);
 
-            // Use empty data structure as fallback
             setAnalyticsData({
                 revenue: { totalRevenue: 0, totalAttendees: 0, activeEvents: 0, totalVenues: 0, events: [] },
                 payments: { methods: [] },
@@ -395,17 +447,184 @@ const OrganizerAnalytics: React.FC = () => {
         }
     };
 
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const userPreferences = await response.json();
+                setPreferences(userPreferences);
+            }
+        } catch (error) {
+            setPreferences({
+                currency: 'USD',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC'
+            });
+        }
+    };
+
+    const [stats, setStats] = useState<Stats>({
+        totalEvents: 0,
+        publishedEvents: 0,
+        totalTicketsSold: 0,
+        totalRevenue: 0,
+        upcomingEvents: 0
+    });
+
+    const getTimeZoneAbbreviation = (timeZone: string): string => {
+        const abbreviations: { [key: string]: string } = {
+            'UTC': 'UTC',
+            'America/New_York': 'EST/EDT',
+            'America/Chicago': 'CST/CDT',
+            'America/Denver': 'MST/MDT',
+            'America/Los_Angeles': 'PST/PDT',
+            'Asia/Kuala_Lumpur': 'MYT',
+            'Europe/London': 'GMT/BST',
+            'Europe/Paris': 'CET/CEST',
+            'Asia/Tokyo': 'JST',
+            'Australia/Sydney': 'AEST/AEDT'
+        };
+
+        return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+        const currency = preferences?.currency ?? 'USD';
+        const locale = currentLangData?.region ?? 'en-US';
+
+        try {
+            // Use Intl.NumberFormat for proper currency formatting
+            const formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'JPY': '¥'
+        };
+
+        return symbols[currency] || '$';
+    };
+
+    const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+        const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+            ? preferences.currency
+            : 'USD';
+
+
+        if (fromCurrency === userCurrency) {
+            return formatCurrencyWithUserPreference(amount, preferences, currentLangData);
+        }
+
+        const conversionRates: { [key: string]: { [key: string]: number } } = {
+            'USD': {
+                'USD': 1,
+                'EUR': 0.92,  // 1 USD = 0.92 EUR
+                'GBP': 0.79,  // 1 USD = 0.79 GBP
+                'JPY': 149    // 1 USD = 149 JPY
+            },
+            'EUR': {
+                'USD': 1.09,  // 1 EUR = 1.09 USD
+                'EUR': 1,
+                'GBP': 0.86,  // 1 EUR = 0.86 GBP
+                'JPY': 162    // 1 EUR = 162 JPY
+            },
+            'GBP': {
+                'USD': 1.27,  // 1 GBP = 1.27 USD
+                'EUR': 1.16,  // 1 GBP = 1.16 EUR
+                'GBP': 1,
+                'JPY': 189    // 1 GBP = 189 JPY
+            },
+            'JPY': {
+                'USD': 0.0067, // 1 JPY = 0.0067 USD
+                'EUR': 0.0062, // 1 JPY = 0.0062 EUR
+                'GBP': 0.0053, // 1 JPY = 0.0053 GBP
+                'JPY': 1
+            }
+        };
+
+        const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+        const convertedAmount = amount * rate;
+
+        return formatCurrencyWithUserPreference(convertedAmount, preferences, currentLangData);
+    };
+
+    const formatDateWithUserPreference = (dateString: string, preferences: UserPreferences | null) => {
+        const date = new Date(dateString);
+        const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+
+        const monthNames = [
+            t('jan'), t('feb'), t('mar'), t('apr'),
+            t('may'), t('jun'), t('jul'), t('aug'),
+            t('sep'), t('oct'), t('nov'), t('dec')
+        ];
+        const monthShort = monthNames[date.getMonth()];
+
+        switch (dateFormat) {
+            case 'dd/MM/yyyy':
+                return `${day}/${month}/${year}`;
+            case 'yyyy-MM-dd':
+                return `${year}-${month}-${day}`;
+            case 'MMM dd, yyyy':
+                return `${monthShort} ${parseInt(day)}, ${year}`;
+            case 'dd MMM yyyy':
+                return `${parseInt(day)} ${monthShort} ${year}`;
+            default: // MM/dd/yyyy
+                return `${month}/${day}/${year}`;
+        }
+    };
+
     useEffect(() => {
         checkAuth();
     }, []);
 
     useEffect(() => {
         if (authStatus === 'authenticated') {
+            fetchUserPreferences();
             fetchAnalyticsData();
         }
     }, [selectedPeriod, authStatus]);
 
-    // Theme-aware StatCard component
     const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, trend, color = "blue" }) => (
         <div className={`${themeClasses.card} rounded-lg shadow-md p-6 border-l-4 border-blue-500`}>
             <div className="flex items-center justify-between">
@@ -424,7 +643,6 @@ const OrganizerAnalytics: React.FC = () => {
         </div>
     );
 
-    // Custom Tooltip for charts with theme support
     const CustomTooltip = ({ active, payload, label, isDark }: any) => {
         if (!active || !payload || !payload.length) return null;
 
@@ -440,7 +658,6 @@ const OrganizerAnalytics: React.FC = () => {
         );
     };
 
-    // Show authentication required screen
     if (authStatus === 'checking') {
         return (
             <div className={`flex items-center justify-center min-h-screen ${themeClasses.background}`}>
@@ -529,10 +746,14 @@ const OrganizerAnalytics: React.FC = () => {
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard
+                    icon={() => (
+                        <div className="flex items-center justify-center w-6 h-6 text-white font-bold text-lg">
+                            {getCurrencySymbol(preferences?.currency || 'USD')}
+                        </div>
+                    )}
                     title={t('totalRevenue')}
-                    value={`$${analyticsData.revenue.totalRevenue.toLocaleString()}`}
-                    icon={DollarSign}
-                    trend={analyticsData.revenue.totalRevenue > 0 ? t('fromLastMonth') : t('noRevenueYet')}
+                    value={convertAndFormatCurrency(stats.totalRevenue, 'USD', preferences, { region: 'en-US' })}
+                    color="purple"
                 />
                 <StatCard
                     title={t('totalAttendees')}
@@ -563,7 +784,10 @@ const OrganizerAnalytics: React.FC = () => {
                     </h3>
                     {analyticsData.revenue.events.length > 0 ? (
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={analyticsData.revenue.events}>
+                            <BarChart data={analyticsData.revenue.events.map(event => ({
+                                ...event,
+                                displayRevenue: parseFloat(convertAndFormatCurrency(event.totalRevenue, 'USD', preferences, { region: 'en-US' }).replace(/[^\d.-]/g, ''))
+                            }))}>
                                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#374151' : '#E5E7EB'} />
                                 <XAxis
                                     dataKey="eventName"
@@ -574,8 +798,29 @@ const OrganizerAnalytics: React.FC = () => {
                                     tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }}
                                 />
                                 <YAxis tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
-                                <Tooltip content={<CustomTooltip isDark={isDark} />} />
-                                <Bar dataKey="totalRevenue" fill={COLORS[0]} />
+                                <Tooltip
+                                    content={({ active, payload, label }) => {
+                                        if (!active || !payload || !payload.length) return null;
+                                        const data = payload[0].payload;
+                                        return (
+                                            <div className={`${isDark ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} border rounded-lg p-3 shadow-lg`}>
+                                                <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+                                                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                    Revenue: {convertAndFormatCurrency(data.totalRevenue, 'USD', preferences, { region: 'en-US' })}
+                                                    {preferences?.currency && preferences.currency !== 'USD' && (
+                                                        <span className="block text-xs opacity-75">
+                                                            (≈ ${data.totalRevenue.toFixed(2)} USD)
+                                                        </span>
+                                                    )}
+                                                </p>
+                                                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                    Attendees: {data.attendeeCount}
+                                                </p>
+                                            </div>
+                                        );
+                                    }}
+                                />
+                                <Bar dataKey="displayRevenue" fill={COLORS[0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
@@ -625,6 +870,15 @@ const OrganizerAnalytics: React.FC = () => {
                                             <span className={`text-sm font-medium ${themeClasses.text}`}>{method.percentage}%</span>
                                             <br />
                                             <span className={`text-xs ${themeClasses.textMuted}`}>{method.orderCount} {t('orders')}</span>
+                                            <br />
+                                            <span className={`text-xs font-medium ${themeClasses.text}`}>
+                                                {convertAndFormatCurrency(method.totalAmount, 'USD', preferences, { region: 'en-US' })}
+                                                {preferences?.currency && preferences.currency !== 'USD' && (
+                                                    <span className="block text-xs opacity-75">
+                                                        (≈ ${method.totalAmount.toFixed(2)} USD)
+                                                    </span>
+                                                )}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
@@ -694,7 +948,33 @@ const OrganizerAnalytics: React.FC = () => {
                             <XAxis dataKey="month" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
                             <YAxis yAxisId="left" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
                             <YAxis yAxisId="right" orientation="right" tick={{ fill: isDark ? '#D1D5DB' : '#6B7280' }} />
-                            <Tooltip content={<CustomTooltip isDark={isDark} />} />
+                            <Tooltip
+                                content={({ active, payload, label }) => {
+                                    if (!active || !payload || !payload.length) return null;
+                                    const data = payload[0].payload;
+                                    return (
+                                        <div className={`${isDark ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} border rounded-lg p-3 shadow-lg`}>
+                                            <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{label}</p>
+                                            {payload.map((entry: any, index: number) => (
+                                                <p key={index} className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`} style={{ color: entry.color }}>
+                                                    {entry.name === `${t('revenue')} ($)` ? (
+                                                        <>
+                                                            Revenue: {convertAndFormatCurrency(entry.value, 'USD', preferences, { region: 'en-US' })}
+                                                            {preferences?.currency && preferences.currency !== 'USD' && (
+                                                                <span className="block text-xs opacity-75">
+                                                                    (≈ ${entry.value.toFixed(2)} USD)
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        `${entry.name}: ${entry.value}`
+                                                    )}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    );
+                                }}
+                            />
                             <Bar yAxisId="left" dataKey="eventCount" fill={COLORS[4]} name={t('events')} />
                             <Line yAxisId="right" type="monotone" dataKey="totalRevenue" stroke={COLORS[2]} strokeWidth={2} name={`${t('revenue')} ($)`} />
                         </LineChart>
@@ -750,7 +1030,14 @@ const OrganizerAnalytics: React.FC = () => {
                                         </div>
                                         <div>
                                             <p className={themeClasses.textMuted}>{t('revenue')}</p>
-                                            <p className={`font-medium ${themeClasses.text}`}>${venue.totalRevenue.toLocaleString()}</p>
+                                            <p className={`font-medium ${themeClasses.text}`}>
+                                                {convertAndFormatCurrency(venue.totalRevenue, 'USD', preferences, { region: 'en-US' })}
+                                            </p>
+                                            {preferences?.currency && preferences.currency !== 'USD' && (
+                                                <p className={`text-xs ${themeClasses.textMuted} opacity-75`}>
+                                                    (≈ ${venue.totalRevenue.toFixed(2)} USD)
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -801,7 +1088,14 @@ const OrganizerAnalytics: React.FC = () => {
                                             {event.ticketTypes.map((ticket: TicketTypeData, index: number) => (
                                                 <div key={index} className={`${themeClasses.card} p-2 rounded border ${themeClasses.border}`}>
                                                     <p className={`font-medium ${themeClasses.text}`}>{ticket.typeName}</p>
-                                                    <p className={themeClasses.textMuted}>${ticket.price} - {ticket.sold} {t('ticketsSold')}</p>
+                                                    <p className={themeClasses.textMuted}>
+                                                        {convertAndFormatCurrency(ticket.price, 'USD', preferences, { region: 'en-US' })} - {ticket.sold} {t('ticketsSold')}
+                                                        {preferences?.currency && preferences.currency !== 'USD' && (
+                                                            <span className="block text-xs opacity-75">
+                                                                (≈ ${ticket.price.toFixed(2)} USD)
+                                                            </span>
+                                                        )}
+                                                    </p>
                                                 </div>
                                             ))}
                                         </div>

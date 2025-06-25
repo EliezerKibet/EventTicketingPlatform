@@ -272,12 +272,10 @@ const formatCurrencyWithUserPreference = (amount: number, preferences: UserPrefe
 };
 
 const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
-    // Ensure we always have a valid user currency
     const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
         ? preferences.currency
         : 'USD';
 
-    // If currencies match, just format
     if (fromCurrency === userCurrency) {
         return formatCurrencyWithUserPreference(amount, {
             ...preferences,
@@ -285,7 +283,6 @@ const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferen
         } as UserPreferences, currentLangData);
     }
 
-    // Conversion rates for your 4 supported currencies (approximate rates)
     const conversionRates: { [key: string]: { [key: string]: number } } = {
         'USD': {
             'USD': 1,
@@ -339,31 +336,20 @@ const formatEventDateTime = (dateTimeString: string, preferences: UserPreference
     const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
     const timeFormat = preferences?.timeFormat || '12h';
 
-    console.log('📅 Formatting date with preferences:', {
-        dateFormat,
-        timeFormat,
-        userTimeZone,
-        originalDate: dateTimeString
-    });
 
-    // Create date in user's timezone
     const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
 
-    // Extract date components
     const year = zonedDate.getFullYear();
     const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
     const day = String(zonedDate.getDate()).padStart(2, '0');
 
-    // Month names for text formats
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthShort = monthNames[zonedDate.getMonth()];
 
-    // Weekday names
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const weekday = weekdays[zonedDate.getDay()];
 
-    // Format date according to user preference - INDEPENDENT OF LOCALE
     let formattedDate: string;
     switch (dateFormat) {
         case 'dd/MM/yyyy':
@@ -382,7 +368,6 @@ const formatEventDateTime = (dateTimeString: string, preferences: UserPreference
             formattedDate = `${weekday}, ${month}/${day}/${year}`;
     }
 
-    // Format time - also independent of locale
     const hours24 = zonedDate.getHours();
     const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
 
@@ -395,13 +380,11 @@ const formatEventDateTime = (dateTimeString: string, preferences: UserPreference
         formattedTime = `${hours12}:${minutes} ${ampm}`;
     }
 
-    // Add timezone abbreviation
     const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
     formattedTime += ` ${timeZoneAbbr}`;
 
     const result = `${formattedDate} ${t('at')} ${formattedTime}`;
 
-    console.log('📅 Final formatted result:', result);
     return result;
 };
 
@@ -543,13 +526,10 @@ export default function MyTicketsPage() {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('🎫 Tickets loaded:', data);
                 setTickets(data);
             } else {
-                console.error('Failed to fetch tickets');
             }
         } catch (error) {
-            console.error('Error fetching tickets:', error);
         } finally {
             setLoading(false);
         }
@@ -623,7 +603,6 @@ export default function MyTicketsPage() {
         if (preferences) {
             return formatEventTimeOnly(dateString, preferences);
         }
-        // Fallback for when preferences aren't loaded yet
         const date = new Date(dateString);
         return date.toLocaleTimeString('en-US', {
             hour: 'numeric',
@@ -657,7 +636,6 @@ export default function MyTicketsPage() {
                 window.URL.revokeObjectURL(url);
             }
         } catch (error) {
-            console.error('Error downloading ticket:', error);
         }
     };
 

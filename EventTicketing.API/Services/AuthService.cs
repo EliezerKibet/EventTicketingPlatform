@@ -23,16 +23,13 @@ namespace EventTicketing.API.Services
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
         {
-            // Check if user already exists
             if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
             {
                 throw new Exception("User with this email already exists");
             }
 
-            // Hash password
             var passwordHash = HashPassword(registerDto.Password);
 
-            // Create user
             var user = new User
             {
                 Email = registerDto.Email,
@@ -48,7 +45,6 @@ namespace EventTicketing.API.Services
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Add default customer role
             var userRole = new UserRole
             {
                 UserId = user.UserId,
@@ -60,7 +56,6 @@ namespace EventTicketing.API.Services
             _context.UserRoles.Add(userRole);
             await _context.SaveChangesAsync();
 
-            // Generate token
             var roles = new List<string> { "Customer" };
             var token = GenerateJwtToken(user.UserId, user.Email, roles);
 
@@ -92,15 +87,12 @@ namespace EventTicketing.API.Services
                 throw new Exception("Account is deactivated");
             }
 
-            // Update last login
             user.LastLoginAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            // Get roles
             var roles = user.UserRoles.Where(ur => ur.IsActive)
                            .Select(ur => ur.Role.ToString()).ToList();
 
-            // Generate token
             var token = GenerateJwtToken(user.UserId, user.Email, roles);
 
             return new AuthResponseDto
@@ -125,7 +117,6 @@ namespace EventTicketing.API.Services
                 new Claim(ClaimTypes.Email, email)
             };
 
-            // Add role claims
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
@@ -145,7 +136,6 @@ namespace EventTicketing.API.Services
             return tokenHandler.WriteToken(token);
         }
 
-        // New async methods for UserService
         public async Task<bool> VerifyPasswordAsync(string password, string hashedPassword)
         {
             return await Task.FromResult(VerifyPassword(password, hashedPassword));
@@ -156,7 +146,6 @@ namespace EventTicketing.API.Services
             return await Task.FromResult(HashPassword(password));
         }
 
-        // Existing private methods (keep these as they are)
         private string HashPassword(string password)
         {
             using var rng = RandomNumberGenerator.Create();

@@ -132,7 +132,6 @@ interface UserPreferences {
     currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
 }
 
-// Enhanced theming system - UNIFIED across all pages
 const getThemeClasses = (preferences: UserPreferences | null) => {
     const isDarkMode = preferences?.theme === 'dark' ||
         (preferences?.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -303,7 +302,6 @@ const getThemeClasses = (preferences: UserPreferences | null) => {
     };
 };
 
-// Currency conversion functions
 const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
     const currency = preferences?.currency ?? 'USD';
     const locale = currentLangData?.region ?? 'en-US';
@@ -392,7 +390,6 @@ const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferen
     return formatCurrencyWithUserPreference(convertedAmount, preferences, currentLangData);
 };
 
-
 const getTimeZoneAbbreviation = (timeZone: string): string => {
     const abbreviations: { [key: string]: string } = {
         'UTC': 'UTC',
@@ -416,31 +413,26 @@ const formatEventDateTime = (dateTimeString: string, preferences: UserPreference
     const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
     const timeFormat = preferences?.timeFormat || '12h';
 
-    console.log('📅 Formatting date with preferences:', {
-        dateFormat,
-        timeFormat,
-        userTimeZone,
-        originalDate: dateTimeString
-    });
 
-    // Create date in user's timezone
     const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
 
-    // Extract date components
     const year = zonedDate.getFullYear();
     const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
     const day = String(zonedDate.getDate()).padStart(2, '0');
 
-    // Month names for text formats
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNames = [
+        t('january'), t('february'), t('march'), t('april'),
+        t('may'), t('june'), t('july'), t('august'),
+        t('september'), t('october'), t('november'), t('december')
+    ];
     const monthShort = monthNames[zonedDate.getMonth()];
 
-    // Weekday names
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekdays = [
+        t('sunday'), t('monday'), t('tuesday'), t('wednesday'),
+        t('thursday'), t('friday'), t('saturday')
+    ];
     const weekday = weekdays[zonedDate.getDay()];
 
-    // Format date according to user preference - INDEPENDENT OF LOCALE
     let formattedDate: string;
     switch (dateFormat) {
         case 'dd/MM/yyyy':
@@ -455,11 +447,10 @@ const formatEventDateTime = (dateTimeString: string, preferences: UserPreference
         case 'dd MMM yyyy':
             formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
             break;
-        default: // MM/dd/yyyy
+        default: 
             formattedDate = `${weekday}, ${month}/${day}/${year}`;
     }
 
-    // Format time - also independent of locale
     const hours24 = zonedDate.getHours();
     const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
 
@@ -472,13 +463,11 @@ const formatEventDateTime = (dateTimeString: string, preferences: UserPreference
         formattedTime = `${hours12}:${minutes} ${ampm}`;
     }
 
-    // Add timezone abbreviation
     const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
     formattedTime += ` ${timeZoneAbbr}`;
 
     const result = `${formattedDate} ${t('at')} ${formattedTime}`;
 
-    console.log('📅 Final formatted result:', result);
     return result;
 };
 
@@ -537,7 +526,6 @@ const formatEventTimeOnly = (dateTimeString: string, preferences: UserPreference
     return `${formattedTime} ${timeZoneAbbr}`;
 };
 
-// Hero Slideshow Component with theming
 const EventHeroSlideshow = ({ images, autoPlay = true, themeClasses }: {
     images: SlideImage[],
     autoPlay?: boolean,
@@ -764,7 +752,6 @@ export default function EventDetailsPage() {
         if (user) {
             loadUserPreferences();
         } else {
-            // Set default preferences for non-logged in users
             setPreferences({
                 emailNotifications: true,
                 sessionTimeout: 30,
@@ -780,7 +767,6 @@ export default function EventDetailsPage() {
         }
     }, [user]);
 
-    // Apply theme to document body
     useEffect(() => {
         if (themeClasses.isDarkMode) {
             document.documentElement.classList.add('dark');
@@ -832,7 +818,6 @@ export default function EventDetailsPage() {
 
         const images: SlideImage[] = [];
 
-        // Add event banner if available and not NULL
         if (event.bannerImageUrl && event.bannerImageUrl !== 'NULL' && event.bannerImageUrl.trim() !== '') {
             const imageUrl = getImageUrl(event.bannerImageUrl);
             if (imageUrl) {
@@ -846,7 +831,6 @@ export default function EventDetailsPage() {
             }
         }
 
-        // Add event image if different from banner and not NULL
         if (event.imageUrl &&
             event.imageUrl !== 'NULL' &&
             event.imageUrl.trim() !== '' &&
@@ -863,7 +847,6 @@ export default function EventDetailsPage() {
             }
         }
 
-        // Add venue image if available, not online event, and not NULL
         if (venue &&
             venue.imageUrl &&
             venue.imageUrl !== 'NULL' &&
@@ -917,7 +900,6 @@ export default function EventDetailsPage() {
                 setVenue(data);
             }
         } catch (error) {
-            console.error('Failed to fetch venue details:', error);
         }
     };
 
@@ -966,7 +948,6 @@ export default function EventDetailsPage() {
                 setQuantities(initialQuantities);
             }
         } catch (error) {
-            console.error('Failed to fetch ticket types:', error);
         }
     };
 
@@ -1065,7 +1046,6 @@ export default function EventDetailsPage() {
         if (preferences) {
             return formatEventDateOnly(dateString, preferences);
         }
-        // Fallback for when preferences aren't loaded yet
         return new Date(dateString).toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -1331,7 +1311,7 @@ export default function EventDetailsPage() {
                                             {t('inYourCart')}
                                         </h4>
                                         <span className={`${themeClasses.fontSize.subtitle} text-green-800`}>{getTotalItems()} {t('items')}
-</span>
+                                        </span>
                                     </div>
                                     <div className={themeClasses.spacing}>
                                         {cart.map((item) => (

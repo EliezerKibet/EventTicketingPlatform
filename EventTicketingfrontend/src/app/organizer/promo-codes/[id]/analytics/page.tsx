@@ -34,7 +34,6 @@ import {
     Loader2
 } from 'lucide-react';
 
-// Define analytics interfaces
 interface PromoCodeAnalytics {
     promoCodeId: number;
     code: string;
@@ -72,6 +71,22 @@ interface PromoCodeUsage {
     usedAt: string;
 }
 
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
 const PromoCodeAnalyticsPage: React.FC = () => {
     const themeClasses = useThemeClasses();
     const { t } = useI18n();
@@ -89,21 +104,80 @@ const PromoCodeAnalyticsPage: React.FC = () => {
     const [usageHistory, setUsageHistory] = useState<PromoCodeUsage[]>([]);
     const [activeTab, setActiveTab] = useState<'overview' | 'usage' | 'timeline'>('overview');
 
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
     // Load data on component mount
     useEffect(() => {
         if (user && isOrganizer) {
+            fetchUserPreferences();
             loadData();
         } else if (user && !isOrganizer) {
             router.push('/');
         }
     }, [user, isOrganizer, router, promoCodeId]);
 
+    type Currency = 'USD' | 'EUR' | 'GBP' | 'JPY';
+
+    function isCurrency(value: unknown): value is Currency {
+        return typeof value === 'string' &&
+            ['USD', 'EUR', 'GBP', 'JPY'].includes(value);
+    }
+
+    const CURRENCIES = {
+        USD: { symbol: '$', name: 'US Dollar', code: 'USD' },
+        EUR: { symbol: '€', name: 'Euro', code: 'EUR' },
+        GBP: { symbol: '£', name: 'British Pound', code: 'GBP' },
+        JPY: { symbol: '¥', name: 'Japanese Yen', code: 'JPY' }
+    };
+
+    const EXCHANGE_RATES = {
+        USD: 1.00,
+        EUR: 0.92,
+        GBP: 0.79,
+        JPY: 149.0
+    };
+
+    const convertFromUSD = (usdAmount: number, toCurrency: string): number => {
+        const rate = EXCHANGE_RATES[toCurrency as keyof typeof EXCHANGE_RATES] || 1;
+        return usdAmount * rate;
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null) => {
+        const currency = preferences?.currency ?? 'USD';
+
+        try {
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
     const loadData = async () => {
         try {
             setLoading(true);
             setError('');
 
-            // Load promo code, analytics, and usage history in parallel
             const [promoCodeData, analyticsData, usageData] = await Promise.all([
                 promoCodesApi.getPromoCode(promoCodeId),
                 promoCodesApi.getAnalytics(promoCodeId),
@@ -116,7 +190,6 @@ const PromoCodeAnalyticsPage: React.FC = () => {
 
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to load analytics';
-            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -129,10 +202,8 @@ const PromoCodeAnalyticsPage: React.FC = () => {
     };
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD'
-        }).format(amount);
+        const convertedAmount = convertFromUSD(amount, preferences?.currency || 'USD');
+        return formatCurrencyWithUserPreference(convertedAmount, preferences);
     };
 
     const formatDate = (dateString: string) => {
@@ -151,6 +222,29 @@ const PromoCodeAnalyticsPage: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const userPreferences = await response.json();
+                setPreferences(userPreferences);
+            }
+        } catch (error) {
+            setPreferences({
+                currency: 'USD',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC'
+            });
+        }
     };
 
     const getUsagePercentage = () => {
@@ -174,7 +268,90 @@ const PromoCodeAnalyticsPage: React.FC = () => {
         return 'Active';
     };
 
-    // Loading states
+    const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
+        const eventDate = new Date(dateTimeString);
+        const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+        const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+        const timeFormat = preferences?.timeFormat || '12h';
+
+        const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+        const year = zonedDate.getFullYear();
+        const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(zonedDate.getDate()).padStart(2, '0');
+
+        const monthNames = [
+            t('january'), t('february'), t('march'), t('april'),
+            t('may'), t('june'), t('july'), t('august'),
+            t('september'), t('october'), t('november'), t('december')
+        ];
+        const monthShort = monthNames[zonedDate.getMonth()];
+
+        const weekdays = [
+            t('sunday'), t('monday'), t('tuesday'), t('wednesday'),
+            t('thursday'), t('friday'), t('saturday')
+        ];
+        const weekday = weekdays[zonedDate.getDay()];
+
+        // Format date according to user preference - INDEPENDENT OF LOCALE
+        let formattedDate: string;
+        switch (dateFormat) {
+            case 'dd/MM/yyyy':
+                formattedDate = `${weekday}, ${day}/${month}/${year}`;
+                break;
+            case 'yyyy-MM-dd':
+                formattedDate = `${weekday}, ${year}-${month}-${day}`;
+                break;
+            case 'MMM dd, yyyy':
+                formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+                break;
+            case 'dd MMM yyyy':
+                formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+                break;
+            default: // MM/dd/yyyy
+                formattedDate = `${weekday}, ${month}/${day}/${year}`;
+        }
+
+        // Format time - also independent of locale
+        const hours24 = zonedDate.getHours();
+        const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+        let formattedTime: string;
+        if (timeFormat === '24h') {
+            formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+        } else {
+            const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+            const ampm = hours24 >= 12 ? 'PM' : 'AM';
+            formattedTime = `${hours12}:${minutes} ${ampm}`;
+        }
+
+        // Add timezone abbreviation
+        const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+        formattedTime += ` ${timeZoneAbbr}`;
+
+        const result = `${formattedDate} ${t('at')} ${formattedTime}`;
+
+        return result;
+    };
+
+    const getTimeZoneAbbreviation = (timeZone: string): string => {
+        const abbreviations: { [key: string]: string } = {
+            'UTC': 'UTC',
+            'America/New_York': 'EST/EDT',
+            'America/Chicago': 'CST/CDT',
+            'America/Denver': 'MST/MDT',
+            'America/Los_Angeles': 'PST/PDT',
+            'Asia/Kuala_Lumpur': 'MYT',
+            'Europe/London': 'GMT/BST',
+            'Europe/Paris': 'CET/CEST',
+            'Asia/Tokyo': 'JST',
+            'Australia/Sydney': 'AEST/AEDT'
+        };
+
+        return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+    };
+
+
     if (!user || !isOrganizer) {
         return (
             <div className={`min-h-screen ${themeClasses.themeBg} flex items-center justify-center theme-transition`}>
@@ -319,7 +496,7 @@ const PromoCodeAnalyticsPage: React.FC = () => {
                                     <div className="flex items-center space-x-1">
                                         <Calendar className="h-3 w-3" />
                                         <span className={themeClasses.themeMutedFg}>
-                                            {formatDate(promoCode.startDate)} - {formatDate(promoCode.endDate)}
+                                            {formatEventDateTime(promoCode.startDate, preferences, { region: 'en-US' }, t)} - {formatEventDateTime(promoCode.endDate, preferences, { region: 'en-US'},t)}
                                         </span>
                                     </div>
                                     <div className="flex items-center space-x-1">
@@ -386,18 +563,33 @@ const PromoCodeAnalyticsPage: React.FC = () => {
                                     <p className={`text-lg font-bold ${themeClasses.themeFg}`}>
                                         {formatCurrency(analytics.totalDiscountGiven)}
                                     </p>
+                                    {preferences?.currency && preferences.currency !== 'USD' && (
+                                        <p className={`text-xs ${themeClasses.themeMutedFg}`}>
+                                            (≈ ${analytics.totalDiscountGiven.toFixed(2)} USD)
+                                        </p>
+                                    )}
                                 </div>
                                 <div>
                                     <p className={`text-sm ${themeClasses.themeMutedFg}`}>{t('totalOrderValue')}</p>
                                     <p className={`text-lg font-bold ${themeClasses.themeFg}`}>
                                         {formatCurrency(analytics.totalOrderValue)}
                                     </p>
+                                    {preferences?.currency && preferences.currency !== 'USD' && (
+                                        <p className={`text-xs ${themeClasses.themeMutedFg}`}>
+                                            (≈ ${analytics.totalOrderValue.toFixed(2)} USD)
+                                        </p>
+                                    )}
                                 </div>
                                 <div>
                                     <p className={`text-sm ${themeClasses.themeMutedFg}`}>{t('averageDiscount')}</p>
                                     <p className={`text-lg font-bold ${themeClasses.themeFg}`}>
                                         {formatCurrency(analytics.averageDiscountAmount)}
                                     </p>
+                                    {preferences?.currency && preferences.currency !== 'USD' && (
+                                        <p className={`text-xs ${themeClasses.themeMutedFg}`}>
+                                            (≈ ${analytics.averageDiscountAmount.toFixed(2)} USD)
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -478,6 +670,11 @@ const PromoCodeAnalyticsPage: React.FC = () => {
                                         <p className={`text-2xl font-bold ${themeClasses.themeFg}`}>
                                             {formatCurrency(analytics.totalDiscountGiven)}
                                         </p>
+                                        {preferences?.currency && preferences.currency !== 'USD' && (
+                                            <p className={`text-xs ${themeClasses.themeMutedFg} mt-1`}>
+                                                (≈ ${analytics.totalDiscountGiven.toFixed(2)} USD)
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
                                         <DollarSign className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -522,12 +719,22 @@ const PromoCodeAnalyticsPage: React.FC = () => {
                                                 </p>
                                                 <p className={`text-sm ${themeClasses.themeMutedFg}`}>
                                                     {event.usages} uses • {formatCurrency(event.totalDiscount)} discount
+                                                    {preferences?.currency && preferences.currency !== 'USD' && (
+                                                        <span className="block">
+                                                            (≈ ${event.totalDiscount.toFixed(2)} USD)
+                                                        </span>
+                                                    )}
                                                 </p>
                                             </div>
                                             <div className="text-right">
                                                 <p className={`font-medium ${themeClasses.themeFg}`}>
                                                     {formatCurrency(event.totalOrderValue)}
                                                 </p>
+                                                {preferences?.currency && preferences.currency !== 'USD' && (
+                                                    <p className={`text-xs ${themeClasses.themeMutedFg}`}>
+                                                        (≈ ${event.totalOrderValue.toFixed(2)} USD)
+                                                    </p>
+                                                )}
                                                 <p className={`text-sm ${themeClasses.themeMutedFg}`}>
                                                     {((event.usages / analytics.totalUsages) * 100).toFixed(1)}%
                                                 </p>
@@ -596,7 +803,20 @@ const PromoCodeAnalyticsPage: React.FC = () => {
                                                         {usage.orderNumber}
                                                     </td>
                                                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${themeClasses.themeFg}`}>
+                                                        {formatCurrency(usage.discountAmount)}
+                                                        {preferences?.currency && preferences.currency !== 'USD' && (
+                                                            <div className={`text-xs ${themeClasses.themeMutedFg}`}>
+                                                                (≈ ${usage.discountAmount.toFixed(2)} USD)
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${themeClasses.themeFg}`}>
                                                         {formatCurrency(usage.orderSubtotal)}
+                                                        {preferences?.currency && preferences.currency !== 'USD' && (
+                                                            <div className={`text-xs ${themeClasses.themeMutedFg}`}>
+                                                                (≈ ${usage.orderSubtotal.toFixed(2)} USD)
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td className={`px-6 py-4 whitespace-nowrap text-sm ${themeClasses.themeMutedFg}`}>
                                                         {formatDateTime(usage.usedAt)}
@@ -738,7 +958,10 @@ const PromoCodeAnalyticsPage: React.FC = () => {
                             </div>
                             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                                 <p className="text-xs">
-                                    <strong>Note:</strong> {t('allMonetaryValuesUSD')}
+                                    <strong>Note:</strong> {preferences?.currency && preferences.currency !== 'USD'
+                                        ? `All monetary values shown in ${preferences.currency} with USD equivalents. Original data stored in USD. `
+                                        : 'All monetary values shown in USD. '
+                                    }
                                     {t('analyticsDataUpdatedImmediately')}
                                     {t('historicalDataPreserved')}
                                 </p>

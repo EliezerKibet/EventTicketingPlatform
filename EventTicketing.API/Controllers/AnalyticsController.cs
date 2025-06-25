@@ -88,65 +88,43 @@ namespace EventTicketing.API.Controllers
         {
             try
             {
-                // Debug: Print all claims
-                Console.WriteLine("=== JWT CLAIMS DEBUG ===");
-                foreach (var claim in User.Claims)
-                {
-                    Console.WriteLine($"Type: {claim.Type} | Value: {claim.Value}");
-                }
-                Console.WriteLine("========================");
 
                 // Extract user ID using the exact same claim type as AuthService
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null)
                 {
-                    Console.WriteLine("ERROR: ClaimTypes.NameIdentifier not found in token");
                     return Ok(new CheckInAnalyticsDto());
                 }
 
                 if (!int.TryParse(userIdClaim.Value, out int organizerId) || organizerId <= 0)
                 {
-                    Console.WriteLine($"ERROR: Invalid user ID in token: '{userIdClaim.Value}'");
                     return Ok(new CheckInAnalyticsDto());
                 }
 
-                Console.WriteLine($"SUCCESS: Found organizer ID {organizerId}");
 
                 var result = await _analyticsService.GetCheckInAnalyticsAsync(organizerId, period);
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Check-in analytics error: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return Ok(new CheckInAnalyticsDto());
             }
         }
 
         private int GetCurrentUserId()
         {
-            // Debug: Print all claims for other methods too
-            Console.WriteLine("=== GetCurrentUserId DEBUG ===");
-            foreach (var claim in User.Claims)
-            {
-                Console.WriteLine($"Type: {claim.Type} | Value: {claim.Value}");
-            }
-            Console.WriteLine("==============================");
 
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
             {
-                Console.WriteLine("ERROR: ClaimTypes.NameIdentifier not found");
                 throw new UnauthorizedAccessException("User not authenticated - no NameIdentifier claim");
             }
 
             if (!int.TryParse(userIdClaim.Value, out int userId) || userId <= 0)
             {
-                Console.WriteLine($"ERROR: Invalid user ID value: '{userIdClaim.Value}'");
                 throw new UnauthorizedAccessException($"Invalid user ID in token: {userIdClaim.Value}");
             }
 
-            Console.WriteLine($"SUCCESS: GetCurrentUserId returning {userId}");
             return userId;
         }
 

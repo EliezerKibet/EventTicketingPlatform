@@ -29,7 +29,6 @@ namespace EventTicketing.API.Models.DTOs
         [Required]
         public PromoCodeScope Scope { get; set; }
 
-        // Only required for event-specific promo codes
         public int? EventId { get; set; }
 
         [Required]
@@ -82,7 +81,7 @@ namespace EventTicketing.API.Models.DTOs
         public string? Description { get; set; }
         public string Type { get; set; } = string.Empty;
         public decimal Value { get; set; }
-        public string FormattedValue { get; set; } = string.Empty; // "10%" or "$5.00"
+        public string FormattedValue { get; set; } = string.Empty; 
         public decimal? MinimumOrderAmount { get; set; }
         public decimal? MaximumDiscountAmount { get; set; }
         public string Scope { get; set; } = string.Empty;

@@ -42,9 +42,6 @@ namespace EventTicketing.API.Services
         {
             try
             {
-                _logger.LogInformation($"📸 Saving image: {filePrefix} in {mainFolder}/{subFolder ?? "root"}");
-
-                // Create filename with timestamp and GUID for uniqueness
                 var fileExtension = Path.GetExtension(file.FileName).ToLower();
                 var timestamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
                 var uniqueId = Guid.NewGuid().ToString("N")[..16]; // First 16 chars
@@ -61,15 +58,12 @@ namespace EventTicketing.API.Services
                 var relativePath = Path.Combine(pathParts.ToArray());
                 var absolutePath = Path.Combine(_environment.WebRootPath, relativePath);
 
-                _logger.LogInformation($"📸 Relative path: {relativePath}");
-                _logger.LogInformation($"📸 Absolute path: {absolutePath}");
 
                 // Ensure directory exists
                 var directory = Path.GetDirectoryName(absolutePath);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 {
                     Directory.CreateDirectory(directory);
-                    _logger.LogInformation($"📸 Created directory: {directory}");
                 }
 
                 // Save the file
@@ -80,13 +74,11 @@ namespace EventTicketing.API.Services
 
                 // Return clean URL path (always with forward slashes and leading slash)
                 var urlPath = "/" + relativePath.Replace('\\', '/');
-                _logger.LogInformation($"📸 File saved successfully. URL: {urlPath}");
 
                 return urlPath;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"📸 Error saving image: {filePrefix}");
                 throw new Exception($"Failed to save image: {ex.Message}");
             }
         }
@@ -97,33 +89,27 @@ namespace EventTicketing.API.Services
             {
                 if (string.IsNullOrEmpty(imageUrl))
                 {
-                    _logger.LogWarning("📸 Attempted to delete empty/null image URL");
                     return true;
                 }
 
-                _logger.LogInformation($"📸 Deleting image: {imageUrl}");
 
                 // Convert URL to file path
                 var relativePath = imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
                 var absolutePath = Path.Combine(_environment.WebRootPath, relativePath);
 
-                _logger.LogInformation($"📸 File path: {absolutePath}");
 
                 if (File.Exists(absolutePath))
                 {
-                    File.Delete(absolutePath);
-                    _logger.LogInformation($"📸 Image deleted successfully: {absolutePath}");
+                    File.Delete(absolutePath);;
                     return true;
                 }
                 else
                 {
-                    _logger.LogWarning($"📸 Image file not found: {absolutePath}");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"📸 Error deleting image: {imageUrl}");
                 return false;
             }
         }
@@ -134,7 +120,6 @@ namespace EventTicketing.API.Services
             {
                 if (file == null || file.Length == 0)
                 {
-                    _logger.LogWarning("📸 Validation failed: File is null or empty");
                     return false;
                 }
 
@@ -142,7 +127,6 @@ namespace EventTicketing.API.Services
                 const long maxFileSize = 5 * 1024 * 1024; // 5MB
                 if (file.Length > maxFileSize)
                 {
-                    _logger.LogWarning($"📸 Validation failed: File too large ({file.Length} bytes, max: {maxFileSize})");
                     return false;
                 }
 
@@ -159,7 +143,6 @@ namespace EventTicketing.API.Services
                 var contentType = file.ContentType.ToLower();
                 if (!allowedTypes.Contains(contentType))
                 {
-                    _logger.LogWarning($"📸 Validation failed: Invalid content type ({contentType})");
                     return false;
                 }
 
@@ -168,7 +151,6 @@ namespace EventTicketing.API.Services
                 var fileExtension = Path.GetExtension(file.FileName).ToLower();
                 if (!allowedExtensions.Contains(fileExtension))
                 {
-                    _logger.LogWarning($"📸 Validation failed: Invalid file extension ({fileExtension})");
                     return false;
                 }
 
@@ -181,16 +163,13 @@ namespace EventTicketing.API.Services
                 var isValidImage = IsValidImageHeader(buffer, contentType);
                 if (!isValidImage)
                 {
-                    _logger.LogWarning($"📸 Validation failed: Invalid file header for {contentType}");
                     return false;
                 }
 
-                _logger.LogInformation($"📸 Validation passed: {file.FileName} ({file.Length} bytes, {contentType})");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"📸 Error during image validation: {file?.FileName}");
                 return false;
             }
         }

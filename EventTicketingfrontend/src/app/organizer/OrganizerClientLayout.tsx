@@ -27,7 +27,6 @@ import {
     Languages
 } from 'lucide-react';
 
-// Import shared types and utilities
 interface UserPreferences {
     emailNotifications: boolean;
     smsNotifications: boolean;
@@ -56,7 +55,6 @@ interface UserPreferences {
     compactMode: boolean;
 }
 
-// Safe mapping functions
 const safeMapTheme = (theme: string | undefined): 'light' | 'dark' | 'auto' => {
     if (!theme) return 'auto';
     return ['light', 'dark', 'auto'].includes(theme) ? theme as 'light' | 'dark' | 'auto' : 'auto';
@@ -78,21 +76,15 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
     const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
     const [preferencesLoaded, setPreferencesLoaded] = useState(false);
 
-    // Prevent infinite loops
     const preferencesLoadedRef = useRef(false);
     const initialLoadRef = useRef(false);
-
-    // Theme hooks
     const { settings, isDark, isCompact, updateTheme, initializeTheme } = useTheme();
     const themeClasses = useThemeClasses();
 
-    // Extract fontSize from settings
     const fontSize = settings.fontSize;
 
-    // I18n hook
     const { t, changeLanguage, currentLanguage, supportedLanguages } = useI18n();
 
-    // ADDED: Helper function to get font size classes based on user preference
     const getFontSizeClasses = () => {
         switch (fontSize) {
             case 'small':
@@ -154,37 +146,29 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
 
     const fontSizeClasses = getFontSizeClasses();
 
-    // UPDATED: Load user preferences when component mounts
     const loadUserPreferences = useCallback(async () => {
         if (preferencesLoadedRef.current || !user || !isOrganizer) {
             return;
         }
 
         try {
-            console.log('🔄 Loading user preferences (one time only)');
             preferencesLoadedRef.current = true;
 
             const preferences = await userApi.getPreferences();
-            console.log('📋 Loaded preferences:', preferences);
 
-            // Apply theme preferences with safe mapping
             updateTheme({
                 theme: safeMapTheme(preferences.theme),
-                fontSize: safeMapFontSize(preferences.fontSize), // This will update the fontSize state
+                fontSize: safeMapFontSize(preferences.fontSize),
                 accentColor: preferences.accentColor || 'blue',
                 compactMode: Boolean(preferences.compactMode)
             });
 
-            // Apply language preference (only if different)
             if (preferences.language && preferences.language !== currentLanguage) {
-                console.log(`🌐 Setting language from preferences: ${preferences.language}`);
                 changeLanguage(preferences.language);
             }
 
             setPreferencesLoaded(true);
-            console.log('✅ User preferences loaded successfully');
         } catch (error) {
-            console.error('❌ Failed to load user preferences:', error);
             initializeTheme();
             setPreferencesLoaded(true);
         }
@@ -272,10 +256,8 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
             changeLanguage(langCode);
             setLanguageDropdownOpen(false);
 
-            console.log(`🌐 Saving language preference: ${langCode}`);
 
             const currentPreferences = await userApi.getPreferences();
-            console.log('📋 Current preferences for merge:', currentPreferences);
 
             const updatePayload = {
                 emailNotifications: currentPreferences.emailNotifications ?? true,
@@ -305,16 +287,12 @@ const OrganizerClientLayout: React.FC<OrganizerClientLayoutProps> = ({ children 
                 language: langCode
             };
 
-            console.log('🔄 Sending complete preferences update:', updatePayload);
             await userApi.updatePreferences(updatePayload);
-            console.log('✅ Language preference saved successfully');
 
         } catch (error: any) {
-            console.error('❌ Failed to save language preference:', error);
             changeLanguage(previousLanguage);
             setLanguageDropdownOpen(false);
             const errorMessage = error.response?.data?.message || error.message || 'Network error';
-            alert(`Failed to save language preference: ${errorMessage}. The interface language has been reverted.`);
         }
     };
 

@@ -171,16 +171,13 @@ namespace EventTicketing.API.Models.DTOs
         [Required]
         public string City { get; set; }
 
-        // Optional - no [Required] attribute
         public string? State { get; set; }
 
-        // Optional - no [Required] attribute  
         public string? ZipCode { get; set; }
 
         [Required]
         public string Country { get; set; }
 
-        // Optional - nullable decimals
         [Range(-90, 90)]
         public decimal? Latitude { get; set; }
 

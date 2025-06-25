@@ -28,7 +28,6 @@ import {
     Info
 } from 'lucide-react';
 
-// Interfaces
 interface Event {
     eventId: number;
     title: string;
@@ -73,6 +72,21 @@ interface CreateTicketTypeData {
     quantity: string;
 }
 
+interface CheckInResponse {
+    ticketNumber: string;
+    attendeeName: string;
+    eventTitle: string;
+    ticketTypeName: string;
+    checkInDate: string;
+    success: boolean;
+}
+
+interface ApiErrorResponse {
+    message: string;
+    error?: string;
+    statusCode?: number;
+}
+
 interface EditTicketTypeData extends CreateTicketTypeData {
     ticketTypeId: number;
 }
@@ -85,7 +99,6 @@ const TicketsPage = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Ticket Types State
     const [ticketTypes, setTicketTypes] = useState<TicketType[]>([]);
     const [events, setEvents] = useState<Event[]>([]);
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -95,15 +108,34 @@ const TicketsPage = () => {
     const [selectedEvent, setSelectedEvent] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Validation State
     const [ticketNumber, setTicketNumber] = useState('');
     const [validationResult, setValidationResult] = useState<TicketValidation | null>(null);
     const [validating, setValidating] = useState(false);
 
-    // Check-in State
     const [checkInNumber, setCheckInNumber] = useState('');
-    const [checkInResult, setCheckInResult] = useState<any>(null);
+    const [checkInResult, setCheckInResult] = useState<CheckInResponse | null>(null);
     const [checkingIn, setCheckingIn] = useState(false);
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
+    const getAuthToken = (): string | null => {
+        try {
+            return localStorage.getItem('authToken');
+        } catch (error) {
+            return null;
+        }
+    };
+
+    const handleApiError = (error: unknown): string => {
+        if (error instanceof Error) {
+            return error.message;
+        }
+        if (typeof error === 'string') {
+            return error;
+        }
+        return 'An unexpected error occurred';
+    };
+
 
     const [formData, setFormData] = useState<CreateTicketTypeData>({
         eventId: '',
@@ -124,32 +156,35 @@ const TicketsPage = () => {
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    // Check authorization
     useEffect(() => {
         if (user && !isOrganizer) {
             router.push('/');
         }
     }, [user, isOrganizer, router]);
 
-    // Fetch initial data
     useEffect(() => {
         if (user && isOrganizer) {
             fetchEvents();
         }
     }, [user, isOrganizer]);
 
-    // Fetch ticket types after events are loaded
     useEffect(() => {
         if (events.length > 0) {
             fetchTicketTypes();
         }
     }, [events]);
 
-    const fetchEvents = async () => {
+    const fetchEvents = async (): Promise<void> => {
         try {
-            const response = await fetch('http://localhost:5251/api/events/my-events', {
+            const authToken = getAuthToken();
+            if (!authToken) {
+                setError('Authentication required. Please log in again.');
+                return;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/api/events/my-events`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${authToken}`
                 }
             });
 
@@ -163,26 +198,37 @@ const TicketsPage = () => {
                     isPublished: event.isPublished || false,
                     status: event.status || 'Draft'
                 })));
+                setError(''); 
             } else {
-                console.error('Failed to fetch events:', response.status);
-                setError('Failed to fetch your events');
+                const errorMessage = `Failed to fetch events (${response.status})`;
+                setError(errorMessage);
             }
         } catch (error) {
-            console.error('Error fetching events:', error);
-            setError('Failed to fetch events');
+            const errorMessage = handleApiError(error);
+            setError(`Failed to fetch events: ${errorMessage}`);
+
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error fetching events:', error);
+            }
         }
     };
 
-    const fetchTicketTypes = async () => {
+    const fetchTicketTypes = async (): Promise<void> => {
         try {
             setLoading(true);
+            const authToken = getAuthToken();
+            if (!authToken) {
+                setError('Authentication required. Please log in again.');
+                return;
+            }
+
             const allTicketTypes: TicketType[] = [];
 
             for (const event of events) {
                 try {
-                    const response = await fetch(`http://localhost:5251/api/tickets/event/${event.eventId}/ticket-types`, {
+                    const response = await fetch(`${API_BASE_URL}/api/tickets/event/${event.eventId}/ticket-types`, {
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            'Authorization': `Bearer ${authToken}`
                         }
                     });
 
@@ -198,22 +244,27 @@ const TicketsPage = () => {
                         allTicketTypes.push(...typesWithEventInfo);
                     }
                 } catch (error) {
-                    console.error(`Error fetching ticket types for event ${event.eventId}:`, error);
+                    if (process.env.NODE_ENV === 'development') {
+                        console.warn(`Failed to fetch ticket types for event ${event.eventId}:`, error);
+                    }
                 }
             }
 
             setTicketTypes(allTicketTypes);
+            setError(''); 
         } catch (error) {
-            console.error('Error fetching ticket types:', error);
-            setError('Failed to fetch ticket types');
+            const errorMessage = handleApiError(error);
+            setError(`Failed to fetch ticket types: ${errorMessage}`);
+
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error fetching ticket types:', error);
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    // Helper function to check if ticket type can be edited
     const canEditTicketType = (ticketType: TicketType): { canEdit: boolean; reason: string } => {
-        // Check if event is published
         if (ticketType.isEventPublished) {
             return {
                 canEdit: false,
@@ -221,7 +272,6 @@ const TicketsPage = () => {
             };
         }
 
-        // Check if tickets have been sold
         const ticketsSold = ticketType.ticketsSold || 0;
         if (ticketsSold > 0) {
             return {
@@ -230,7 +280,6 @@ const TicketsPage = () => {
             };
         }
 
-        // Check if event is in draft status
         if (ticketType.eventStatus && ticketType.eventStatus.toLowerCase() !== 'draft') {
             return {
                 canEdit: false,
@@ -244,7 +293,6 @@ const TicketsPage = () => {
         };
     };
 
-    // Get editing status for display
     const getEditingStatus = (ticketType: TicketType) => {
         const { canEdit, reason } = canEditTicketType(ticketType);
         const ticketsSold = ticketType.ticketsSold || 0;
@@ -347,7 +395,7 @@ const TicketsPage = () => {
         setShowEditForm(true);
     };
 
-    const handleCreateTicketType = async (e: React.FormEvent) => {
+    const handleCreateTicketType = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
 
         if (!validateForm()) return;
@@ -357,6 +405,11 @@ const TicketsPage = () => {
         setSuccess('');
 
         try {
+            const authToken = getAuthToken();
+            if (!authToken) {
+                throw new Error('Authentication required. Please log in again.');
+            }
+
             const payload = {
                 eventId: parseInt(formData.eventId),
                 name: formData.name.trim(),
@@ -365,49 +418,49 @@ const TicketsPage = () => {
                 quantity: parseInt(formData.quantity)
             };
 
-            console.log('🚀 Creating ticket type with payload:', JSON.stringify(payload, null, 2));
-
-            const response = await fetch('http://localhost:5251/api/tickets/ticket-types', {
+            const response = await fetch(`${API_BASE_URL}/api/tickets/ticket-types`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify(payload)
             });
 
-            const responseText = await response.text();
-            let errorData;
-            try {
-                errorData = JSON.parse(responseText);
-            } catch {
-                errorData = { message: responseText };
-            }
-
             if (response.ok) {
-                console.log('✅ Created ticket type:', errorData);
                 setSuccess('Ticket type created successfully!');
                 await fetchTicketTypes();
                 resetForm();
                 setTimeout(() => setSuccess(''), 3000);
             } else {
-                console.error('❌ Ticket type creation failed:', errorData);
-                setError(errorData.message || `Failed to create ticket type (HTTP ${response.status})`);
+                let errorMessage = `Failed to create ticket type (${response.status})`;
+
+                try {
+                    const errorData: ApiErrorResponse = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch {
+                    errorMessage = response.statusText || errorMessage;
+                }
+
+                setError(errorMessage);
             }
         } catch (error) {
-            console.error('💥 Network error creating ticket type:', error);
-            setError('Network error. Please check your connection and try again.');
+            const errorMessage = handleApiError(error);
+            setError(`Failed to create ticket type: ${errorMessage}`);
+
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error creating ticket type:', error);
+            }
         } finally {
             setFormLoading(false);
         }
     };
 
-    const handleUpdateTicketType = async (e: React.FormEvent) => {
+    const handleUpdateTicketType = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
 
         if (!validateForm(true)) return;
 
-        // Double-check if editing is still allowed
         if (editingTicketType) {
             const { canEdit, reason } = canEditTicketType(editingTicketType);
             if (!canEdit) {
@@ -421,6 +474,11 @@ const TicketsPage = () => {
         setSuccess('');
 
         try {
+            const authToken = getAuthToken();
+            if (!authToken) {
+                throw new Error('Authentication required. Please log in again.');
+            }
+
             const payload = {
                 name: editFormData.name.trim(),
                 description: editFormData.description.trim() || null,
@@ -428,45 +486,46 @@ const TicketsPage = () => {
                 quantity: parseInt(editFormData.quantity)
             };
 
-            console.log('🔄 Updating ticket type with payload:', JSON.stringify(payload, null, 2));
-
-            // Note: You'll need to implement this endpoint in your API
-            const response = await fetch(`http://localhost:5251/api/tickets/ticket-types/${editFormData.ticketTypeId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/tickets/ticket-types/${editFormData.ticketTypeId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify(payload)
             });
 
-            const responseText = await response.text();
-            let errorData;
-            try {
-                errorData = JSON.parse(responseText);
-            } catch {
-                errorData = { message: responseText };
-            }
-
             if (response.ok) {
-                console.log('✅ Updated ticket type:', errorData);
                 setSuccess('Ticket type updated successfully!');
                 await fetchTicketTypes();
                 resetEditForm();
                 setTimeout(() => setSuccess(''), 3000);
             } else {
-                console.error('❌ Ticket type update failed:', errorData);
-                setError(errorData.message || `Failed to update ticket type (HTTP ${response.status})`);
+                let errorMessage = `Failed to update ticket type (${response.status})`;
+
+                try {
+                    const errorData: ApiErrorResponse = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch {
+                    errorMessage = response.statusText || errorMessage;
+                }
+
+                setError(errorMessage);
             }
         } catch (error) {
-            console.error('💥 Network error updating ticket type:', error);
-            setError('Network error. Please check your connection and try again.');
+            const errorMessage = handleApiError(error);
+            setError(`Failed to update ticket type: ${errorMessage}`);
+
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error updating ticket type:', error);
+            }
         } finally {
             setFormLoading(false);
         }
     };
 
-    const handleValidateTicket = async () => {
+
+    const handleValidateTicket = async (): Promise<void> => {
         if (!ticketNumber.trim()) {
             setError('Please enter a ticket number');
             return;
@@ -477,31 +536,48 @@ const TicketsPage = () => {
         setValidationResult(null);
 
         try {
-            const response = await fetch('http://localhost:5251/api/tickets/validate', {
+            const authToken = getAuthToken();
+            if (!authToken) {
+                throw new Error('Authentication required. Please log in again.');
+            }
+
+            const response = await fetch(`${API_BASE_URL}/api/tickets/validate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${authToken}`
                 },
-                body: JSON.stringify(ticketNumber)
+                body: JSON.stringify(ticketNumber.trim())
             });
 
             if (response.ok) {
-                const data = await response.json();
+                const data: TicketValidation = await response.json();
                 setValidationResult(data);
             } else {
-                const errorData = await response.json();
-                setError(errorData.message || 'Failed to validate ticket');
+                let errorMessage = `Failed to validate ticket (${response.status})`;
+
+                try {
+                    const errorData: ApiErrorResponse = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch {
+                    errorMessage = response.statusText || errorMessage;
+                }
+
+                setError(errorMessage);
             }
         } catch (error) {
-            console.error('Error validating ticket:', error);
-            setError('Failed to validate ticket. Please try again.');
+            const errorMessage = handleApiError(error);
+            setError(`Failed to validate ticket: ${errorMessage}`);
+
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error validating ticket:', error);
+            }
         } finally {
             setValidating(false);
         }
     };
 
-    const handleCheckInTicket = async () => {
+    const handleCheckInTicket = async (): Promise<void> => {
         if (!checkInNumber.trim()) {
             setError('Please enter a ticket number');
             return;
@@ -512,33 +588,50 @@ const TicketsPage = () => {
         setCheckInResult(null);
 
         try {
-            const response = await fetch('http://localhost:5251/api/tickets/check-in', {
+            const authToken = getAuthToken();
+            if (!authToken) {
+                throw new Error('Authentication required. Please log in again.');
+            }
+
+            const response = await fetch(`${API_BASE_URL}/api/tickets/check-in`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    'Authorization': `Bearer ${authToken}`
                 },
-                body: JSON.stringify({ ticketNumber: checkInNumber })
+                body: JSON.stringify({ ticketNumber: checkInNumber.trim() })
             });
 
             if (response.ok) {
-                const data = await response.json();
+                const data: CheckInResponse = await response.json();
                 setCheckInResult(data);
                 setSuccess('Ticket checked in successfully!');
+                setCheckInNumber('');
                 setTimeout(() => setSuccess(''), 3000);
             } else {
-                const errorData = await response.json();
-                setError(errorData.message || 'Failed to check in ticket');
+                let errorMessage = `Failed to check in ticket (${response.status})`;
+
+                try {
+                    const errorData: ApiErrorResponse = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch {
+                    errorMessage = response.statusText || errorMessage;
+                }
+
+                setError(errorMessage);
             }
         } catch (error) {
-            console.error('Error checking in ticket:', error);
-            setError('Failed to check in ticket. Please try again.');
+            const errorMessage = handleApiError(error);
+            setError(`Failed to check in ticket: ${errorMessage}`);
+
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error checking in ticket:', error);
+            }
         } finally {
             setCheckingIn(false);
         }
     };
 
-    // Filter ticket types
     const filteredTicketTypes = ticketTypes.filter(ticketType => {
         const matchesSearch = ticketType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (ticketType.eventTitle && ticketType.eventTitle.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -546,7 +639,6 @@ const TicketsPage = () => {
         return matchesSearch && matchesEvent;
     });
 
-    // Count editable vs locked ticket types
     const editableCount = filteredTicketTypes.filter(tt => canEditTicketType(tt).canEdit).length;
     const lockedCount = filteredTicketTypes.length - editableCount;
 

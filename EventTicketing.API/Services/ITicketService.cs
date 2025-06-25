@@ -8,7 +8,7 @@ namespace EventTicketing.API.Services
         Task<TicketTypeResponseDto> CreateTicketTypeAsync(CreateTicketTypeDto createTicketTypeDto, int organizerId);
         Task<List<TicketTypeResponseDto>> GetTicketTypesByEventAsync(int eventId);
         Task<TicketTypeResponseDto> GetTicketTypeByIdAsync(int ticketTypeId);
-        Task<TicketTypeResponseDto> UpdateTicketTypeAsync(int ticketTypeId, UpdateTicketTypeDto updateTicketTypeDto, int organizerId); // Fixed: Use UpdateTicketTypeDto
+        Task<TicketTypeResponseDto> UpdateTicketTypeAsync(int ticketTypeId, UpdateTicketTypeDto updateTicketTypeDto, int organizerId);
         Task<bool> DeleteTicketTypeAsync(int ticketTypeId, int organizerId);
 
         // Ticket Purchasing
@@ -30,7 +30,13 @@ namespace EventTicketing.API.Services
         Task<TicketResponseDto> CheckInTicketAsync(CheckInTicketDto checkInDto, int organizerId);
         Task<List<TicketResponseDto>> GetCheckedInTicketsAsync(int eventId, int organizerId);
 
-        // Analytics
+        // Analytics - Enhanced Revenue Methods
         Task<object> GetTicketSalesAnalyticsAsync(int eventId, int organizerId);
+        Task<List<TicketResponseDto>> GetTicketsByEventAsync(int eventId, int organizerId);
+
+        // NEW: Enhanced Revenue Analytics Methods
+        Task<object> GetEventRevenueAnalyticsAsync(int eventId, int organizerId);
+        Task<object> GetDetailedEventRevenueAsync(int eventId, int organizerId);
+        Task<object> GetEventRevenueTimelineAsync(int eventId, int organizerId, string period = "daily");
     }
 }

@@ -337,13 +337,6 @@ namespace EventTicketing.API.Services
             if (updateEventDto.MaxAttendees.HasValue)
                 eventEntity.MaxAttendees = updateEventDto.MaxAttendees.Value;
 
-            // COMPLETELY SAFE APPROACH - Skip BasePrice and Currency for now
-            // if (updateEventDto.BasePrice.HasValue)
-            //     eventEntity.BasePrice = updateEventDto.BasePrice.Value;
-
-            // if (!string.IsNullOrEmpty(updateEventDto.Currency))
-            //     eventEntity.Currency = updateEventDto.Currency;
-
             if (updateEventDto.IsOnline.HasValue)
                 eventEntity.IsOnline = updateEventDto.IsOnline.Value;
 
@@ -615,8 +608,8 @@ namespace EventTicketing.API.Services
                     Currency = e.Currency,
                     IsOnline = e.IsOnline,
                     OnlineUrl = e.OnlineUrl,
-                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used),  // FIX: Use enum
-                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  // FIX: Use enum
+                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used),
+                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  
                 })
                 .ToListAsync();
 
@@ -653,7 +646,7 @@ namespace EventTicketing.API.Services
                     EndDateTime = e.EndDateTime,
                     ImageUrl = e.ImageUrl,
                     BannerImageUrl = e.BannerImageUrl,
-                    Status = e.Status.ToString(),  // FIX: Convert enum to string
+                    Status = e.Status.ToString(),  
                     IsPublished = e.IsPublished,
                     IsFeatured = e.IsFeatured,
                     CreatedAt = e.CreatedAt,
@@ -663,8 +656,8 @@ namespace EventTicketing.API.Services
                     Currency = e.Currency,
                     IsOnline = e.IsOnline,
                     OnlineUrl = e.OnlineUrl,
-                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used),  // FIX: Use enum
-                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  // FIX: Use enum
+                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used),  
+                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  
                 })
                 .ToListAsync();
 
@@ -679,7 +672,7 @@ namespace EventTicketing.API.Services
                 .Include(e => e.Venue)
                 .Include(e => e.Category)
                 .Include(e => e.Organizer)
-                .Include(e => e.Tickets)  // ADD THIS
+                .Include(e => e.Tickets) 
                 .Where(e => e.VenueId == venueId &&
                            e.IsPublished &&
                            e.StartDateTime <= now)
@@ -701,7 +694,7 @@ namespace EventTicketing.API.Services
                     EndDateTime = e.EndDateTime,
                     ImageUrl = e.ImageUrl,
                     BannerImageUrl = e.BannerImageUrl,
-                    Status = e.Status.ToString(),  // FIX: Convert enum to string
+                    Status = e.Status.ToString(),  
                     IsPublished = e.IsPublished,
                     IsFeatured = e.IsFeatured,
                     CreatedAt = e.CreatedAt,
@@ -711,8 +704,8 @@ namespace EventTicketing.API.Services
                     Currency = e.Currency,
                     IsOnline = e.IsOnline,
                     OnlineUrl = e.OnlineUrl,
-                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used),  // FIX: Use enum
-                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  // FIX: Use enum
+                    TicketsSold = e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used), 
+                    AvailableTickets = e.MaxAttendees - e.Tickets.Count(t => t.Status == TicketStatus.Valid || t.Status == TicketStatus.Used)  
                 })
                 .ToListAsync();
 

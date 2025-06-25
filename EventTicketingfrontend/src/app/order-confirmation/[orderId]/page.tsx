@@ -520,7 +520,7 @@ export default function OrderConfirmationPage() {
                 compactMode: prefsData.compactMode ?? false,
                 currency: (prefsData.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(prefsData.currency))
                     ? prefsData.currency as 'USD' | 'EUR' | 'GBP' | 'JPY'
-                    : 'USD'  // Add this line
+                    : 'USD'  
             });
         } catch (error) {
             console.log('No preferences found, using defaults');
@@ -535,7 +535,7 @@ export default function OrderConfirmationPage() {
                 accentColor: 'blue',
                 fontSize: 'medium',
                 compactMode: false,
-                currency: 'USD'  // Add this line
+                currency: 'USD'  
             });
         }
     };
@@ -565,11 +565,9 @@ export default function OrderConfirmationPage() {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('🎫 Order data received:', data);
                 setOrder(data);
             }
         } catch (error) {
-            console.error('Failed to fetch order:', error);
         } finally {
             setLoading(false);
         }
@@ -582,12 +580,9 @@ export default function OrderConfirmationPage() {
             const response = await fetch(`http://localhost:5251/api/events/${order.eventId}`);
             if (response.ok) {
                 const eventData = await response.json();
-                console.log('🖼️ Event data for banner:', eventData);
-                console.log('🖼️ Banner URL from API:', eventData.bannerImageUrl);
                 setEvent(eventData);
             }
         } catch (error) {
-            console.error('Failed to fetch event details:', error);
         }
     };
 

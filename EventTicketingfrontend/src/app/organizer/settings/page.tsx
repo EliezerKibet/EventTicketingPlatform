@@ -160,21 +160,16 @@ const currencies = [
     { code: 'USD', symbol: '$', name: 'US Dollar' },
     { code: 'EUR', symbol: '€', name: 'Euro' },
     { code: 'GBP', symbol: '£', name: 'British Pound' },
-    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-    { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit' },
-    { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
-    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' }
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' }
 ];
+
 
 const dateFormats = [
     { id: 'MM/dd/yyyy', name: 'MM/DD/YYYY', example: '12/31/2024' },
     { id: 'dd/MM/yyyy', name: 'DD/MM/YYYY', example: '31/12/2024' },
-    { id: 'yyyy-MM-dd', name: 'YYYY-MM-DD', example: '2024-12-31' },
-    { id: 'dd-MM-yyyy', name: 'DD-MM-YYYY', example: '31-12-2024' },
-    { id: 'MMM dd, yyyy', name: 'MMM DD, YYYY', example: 'Dec 31, 2024' },
-    { id: 'dd MMM yyyy', name: 'DD MMM YYYY', example: '31 Dec 2024' }
+    { id: 'yyyy-MM-dd', name: 'YYYY-MM-DD', example: '2024-12-31' }
 ];
+
 
 const OrganizerSettings: React.FC = () => {
     // State declarations
@@ -314,7 +309,6 @@ const OrganizerSettings: React.FC = () => {
     // Auth check function
     const checkAuth = (): boolean => {
         const token = localStorage.getItem('authToken');
-        console.log('🔍 Checking auth status:', { hasToken: !!token });
 
         if (!token) {
             setAuthStatus('unauthenticated');
@@ -344,7 +338,6 @@ const OrganizerSettings: React.FC = () => {
         }
     };
 
-    // Fetch user data function
     const fetchUserData = async (): Promise<void> => {
         if (!checkAuth()) return;
 
@@ -358,7 +351,6 @@ const OrganizerSettings: React.FC = () => {
                 userApi.getPreferences()
             ]);
 
-            // Handle user profile data
             if (userResponse.status === 'fulfilled') {
                 setUserData({
                     userId: userResponse.value.userId,
@@ -381,7 +373,6 @@ const OrganizerSettings: React.FC = () => {
                 });
             }
 
-            // Handle organization data
             if (organizationData.status === 'fulfilled') {
                 setUserProfile({
                     companyName: organizationData.value.companyName || '',
@@ -398,7 +389,6 @@ const OrganizerSettings: React.FC = () => {
                 });
             }
 
-            // Handle preferences data
             if (preferencesData.status === 'fulfilled') {
                 setUserPreferences({
                     emailNotifications: preferencesData.value.emailNotifications ?? true,
@@ -430,7 +420,6 @@ const OrganizerSettings: React.FC = () => {
             }
 
         } catch (error: any) {
-            console.error('Error fetching user data:', error);
             setError(error.message || t('loadError'));
         } finally {
             setProfileLoading(false);
@@ -453,7 +442,6 @@ const OrganizerSettings: React.FC = () => {
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
         } catch (error: any) {
-            console.error('Error updating profile:', error);
             setError(error.message || t('failedToUpdateProfile'));
         } finally {
             setLoading(false);
@@ -478,7 +466,6 @@ const OrganizerSettings: React.FC = () => {
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
         } catch (error: any) {
-            console.error('Error updating profile info:', error);
             setError(error.message || t('failedToUpdateOrganization'));
         } finally {
             setLoading(false);
@@ -521,7 +508,6 @@ const OrganizerSettings: React.FC = () => {
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
         } catch (error: any) {
-            console.error('Error updating preferences:', error);
             setError(error.message || t('failedToUpdatePreferences'));
         } finally {
             setLoading(false);
@@ -558,7 +544,6 @@ const OrganizerSettings: React.FC = () => {
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
         } catch (error: any) {
-            console.error('Error changing password:', error);
             setError(error.message || t('failedToChangePassword'));
         } finally {
             setLoading(false);

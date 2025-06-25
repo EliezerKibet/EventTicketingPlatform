@@ -35,7 +35,6 @@ export default function RegisterPage() {
         setIsLoading(true);
         setError('');
 
-        // Validation
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
             setIsLoading(false);
@@ -59,7 +58,6 @@ export default function RegisterPage() {
             router.push('/events');
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            setError('Registration failed. Please try again.');
         } finally {
             setIsLoading(false);
         }

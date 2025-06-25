@@ -245,7 +245,6 @@ export default function VenueDetailPage() {
 
     const themeClasses = getThemeClasses(preferences);
 
-    // Currency helper functions
     const getCurrencySymbol = (currency: string) => {
         const symbols: { [key: string]: string } = {
             'USD': '$',
@@ -260,12 +259,11 @@ export default function VenueDetailPage() {
         const currency = preferences?.currency || 'USD';
         const symbol = getCurrencySymbol(currency);
 
-        // Conversion rates (in a real app, you'd fetch these from an API)
         const conversionRates: { [key: string]: number } = {
             'USD': 1,
-            'EUR': 0.92,  // 1 USD = 0.92 EUR
-            'GBP': 0.79,  // 1 USD = 0.79 GBP
-            'JPY': 149    // 1 USD = 149 JPY
+            'EUR': 0.92,  
+            'GBP': 0.79,  
+            'JPY': 149    
         };
 
         const convertedPrice = price * (conversionRates[currency] || 1);
@@ -277,7 +275,6 @@ export default function VenueDetailPage() {
         return `${symbol}${convertedPrice.toFixed(2)}`;
     };
 
-    // Enhanced date formatting
     const formatAccountCreationDate = (
         dateString: string,
         preferences: AttendeePreferences | null,
@@ -290,15 +287,12 @@ export default function VenueDetailPage() {
         const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
         const timeFormat = preferences?.timeFormat || '12h';
 
-        // Convert to user's timezone
         const zonedDate = new Date(date.toLocaleString("en-US", { timeZone: userTimeZone }));
 
-        // Extract date components
         const year = zonedDate.getFullYear();
         const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
         const day = String(zonedDate.getDate()).padStart(2, '0');
 
-        // Month names for text formats
         const monthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December'
@@ -309,11 +303,9 @@ export default function VenueDetailPage() {
         const monthFull = monthNames[zonedDate.getMonth()];
         const monthAbbr = monthShort[zonedDate.getMonth()];
 
-        // Weekday names
         const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-        // Format date according to user preference
         let formattedDate: string;
         switch (dateFormat) {
             case 'dd/MM/yyyy':
@@ -355,7 +347,6 @@ export default function VenueDetailPage() {
         }
     }, [venueId]);
 
-    // Apply theme to document body
     useEffect(() => {
         if (preferences) {
             if (themeClasses.isDarkMode) {
@@ -384,7 +375,7 @@ export default function VenueDetailPage() {
                 compactMode: prefsData.compactMode || false,
                 currency: (prefsData.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(prefsData.currency))
                     ? prefsData.currency as 'USD' | 'EUR' | 'GBP' | 'JPY'
-                    : 'USD' // Add this line
+                    : 'USD'
             });
         } catch (error) {
             console.log('No preferences found, using defaults');
@@ -399,7 +390,7 @@ export default function VenueDetailPage() {
                 accentColor: 'blue',
                 fontSize: 'medium',
                 compactMode: false,
-                currency: 'USD' // Add this line
+                currency: 'USD' 
             });
         }
     };
@@ -411,10 +402,8 @@ export default function VenueDetailPage() {
                 const data = await response.json();
                 setVenue(data);
             } else {
-                console.error('Failed to fetch venue details');
             }
         } catch (error) {
-            console.error('Failed to fetch venue details:', error);
         } finally {
             setLoading(false);
         }
@@ -428,7 +417,6 @@ export default function VenueDetailPage() {
                 setEvents(venueEvents);
             }
         } catch (error) {
-            console.error('Failed to fetch venue events:', error);
         }
     };
 
@@ -1183,12 +1171,10 @@ function EnhancedEventCard({
         return `http://localhost:5251/${imageUrl}`;
     };
 
-    // SINGLE formatShortDate function - use the formatDate prop that already handles user preferences
     const formatShortDate = (dateString: string) => {
         return formatDate(dateString);
     };
 
-    // Add the formatPrice function
     const formatPrice = (price: number, preferences: AttendeePreferences | null) => {
         const currency = preferences?.currency || 'USD';
         const symbols: { [key: string]: string } = {

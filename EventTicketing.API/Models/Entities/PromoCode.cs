@@ -1,4 +1,3 @@
-// ALTERNATIVE FIX: Update your PromoCode.cs enums to match database values
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,25 +6,25 @@ namespace EventTicketing.API.Models.Entities
 {
     public enum PromoCodeType
     {
-        Percentage = 0,    // Changed from 1 to 0 to match database
-        FixedAmount = 1    // Changed from 2 to 1
+        Percentage = 0,   
+        FixedAmount = 1    
     }
 
     public enum PromoCodeStatus
     {
-        Inactive = 0,      // Added Inactive = 0
-        Active = 1,        // Keep Active = 1
-        Expired = 2,       // Changed from 3 to 2
-        Suspended = 3      // New status
+        Inactive = 0,
+        Active = 1,
+        Expired = 2,
+        Suspended = 3
     }
 
     public enum PromoCodeScope
     {
-        EventSpecific = 0, // Changed from 1 to 0
-        OrganizerWide = 1  // Changed from 2 to 1
+        EventSpecific = 0, 
+        OrganizerWide = 1  
     }
 
-    // Rest of your PromoCode class stays the same...
+   
     public class PromoCode
     {
         [Key]
@@ -87,11 +86,9 @@ namespace EventTicketing.API.Models.Entities
 
         public DateTime? UpdatedAt { get; set; }
 
-        // Navigation properties
         public virtual ICollection<PromoCodeUsage> PromoCodeUsages { get; set; } = new List<PromoCodeUsage>();
     }
 
-    // PromoCodeUsage class stays the same...
     public class PromoCodeUsage
     {
         [Key]

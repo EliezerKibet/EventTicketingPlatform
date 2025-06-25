@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
@@ -25,10 +26,13 @@ import {
     AlertCircle
 } from 'lucide-react';
 
-// Use the same Event interface as your dashboard
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5251';
+
+
 interface Event {
     eventDate: string | number | Date;
     revenue: number;
+    actualRevenue?: number;
     eventId: number;
     title: string;
     description: string;
@@ -52,14 +56,38 @@ interface Event {
     isPublished: boolean;
 }
 
+interface Stats {
+    totalEvents: number;
+    publishedEvents: number;
+    totalTicketsSold: number;
+    totalRevenue: number;
+    upcomingEvents: number;
+}
+
+interface UserPreferences {
+    emailNotifications?: boolean;
+    sessionTimeout?: number;
+    theme?: string;
+    language?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    defaultTimeZone?: string;
+    accentColor?: string;
+    fontSize?: string;
+    compactMode?: boolean;
+    currency?: 'USD' | 'EUR' | 'GBP' | 'JPY';
+}
+
 const OrganizerEventsPage = () => {
     const router = useRouter();
     const { user, isOrganizer } = useAuth();
     const { isDark, isCompact } = useTheme();
     const themeClasses = useThemeClasses();
 
-    // FIXED: Use the same I18n hook as your settings page
     const { t, formatCurrency } = useI18nContext();
+
+    const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+
 
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
@@ -67,14 +95,14 @@ const OrganizerEventsPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterPublished, setFilterPublished] = useState<'all' | 'published' | 'unpublished'>('all');
 
-    // Load user's events
-    useEffect(() => {
-        if (user && isOrganizer) {
-            fetchMyEvents();
-        } else if (user && !isOrganizer) {
-            router.push('/');
-        }
-    }, [user, isOrganizer, router]);
+    const [stats, setStats] = useState<Stats>({
+        totalEvents: 0,
+        publishedEvents: 0,
+        totalTicketsSold: 0,
+        totalRevenue: 0,
+        upcomingEvents: 0
+    });
+
 
     const fetchMyEvents = async () => {
         try {
@@ -82,15 +110,79 @@ const OrganizerEventsPage = () => {
             setError('');
 
             const eventsData = await eventsApi.getMyEvents();
-            console.log(`Successfully loaded ${eventsData.length} events with full data`);
+
+            // Get actual revenue for each event using the API
+            let totalActualRevenue = 0;
+
+            for (const event of eventsData) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/tickets/event/${event.eventId}/revenue`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const revenueData = await response.json();
+                        // FIXED: Use grossRevenue instead of revenue
+                        event.actualRevenue = revenueData.grossRevenue || 0;
+                        totalActualRevenue += event.actualRevenue;
+                    } else {
+                        event.actualRevenue = 0;
+                    }
+                } catch (error) {
+                    console.error(`Failed to fetch revenue for event ${event.eventId}`);
+                    event.actualRevenue = 0;
+                }
+            }
 
             setEvents(eventsData);
 
+            // Use ACTUAL revenue instead of wrong calculation
+            const now = new Date();
+            const totalEvents = eventsData.length;
+            const publishedEvents = eventsData.filter(event => event.isPublished).length;
+            const upcomingEvents = eventsData.filter(event =>
+                new Date(event.startDateTime || event.eventDate) > now && event.isPublished
+            ).length;
+            const totalTicketsSold = eventsData.reduce((sum, event) => sum + (event.ticketsSold || 0), 0);
+
+            setStats({
+                totalEvents,
+                publishedEvents,
+                totalTicketsSold,
+                totalRevenue: totalActualRevenue, // Use actual revenue
+                upcomingEvents
+            });
+
         } catch (error) {
-            console.error('Error fetching my events:', error);
             setError(t('dashboardError'));
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchUserPreferences = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/preferences`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const userPreferences = await response.json();
+                setPreferences(userPreferences);
+            }
+        } catch (error) {
+            setPreferences({
+                currency: 'USD',
+                dateFormat: 'MM/dd/yyyy',
+                timeFormat: '12h',
+                defaultTimeZone: 'UTC'
+            });
         }
     };
 
@@ -117,7 +209,6 @@ const OrganizerEventsPage = () => {
             );
 
         } catch (error) {
-            console.error('Error toggling publish status:', error);
             setError(t('failedToTogglePublish', { action: isCurrentlyPublished ? t('unpublish') : t('publish') }));
         }
     };
@@ -142,12 +233,10 @@ const OrganizerEventsPage = () => {
             setEvents(prevEvents => prevEvents.filter(event => event.eventId !== eventId));
 
         } catch (error) {
-            console.error('Error deleting event:', error);
             setError(t('dashboardError'));
         }
     };
 
-    // Helper function to check if event spans multiple days
     const isMultiDayEvent = (startDate: string | number | Date, endDate: string | number | Date) => {
         if (!startDate || !endDate) return false;
         const start = new Date(startDate);
@@ -156,7 +245,6 @@ const OrganizerEventsPage = () => {
         return start.toDateString() !== end.toDateString();
     };
 
-    // Helper function to format date range
     const formatDateRange = (startDate: string | number | Date, endDate: string | number | Date) => {
         if (!startDate) return t('dateNotSet');
         const start = new Date(startDate);
@@ -182,7 +270,6 @@ const OrganizerEventsPage = () => {
         return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
     };
 
-    // Helper function to format time range
     const formatTimeRange = (startDate: string | number | Date, endDate: string | number | Date) => {
         if (!startDate) return t('timeNotSet');
         const start = new Date(startDate);
@@ -196,7 +283,6 @@ const OrganizerEventsPage = () => {
         return startTime !== endTime ? `${startTime} - ${endTime}` : startTime;
     };
 
-    // Calculate event duration in days
     const getEventDuration = (startDate: string | number | Date, endDate: string | number | Date) => {
         if (!startDate || !endDate || !isMultiDayEvent(startDate, endDate)) return null;
         const start = new Date(startDate);
@@ -207,7 +293,177 @@ const OrganizerEventsPage = () => {
         return diffInDays > 0 ? diffInDays : null;
     };
 
-    // Filter events based on search and publish status
+    const convertAndFormatCurrency = (amount: number, fromCurrency: string, preferences: UserPreferences | null, currentLangData: any) => {
+        const userCurrency = (preferences?.currency && ['USD', 'EUR', 'GBP', 'JPY'].includes(preferences.currency))
+            ? preferences.currency
+            : 'USD';
+
+
+        if (fromCurrency === userCurrency) {
+            return formatCurrencyWithUserPreference(amount, preferences, currentLangData);
+        }
+
+        const conversionRates: { [key: string]: { [key: string]: number } } = {
+            'USD': {
+                'USD': 1,
+                'EUR': 0.92,  // 1 USD = 0.92 EUR
+                'GBP': 0.79,  // 1 USD = 0.79 GBP
+                'JPY': 149    // 1 USD = 149 JPY
+            },
+            'EUR': {
+                'USD': 1.09,  // 1 EUR = 1.09 USD
+                'EUR': 1,
+                'GBP': 0.86,  // 1 EUR = 0.86 GBP
+                'JPY': 162    // 1 EUR = 162 JPY
+            },
+            'GBP': {
+                'USD': 1.27,  // 1 GBP = 1.27 USD
+                'EUR': 1.16,  // 1 GBP = 1.16 EUR
+                'GBP': 1,
+                'JPY': 189    // 1 GBP = 189 JPY
+            },
+            'JPY': {
+                'USD': 0.0067, // 1 JPY = 0.0067 USD
+                'EUR': 0.0062, // 1 JPY = 0.0062 EUR
+                'GBP': 0.0053, // 1 JPY = 0.0053 GBP
+                'JPY': 1
+            }
+        };
+
+        const rate = conversionRates[fromCurrency]?.[userCurrency] || 1;
+        const convertedAmount = amount * rate;
+
+        return formatCurrencyWithUserPreference(convertedAmount, preferences, currentLangData);
+    };
+
+    const formatCurrencyWithUserPreference = (amount: number, preferences: UserPreferences | null, currentLangData: any) => {
+        const currency = preferences?.currency ?? 'USD';
+        const locale = currentLangData?.region ?? 'en-US';
+
+        try {
+            // Use Intl.NumberFormat for proper currency formatting
+            const formatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: currency === 'JPY' ? 0 : 2,
+                maximumFractionDigits: currency === 'JPY' ? 0 : 2
+            });
+
+            return formatter.format(amount);
+        } catch (error) {
+            const symbols: { [key: string]: string } = {
+                'USD': '$',
+                'EUR': '\u20AC', // Euro symbol
+                'GBP': '\u00A3', // Pound symbol
+                'JPY': '\u00A5'  // Yen symbol
+            };
+
+            const symbol = symbols[currency] || '$';
+
+            if (currency === 'JPY') {
+                const wholeAmount = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                return `${symbol}${wholeAmount}`;
+            }
+
+            const formattedAmount = amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            return `${symbol}${formattedAmount}`;
+        }
+    };
+
+    const getCurrencySymbol = (currency: string) => {
+        const symbols: { [key: string]: string } = {
+            'USD': '$',
+            'EUR': '\u20AC', // Euro symbol
+            'GBP': '\u00A3', // Pound symbol
+            'JPY': '\u00A5'  // Yen symbol
+        };
+
+        return symbols[currency] || '$';
+    };
+
+    const formatEventDateTime = (dateTimeString: string, preferences: UserPreferences | null, currentLangData: any, t: any) => {
+        const eventDate = new Date(dateTimeString);
+        const userTimeZone = preferences?.defaultTimeZone || 'UTC';
+        const dateFormat = preferences?.dateFormat || 'MM/dd/yyyy';
+        const timeFormat = preferences?.timeFormat || '12h';
+
+        const zonedDate = new Date(eventDate.toLocaleString("en-US", { timeZone: userTimeZone }));
+
+        const year = zonedDate.getFullYear();
+        const month = String(zonedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(zonedDate.getDate()).padStart(2, '0');
+
+        const monthNames = [
+            t('january'), t('february'), t('march'), t('april'),
+            t('may'), t('june'), t('july'), t('august'),
+            t('september'), t('october'), t('november'), t('december')
+        ];
+        const monthShort = monthNames[zonedDate.getMonth()];
+
+        const weekdays = [
+            t('sunday'), t('monday'), t('tuesday'), t('wednesday'),
+            t('thursday'), t('friday'), t('saturday')
+        ];
+        const weekday = weekdays[zonedDate.getDay()];
+
+        // Format date according to user preference - INDEPENDENT OF LOCALE
+        let formattedDate: string;
+        switch (dateFormat) {
+            case 'dd/MM/yyyy':
+                formattedDate = `${weekday}, ${day}/${month}/${year}`;
+                break;
+            case 'yyyy-MM-dd':
+                formattedDate = `${weekday}, ${year}-${month}-${day}`;
+                break;
+            case 'MMM dd, yyyy':
+                formattedDate = `${weekday}, ${monthShort} ${parseInt(day)}, ${year}`;
+                break;
+            case 'dd MMM yyyy':
+                formattedDate = `${weekday}, ${parseInt(day)} ${monthShort} ${year}`;
+                break;
+            default: // MM/dd/yyyy
+                formattedDate = `${weekday}, ${month}/${day}/${year}`;
+        }
+
+        // Format time - also independent of locale
+        const hours24 = zonedDate.getHours();
+        const minutes = String(zonedDate.getMinutes()).padStart(2, '0');
+
+        let formattedTime: string;
+        if (timeFormat === '24h') {
+            formattedTime = `${String(hours24).padStart(2, '0')}:${minutes}`;
+        } else {
+            const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+            const ampm = hours24 >= 12 ? 'PM' : 'AM';
+            formattedTime = `${hours12}:${minutes} ${ampm}`;
+        }
+
+        // Add timezone abbreviation
+        const timeZoneAbbr = getTimeZoneAbbreviation(userTimeZone);
+        formattedTime += ` ${timeZoneAbbr}`;
+
+        const result = `${formattedDate} ${t('at')} ${formattedTime}`;
+
+        return result;
+    };
+
+    const getTimeZoneAbbreviation = (timeZone: string): string => {
+        const abbreviations: { [key: string]: string } = {
+            'UTC': 'UTC',
+            'America/New_York': 'EST/EDT',
+            'America/Chicago': 'CST/CDT',
+            'America/Denver': 'MST/MDT',
+            'America/Los_Angeles': 'PST/PDT',
+            'Asia/Kuala_Lumpur': 'MYT',
+            'Europe/London': 'GMT/BST',
+            'Europe/Paris': 'CET/CEST',
+            'Asia/Tokyo': 'JST',
+            'Australia/Sydney': 'AEST/AEDT'
+        };
+
+        return abbreviations[timeZone] || timeZone.split('/').pop() || 'UTC';
+    };
+
     const filteredEvents = events.filter(event => {
         if (!searchTerm.trim()) {
             return filterPublished === 'all' ||
@@ -234,6 +490,15 @@ const OrganizerEventsPage = () => {
 
         return matchesSearch && matchesFilter;
     });
+
+    useEffect(() => {
+        if (user && isOrganizer) {
+            fetchUserPreferences();
+            fetchMyEvents();
+        } else if (user && !isOrganizer) {
+            router.push('/');
+        }
+    }, [user, isOrganizer, router]);
 
     if (!user || !isOrganizer) {
         return (
@@ -350,10 +615,10 @@ const OrganizerEventsPage = () => {
                             </div>
                             <div className={`${themeClasses.themeCard} ${themeClasses.compactCard} rounded-lg shadow-sm border ${themeClasses.themeBorder} theme-transition`}>
                                 <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                    {formatCurrency(events.reduce((sum, e) => sum + (e.revenue || 0), 0))}
+                                    {convertAndFormatCurrency(stats.totalRevenue, 'USD', preferences, { region: 'en-US' })}
                                 </div>
                                 <div className={`${themeClasses.textSm} ${themeClasses.themeMutedFg}`}>
-                                    {t('totalRevenue')}
+                                    {t('totalRevenue')} ({getCurrencySymbol(preferences?.currency || 'USD')})
                                 </div>
                             </div>
                         </div>
@@ -431,12 +696,8 @@ const OrganizerEventsPage = () => {
                                                             <div className="flex items-center">
                                                                 <Calendar className="h-4 w-4 mr-1" />
                                                                 <span className={`font-medium ${themeClasses.themeFg}`}>
-                                                                    {formatDateRange(startDateTime, endDateTime)}
+                                                                    {formatEventDateTime(event.startDateTime, preferences, { region: 'en-US' }, t)}
                                                                 </span>
-                                                            </div>
-                                                            <div className="flex items-center">
-                                                                <Clock className="h-4 w-4 mr-1" />
-                                                                <span>{formatTimeRange(startDateTime, endDateTime)}</span>
                                                             </div>
                                                             <div className="flex items-center">
                                                                 {event.isOnline ? <Globe className="h-4 w-4 mr-1" /> : <MapPin className="h-4 w-4 mr-1" />}
@@ -447,6 +708,7 @@ const OrganizerEventsPage = () => {
                                                                 {event.categoryName || t('uncategorized')}
                                                             </div>
                                                         </div>
+
 
                                                         {/* Event Statistics */}
                                                         <div className={`grid grid-cols-3 ${themeClasses.compactGap} ${themeClasses.compactCard} ${isDark ? 'bg-gray-800' : 'bg-gray-50'} rounded-lg`}>
@@ -468,10 +730,15 @@ const OrganizerEventsPage = () => {
                                                             </div>
                                                             <div className="text-center">
                                                                 <div className={`${themeClasses.textLg} font-bold text-green-600 dark:text-green-400`}>
-                                                                    {formatCurrency(event.revenue || 0)}
+                                                                    {convertAndFormatCurrency(
+                                                                        event.actualRevenue || 0, 
+                                                                        event.currency || 'USD',
+                                                                        preferences,
+                                                                        { region: 'en-US' }
+                                                                    )}
                                                                 </div>
                                                                 <div className={`text-xs ${themeClasses.themeMutedFg}`}>
-                                                                    {t('revenue')}
+                                                                    {t('revenue')} ({getCurrencySymbol(preferences?.currency || 'USD')})
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -479,13 +746,6 @@ const OrganizerEventsPage = () => {
 
                                                     {/* Actions - Same style as Dashboard */}
                                                     <div className={`flex ${isCompact ? 'gap-1' : 'gap-2'} ${isCompact ? 'ml-3' : 'ml-4'}`}>
-                                                        <button
-                                                            onClick={() => window.open(`/events/${event.eventId}`, '_blank')}
-                                                            className={`flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 theme-transition`}
-                                                        >
-                                                            <Eye className="h-4 w-4 mr-1" />
-                                                            {t('view')}
-                                                        </button>
                                                         <button
                                                             onClick={() => router.push(`/organizer/events/${event.eventId}/edit`)}
                                                             className={`flex items-center ${themeClasses.compactButton} ${themeClasses.textSm} ${themeClasses.themeMuted} ${themeClasses.themeMutedFg} rounded-lg ${isDark ? 'hover:bg-gray-600' : 'hover:bg-gray-200'} theme-transition`}

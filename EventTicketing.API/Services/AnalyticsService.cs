@@ -17,13 +17,11 @@ namespace EventTicketing.API.Services
         {
             var dateFilter = GetDateFilter(period);
 
-            // Get organizer's events
             var organizerEvents = await _context.Events
                 .Where(e => e.OrganizerId == organizerId)
                 .Select(e => e.EventId)
                 .ToListAsync();
 
-            // Get revenue data using correct property names
             var revenueData = await _context.Orders
                 .Where(o => o.CreatedAt >= dateFilter &&
                            o.Tickets.Any(t => organizerEvents.Contains(t.EventId)))
@@ -43,7 +41,6 @@ namespace EventTicketing.API.Services
                 .Take(10)
                 .ToListAsync();
 
-            // Get totals
             var totalRevenue = revenueData.Sum(r => r.TotalRevenue);
             var totalAttendees = revenueData.Sum(r => r.AttendeeCount);
             var activeEvents = await _context.Events
@@ -74,16 +71,12 @@ namespace EventTicketing.API.Services
                 .Select(e => e.EventId)
                 .ToListAsync();
 
-            // Note: Your Order entity doesn't have PaymentMethod property
-            // You might need to add this property or track payment methods differently
-            // For now, I'll create mock data based on order patterns
             var orderData = await _context.Orders
                 .Where(o => o.CreatedAt >= dateFilter &&
                            o.Tickets.Any(t => organizerEvents.Contains(t.EventId)))
                 .Select(o => new { o.OrderId, o.TotalAmount })
                 .ToListAsync();
 
-            // Mock payment method distribution since PaymentMethod isn't in your Order entity
             var totalOrders = orderData.Count;
             var methods = new List<PaymentMethodDto>
             {
@@ -111,7 +104,6 @@ namespace EventTicketing.API.Services
                 })
                 .ToListAsync();
 
-            // Calculate utilization percentage in memory
             var result = capacityData
                 .Select(e => new CapacityEventDto
                 {
@@ -137,14 +129,12 @@ namespace EventTicketing.API.Services
                 .Select(e => e.EventId)
                 .ToListAsync();
 
-            // Get users who purchased tickets for organizer's events
             var attendeeData = await _context.Users
                 .Where(u => u.Tickets.Any(t => organizerEvents.Contains(t.EventId) &&
                                                t.PurchaseDate >= dateFilter))
                 .Select(u => new { u.DateOfBirth })
                 .ToListAsync();
 
-            // Calculate age distribution
             var ageGroups = attendeeData
                 .Where(u => u.DateOfBirth.HasValue)
                 .Select(u => CalculateAge(u.DateOfBirth.Value))
@@ -153,7 +143,7 @@ namespace EventTicketing.API.Services
                 {
                     AgeGroup = g.Key,
                     Count = g.Count(),
-                    Percentage = 0 // Will calculate below
+                    Percentage = 0 
                 })
                 .ToList();
 
@@ -164,7 +154,6 @@ namespace EventTicketing.API.Services
                     Math.Round((decimal)ageGroup.Count / totalWithAge * 100, 1) : 0;
             }
 
-            // Mock gender distribution (you don't have gender in User entity)
             var totalAttendees = attendeeData.Count;
             var genderDistribution = new List<GenderDistributionDto>
             {
@@ -196,7 +185,6 @@ namespace EventTicketing.API.Services
                     return new CheckInAnalyticsDto();
                 }
 
-                // Fetch data first, then process in memory
                 var allCheckInTickets = await _context.Tickets
                     .Where(t => organizerEventIds.Contains(t.EventId) &&
                                t.CheckInDate.HasValue &&
@@ -204,7 +192,6 @@ namespace EventTicketing.API.Services
                     .Select(t => t.CheckInDate.Value)
                     .ToListAsync();
 
-                // Process in memory (no EF translation issues)
                 var hourlyData = allCheckInTickets
                     .GroupBy(date => date.Hour)
                     .Select(g => new CheckInHourlyDto
@@ -216,7 +203,6 @@ namespace EventTicketing.API.Services
                     .OrderBy(x => x.Hour)
                     .ToList();
 
-                // Calculate cumulative counts
                 var cumulative = 0;
                 foreach (var item in hourlyData)
                 {
@@ -243,7 +229,6 @@ namespace EventTicketing.API.Services
             }
             catch (Exception)
             {
-                // Return empty data instead of throwing
                 return new CheckInAnalyticsDto();
             }
         }
@@ -252,7 +237,6 @@ namespace EventTicketing.API.Services
         {
             var dateFilter = GetDateFilter(period);
 
-            // Get basic venue data first
             var venueData = await _context.Events
                 .Where(e => e.OrganizerId == organizerId && e.StartDateTime >= dateFilter)
                 .GroupBy(e => new { e.VenueId, e.Venue.Name })
@@ -268,11 +252,9 @@ namespace EventTicketing.API.Services
                 .OrderByDescending(x => x.TotalRevenue)
                 .ToListAsync();
 
-            // Calculate ratings separately to avoid EF translation issues
             var venuePerformance = new List<VenuePerformanceDto>();
             foreach (var venue in venueData)
             {
-                // Get average rating for events at this venue
                 var avgRating = await _context.EventReviews
                     .Where(r => venue.EventIds.Contains(r.EventId))
                     .AverageAsync(r => (decimal?)r.Rating) ?? 4.5m;
@@ -307,7 +289,6 @@ namespace EventTicketing.API.Services
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToListAsync();
 
-            // Convert to DTOs after EF query
             var trends = monthlyData.Select(m => new SeasonalTrendDto
             {
                 Month = $"{GetMonthName(m.Month)} {m.Year}",
@@ -321,14 +302,12 @@ namespace EventTicketing.API.Services
 
         public async Task<LowAttendanceAnalyticsDto> GetLowAttendanceEventsAsync(int organizerId)
         {
-            // First, get basic event data
             var events = await _context.Events
                 .Where(e => e.OrganizerId == organizerId &&
                            e.StartDateTime > DateTime.Now &&
                            e.IsPublished)
                 .ToListAsync();
 
-            // Get ticket counts for each event
             var eventTicketCounts = new Dictionary<int, int>();
             foreach (var eventItem in events)
             {
@@ -338,7 +317,6 @@ namespace EventTicketing.API.Services
                 eventTicketCounts[eventItem.EventId] = ticketCount;
             }
 
-            // Filter events with low attendance and create DTOs
             var lowAttendanceEventDtos = new List<LowAttendanceEventDto>();
 
             foreach (var eventItem in events)
@@ -347,9 +325,8 @@ namespace EventTicketing.API.Services
                 var utilizationPercentage = eventItem.MaxAttendees > 0 ?
                     (decimal)ticketsSold / eventItem.MaxAttendees * 100 : 0;
 
-                if (utilizationPercentage < 50) // Less than 50% capacity
+                if (utilizationPercentage < 50) 
                 {
-                    // Get ticket types for this event
                     var ticketTypes = await _context.TicketTypes
                         .Where(tt => tt.EventId == eventItem.EventId)
                         .Select(tt => new TicketTypeDataDto

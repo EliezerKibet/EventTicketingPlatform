@@ -51,7 +51,7 @@ export const SUPPORTED_LANGUAGES = [
         currency: 'EUR'
     },
     {
-        code: 'it', // ADD ITALIAN HERE
+        code: 'it',
         name: 'Italian',
         nativeName: 'Italiano',
         flag: '🇮🇹',
@@ -63,7 +63,6 @@ export const SUPPORTED_LANGUAGES = [
     }
 ];
 
-// Translation keys interface for type safety
 export interface TranslationKeys {
     // Common
     save: string;
@@ -112,10 +111,10 @@ export interface TranslationKeys {
     eventTime: string;
     eventLocation: string;
     ticketPrice: string;
-    eventsSubtitle: string, // NEW
-    allEvents: string, // NEW
-    searchEvents: string, // NEW
-    unpublished: string, // NEW
+    eventsSubtitle: string, 
+    allEvents: string, 
+    searchEvents: string,
+    unpublished: string, 
 
     // Appearance
     theme: string;
@@ -168,14 +167,12 @@ export interface TranslationKeys {
     dayEvent: string;
 }
 
-// Helper function for string interpolation
 const interpolate = (str: string, params: Record<string, any> = {}): string => {
     return str.replace(/\{(\w+)\}/g, (match, key) => {
         return params[key] !== undefined ? String(params[key]) : match;
     });
 };
 
-// Translation data - COMPLETE WITH ALL LANGUAGES
 const translations: Record<string, TranslationKeys> = {
     en: {
         // Common
@@ -225,7 +222,7 @@ const translations: Record<string, TranslationKeys> = {
         eventTime: 'Event Time',
         eventLocation: 'Event Location',
         ticketPrice: 'Ticket Price',
-        eventsSubtitle: 'Manage your events and track their performance', // NEW
+        eventsSubtitle: 'Manage your events and track their performance', 
         allEvents: 'All Events',
         unpublished: 'Unpublished',
         searchEvents: 'Search events...',
@@ -760,7 +757,6 @@ export const useI18n = () => {
             try {
                 localStorage.setItem('selectedLanguage', languageCode);
             } catch (error) {
-                console.error('Error saving language preference:', error);
             }
         }
     }, []);
