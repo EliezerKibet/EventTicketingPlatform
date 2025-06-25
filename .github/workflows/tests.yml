@@ -6,23 +6,34 @@ on:
   pull_request:
     branches: [ main, master ]
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.x'
         
     - name: Restore dependencies
-      run: dotnet restore EventTicketing.API/
+      run: dotnet restore EventTicketing.Tests/
       
     - name: Build
-      run: dotnet build EventTicketing.API/ --no-restore
+      run: dotnet build EventTicketing.Tests/ --no-restore
       
-    - name: Test
-      run: dotnet test ./EventTicketing.API/EventTicketing.Tests/EventTicketing.Tests.csproj --verbosity normal
+    - name: Run Tests
+      run: dotnet test EventTicketing.Tests/ --verbosity normal --no-build --logger trx --results-directory "TestResults"
+      
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: TestResults/**/*.trx
