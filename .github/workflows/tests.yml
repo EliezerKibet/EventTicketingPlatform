@@ -1,8 +1,8 @@
-name: Event Ticketing Platform Tests
+﻿name: EventHub Platform CI/CD
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, develop ]
   pull_request:
     branches: [ main, master ]
 
@@ -10,30 +10,134 @@ permissions:
   contents: read
   checks: write
   pull-requests: write
+  statuses: write
 
 jobs:
   test:
+    name: 🧪 Test Suite
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
     
-    - name: Setup .NET
+    - name: 🔧 Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.x'
         
-    - name: Restore dependencies
+    - name: 📦 Restore Dependencies
       run: dotnet restore EventTicketing.Tests/
       
-    - name: Build
-      run: dotnet build EventTicketing.Tests/ --no-restore
+    - name: 🏗️ Build Project
+      run: dotnet build EventTicketing.Tests/ --no-restore --configuration Release
       
-    - name: Run Tests
-      run: dotnet test EventTicketing.Tests/ --verbosity normal --no-build --logger trx --results-directory "TestResults"
+    - name: 🧪 Run Tests
+      run: |
+        dotnet test EventTicketing.Tests/ \
+          --no-build \
+          --configuration Release \
+          --verbosity normal \
+          --logger trx \
+          --logger "console;verbosity=detailed" \
+          --results-directory "TestResults" \
+          --collect:"XPlat Code Coverage" \
+          --settings coverlet.runsettings
       
-    - name: Publish Test Results
+    - name: 📊 Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
       with:
         files: TestResults/**/*.trx
+        check_name: "🧪 Test Results"
+        comment_title: "🎯 Test Summary"
+        
+    - name: 📈 Upload Coverage to Codecov
+      uses: codecov/codecov-action@v3
+      if: always()
+      with:
+        file: TestResults/*/coverage.cobertura.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  build:
+    name: 🏗️ Build & Analyze
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: 📦 Restore Dependencies
+      run: dotnet restore
+      
+    - name: 🏗️ Build API
+      run: dotnet build EventTicketing.API/ --configuration Release --no-restore
+      
+    - name: 🔍 Run Code Analysis
+      run: dotnet format --verify-no-changes --verbosity diagnostic
+      continue-on-error: true
+      
+    - name: 🏷️ Create Build Artifact
+      if: github.ref == 'refs/heads/main'
+      run: dotnet publish EventTicketing.API/ -c Release -o ./publish
+      
+    - name: 📤 Upload Build Artifact
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-artifact@v3
+      with:
+        name: eventhub-api-${{ github.sha }}
+        path: ./publish
+
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: 🔐 Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: 📊 Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  quality:
+    name: 📋 Quality Gate
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: always()
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: ✅ Quality Gate Status
+      run: |
+        echo "🎯 Quality Gate Summary:"
+        echo "- Tests: ${{ needs.test.result }}"
+        echo "- Build: ${{ needs.build.result }}"
+        
+        if [[ "${{ needs.test.result }}" == "success" && "${{ needs.build.result }}" == "success" ]]; then
+          echo "✅ Quality Gate: PASSED"
+          echo "🚀 Ready for deployment!"
+        else
+          echo "❌ Quality Gate: FAILED"
+          exit 1
+        fi
