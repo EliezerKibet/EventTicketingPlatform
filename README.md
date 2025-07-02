@@ -260,7 +260,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - 🔗 **GitHub**: [@EliezerKibet](https://github.com/EliezerKibet)
 - 💼 **LinkedIn**: [Connect with me](https://linkedin.com/in/eliezerkirbet)
-- 📧 **Email**: eliezer.kibet@example.com
+- 📧 **Email**: eliezerkibet@gmail.com
 
 ## 🏆 **Project Highlights**
 
