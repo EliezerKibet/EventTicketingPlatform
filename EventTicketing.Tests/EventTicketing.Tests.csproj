@@ -23,8 +23,5 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-	  <ProjectReference Include="..\EventTicketing.API\EventTicketing.API.csproj" />
-  </ItemGroup>
 
 </Project>
