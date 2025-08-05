@@ -7,6 +7,24 @@
 ![Coverage](https://img.shields.io/badge/Coverage-Comprehensive-green?style=for-the-badge&logo=codecov&logoColor=white)
 ![Quality](https://img.shields.io/badge/Code%20Quality-Enterprise-blue?style=for-the-badge&logo=sonarqube&logoColor=white)
 
+## 🖼️ Screenshots
+
+### Analytics Page
+![Home Page](screenshots/analytics.png)
+
+### Dashbaord Page
+![Products](screenshots/dashboard.png)
+
+### Events Page
+![Cart](screenshots/events.png)
+
+### Events specific
+![Checkout](screenshots/eventsspecific.png)
+
+### Venue
+![Orders](screenshots/venue.png)
+
+
 **A production-ready event ticketing system powering seamless event experiences from creation to analytics.**
 
 ## 🚀 **Live Demo & Quick Start**
